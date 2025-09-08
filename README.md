@@ -33,6 +33,7 @@ Vývoj se **řídí pravidly v [`STAVBAU_GUIDELINES.md`](./docs/STAVBAU_GUIDELIN
 - Po dokončení bloku práce se provádí checkpoint → aktualizace `hotovo-todo-future.md`.  
 
 ---
-
 ## 📜 Licence
 Projekt zatím není veřejně licencován – licence bude doplněna podle zvoleného modelu distribuce (MVP vs PRO verze).  
+
+![BE CI](https://github.com/preisvladimir/stavbau-backend-v2/actions/workflows/backend-ci.yml/badge.svg)
