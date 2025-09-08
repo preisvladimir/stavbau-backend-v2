@@ -1,0 +1,15 @@
+# Výchozí – udržuj LF v textových souborech
+* text=auto eol=lf
+
+# Windows skripty můžou zůstat CRLF
+*.bat eol=crlf
+*.cmd eol=crlf
+*.ps1 eol=crlf
+
+# Binárky
+*.jar binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
