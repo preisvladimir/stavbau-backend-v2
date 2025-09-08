@@ -1,0 +1,31 @@
+spring:
+  application.name: stavbau-backend
+  datasource: { url: jdbc:postgresql://localhost:5432/stavbau, username: stavbau, password: stavbau }
+  jpa:
+    hibernate.ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc.lob.non_contextual_creation: true
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+server:
+  port: 8080
+
+app:
+  security:
+    cookies:
+      secure: false   # lokal: false; prod: true
+    bcrypt-cost: 12
+    jwt:
+      issuer: "stavbau"
+      accessTokenTtlMinutes: 30
+      refreshTokenTtlDays: 14
+      # POZOR: klíč bude v ENV/Secrets manageru; zde jen pro dev
+      secret: "hkCeFiMnK/WnZlQn9JvxguLMB7LEBXxM05E86Gg2Eirg0CWmrKvH1dG0lfcTBwwECiIyw1/Cc4Mgk0qLA6rlpg=="
+
+---
+spring:
+  config.activate.on-profile: dev
+logging.level.org.hibernate.SQL: DEBUG
