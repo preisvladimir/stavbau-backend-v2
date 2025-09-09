@@ -1,5 +1,6 @@
 package cz.stavbau.backend.security.auth;
 
+import cz.stavbau.backend.security.AppUserPrincipal;
 import cz.stavbau.backend.security.jwt.JwtService;
 import cz.stavbau.backend.security.jwt.RefreshCookie;
 import cz.stavbau.backend.users.model.User;
@@ -119,7 +120,7 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<?> me(
             @org.springframework.security.core.annotation.AuthenticationPrincipal Object principal) {
-        if (principal instanceof cz.stavbau.backend.security.rbac.AppUserPrincipal p) {
+        if (principal instanceof AppUserPrincipal p) {
             return ResponseEntity.ok(Map.of(
                     "userId", p.getUserId().toString(),
                     "companyId", p.getCompanyId() != null ? p.getCompanyId().toString() : null,

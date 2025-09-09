@@ -1,5 +1,4 @@
 package cz.stavbau.backend.security;
-import cz.stavbau.backend.security.rbac.AppUserPrincipal;
 import org.springframework.security.core.*; import org.springframework.security.core.context.SecurityContextHolder;
 import java.util.UUID;
 

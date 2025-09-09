@@ -30,7 +30,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwt) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                            JwtAuthenticationFilter jwt) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -46,10 +47,10 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
 
-                // ⬇️ pořadí filtrů
-                // 1) rate limit (platí jen pro POST /api/v1/auth/login, viz shouldNotFilter)
-                .addFilterBefore(rateLimitFilter, JwtAuthenticationFilter.class)
-                // 2) JWT (nastaví Authentication z Bearer tokenu)
+                // ⬇️ Pořadí filtrů (oběma dáváme kotvu k vestavěnému filtru)
+                // 1) Rate limit před UsernamePasswordAuthenticationFilter
+                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
+                // 2) JWT taktéž před UsernamePasswordAuthenticationFilter (poběží po rate-limit)
                 .addFilterBefore(jwt, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
