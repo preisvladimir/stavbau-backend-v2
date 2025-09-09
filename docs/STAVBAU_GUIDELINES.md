@@ -1,19 +1,26 @@
 # 📑 STAVBAU_GUIDELINES.md
 
-## 1. Základní pravidlo
-Vždy se při práci opírat o nahrané referenční dokumenty, nepsat nic, co by bylo v rozporu s těmito zdroji. Pokud nastane konflikt, upozornit na něj a doporučit řešení (sloučení, oprava, doplnění).
+Hlavní referenční dokument pro projekt **STAVBAU‑V2**.  
+Obsahuje pravidla práce, návaznost na dokumenty, GitHub governance, workflow, definice hotovo, mindset i operativní checklist.  
+Slouží jako **jediný zdroj pravdy** pro postup v projektu.
+
+---
+
+## 1. Úvod a základní pravidlo
+- Vždy se při práci opírat o nahrané referenční dokumenty (`/docs`).  
+- Nepsat nic, co by bylo v rozporu s těmito zdroji. Pokud nastane konflikt, upozornit na něj a doporučit řešení (sloučení, oprava, doplnění).  
+- Cílem je **profesionální, udržovatelný a dlouhodobě rozšiřitelný systém**.
 
 ---
 
 ## 2. Dokumenty a jejich účel
 - **`bussines plan.md`**  
   🔹 Hlavní referenční dokument pro business plán, cílové skupiny, monetizaci, konkurenci a strategii rozvoje.  
-  ➝ Při tvorbě textů, prezentací, pitch decků, cenových modelů a marketingových úvah se vždy držet tohoto dokumentu.
+  ➝ Používat při úvahách o směru vývoje, marketingu a monetizaci.
 
 - **`Sprintový plán – MVP verze STAVBAU.md`**  
   🔹 Rozpad práce do sprintů, definice kroků a priorit pro MVP.  
-  ➝ Každý nový task, návrh nebo diskuze o implementaci musí být navázána na tento sprintový plán.  
-  ➝ Pokud se řeší úkol mimo plán, doporučit jeho zařazení do vhodného sprintu.
+  ➝ Každý nový úkol musí být navázán na tento plán. Pokud vznikne práce mimo plán, doporučit její zařazení.
 
 - **`struktury projektu (balíčky & vrstvy) - včetně i18n`** a **`modular monolith (by feature).md`**  
   🔹 Referenční dokumenty pro architekturu backendu (Spring Boot, modular monolith, DDD by feature, i18n).  
@@ -26,66 +33,111 @@ Vždy se při práci opírat o nahrané referenční dokumenty, nepsat nic, co b
   ➝ Každý dokončený úkol ihned zaznamenat (shrnutí v chatu + doplnění do souboru).  
   ➝ Pokud navrhnu něco, co už bylo hotové, upozorni mě a odkaž se na tento dokument.
 
+- **`STAVBAU_TEMPLATES.md`**  
+  🔹 Šablony pro Commit message a Step Plan.  
+  ➝ Používat při každém commitu a návrhu nového kroku.
+
+- **`REPO_GUIDELINES.md`**  
+  🔹 Pravidla pro GitHub (PR/CI/labels/CODEOWNERS, governance).  
+  ➝ Dodržovat při správě repozitářů.
+
 ---
 
-## 3. Styl práce
-1. **Navazovat na existující zdroje** – vždy se odkazuj na konkrétní dokument, odkud čerpáš.  
-2. **Doplňovat časovou osu** – pokud se něco udělá, hned vytvořit checkpoint do `hotovo-todo-future.md`.  
+## 3. Průběh práce (workflow)
+1. **Před implementací** vždy vytvořit krátký **Step Plan**:  
+   - Cíl, vstupy/závislosti, změněné části (BE/FE/DB), migrace, bezpečnost & i18n dopady, akceptační kritéria, test plan, rollback.  
+
+2. **Inkrementální vývoj** – nekódujeme dopředu, jen minimální další krok. Pokud je nejasnost → zeptat se.  
+
 3. **Minimalizovat rework** – vždy hlídat, abychom nepřepisovali hotové části bez vážného důvodu.  
-4. **Jasně rozlišovat roviny** – business (plán), sprint (MVP kroky), architektura (struktury, modular monolith), stav (hotovo-todo-future).  
+
+4. **Jasně rozlišovat roviny** – business (plán), sprint (MVP kroky), architektura (struktury, modular monolith), stav (hotovo-todo-future). 
+
+5. **Commity (Conventional Commits)**  
+   - po uzavřené jednotce práce (endpoint, služba, komponenta) nebo po 45–60 min.  
+   - styl: `feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:`, `build:`, `ci:`.  
+
+6. **Pull Request povinný** (i když je autor stejný):  
+   - 1 review (u bootstrapu lze dočasně vypnout).  
+   - CI musí být zelené.  
+   - PR popsat: co, proč, dopady, odkaz na sprint.  
+
+7. **Doplňovat časovou osu** – pokud se něco udělá, hned vytvořit checkpoint do `hotovo-todo-future.md`.
+
+8. **Checkpoint po mergi** – ihned doplnit `hotovo-todo-future.md` (datum, rozsah, moduly, důvod/dopad).  
+
+9. **Aktualizace sprintu** – pokud změna rozšíří nebo zúží scope, upravit `Sprintový plán`.  
 
 ---
 
-## 4. Priority
-1. **Business plan** (kam směřujeme)  
-2. **Sprintový plán (MVP)** (co právě děláme)  
-3. **Struktura projektu** (jak to děláme technicky)  
-4. **Hotovo-TODO-Future** (co už je a co chybí)  
+## 4. GitHub governance
+- **Branch protection (main):**  
+  - Require PR, approvals = 1, status checks, up-to-date branch, resolve conversations, no bypass.  
+- **CI povinné:**  
+  - BE: `backend-ci.yml` (build+test+artifact).  
+  - FE: `frontend-ci.yml` (install+lint+test+build+artifact).  
+- **Labels (štítky):** bug, enhancement, security, documentation, performance, test, good first issue, priority-{high|medium|low}, sprint-{1|2|3}, question, wontfix.  
+- **Šablony:** ISSUE (bug, feature), PR template, CODEOWNERS.  
+- **Changelog & verze:** semver, tag po zeleném CI, release s artefakty.  
+- **Line endings & formát:** `.gitattributes` (LF), `.editorconfig`, lint/format na FE.  
+- **Tajemství:** nikdy v repu; BE přes `application.yml` (env), FE jen `VITE_*` v `.env` (bez reálných hodnot).  
 
 ---
 
-## 5. Chování a mindset
-1. **Programovat profesionálně**  
-   - Čistý, udržovatelný kód, plně dokumentovaný (JavaDoc, komentáře, README).  
-   - Architektura navržená tak, aby byla rozšiřitelná bez nutnosti zásadních refaktorů.  
-   - Dodržovat best practices (DDD, SOLID, REST API standardy, bezpečnostní zásady).  
-
-2. **Myslet na budoucnost**  
-   - Každé rozhodnutí hodnotit i z pohledu škálovatelnosti a dlouhodobého provozu.  
-   - Vyhýbat se „rychlým hackům“, pokud by mohly v budoucnu znamenat drahé opravy.  
-   - Vždy zohlednit modularitu a možnost pozdější migrace na microservices, pokud by to dávalo smysl.  
-
-3. **Průběžná analýza trhu**  
-   - Pravidelně reflektovat, zda směr vývoje odpovídá trendům ve stavebnictví, SaaS a B2B nástrojích.  
-   - Identifikovat příležitosti pro MVP i PRO verzi (nové funkce, integrace, AI, legislativní požadavky).  
-   - Pokud se objeví signál, že určitý modul nebo směr vývoje nemá budoucnost → upozornit a navrhnout alternativu.  
-
-4. **Zodpovědnost za kvalitu**  
-   - Každý nový kód/část systému musí zapadnout do již definovaných struktur a pravidel.  
-   - Hlídám, aby se neprogramovalo něco, co už je hotové (viz `hotovo-todo-future.md`).  
-   - Každý krok vysvětlit tak, aby byl jasný i při čtení s odstupem času.  
-
-5. **Workflow & připomínky (commity, checkpointy, návaznost)**  
-   - **Commity a push**: po **každé uzavřené jednotce práce** (endpoint, entita + migrace, služba + testy, FE stránka/komponenta) _nebo_ minimálně po **45–60 minutách**:  
-     - commit ve stylu **Conventional Commits** (`feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:`, `build:`, `ci:`), krátký imperativ, co se změnilo a proč.  
-     - malé PR > rychlé review; velká PR dělit.  
-   - **Automatické checkpointy**: po dokončení bloku práce **vytvořit záznam** do `hotovo-todo-future.md` (sekce HOTOVO) a případně doplnit TODO pro návazný krok. Záznam musí obsahovat:  
-     - datum/čas, _rozsah změn_, _dotčené moduly (BE/FE/DB/i18n/security)_, _důvod_ a _dopad_.  
-   - **Nepsat kód „dopředu“**: neimplementovat rozsáhlé funkce nad rámec domluveného kroku.  
-     - vždy navrhnout **minimální další krok** (MVP inkrement), u větších témat přiložit 2–3 varianty s trade‑offs a doporučení.  
-     - pokud jsou nutné předpoklady, **explicitně je vypsat** (sekce „Assumptions“) a držet se nejbezpečnější varianty.  
-   - **Důkladná analýza dalšího kroku** (dependency‑aware): před implementací stručně formulovat **Step Plan**:  
-     - Cíl, Vstupy/závislosti, Změněné části (BE/FE/DB), Migrace, Bezpečnost & i18n dopady, Akceptační kritéria, Test plan, Rollback.  
-   - **Připomínky**: pokud blok práce přesáhne doporučené okno nebo se mění >5 souborů / >200 řádků, upozorním na nutnost **commit/push + checkpoint**.  
-   - **Aktualizace sprintu**: pokud změna rozšíří/zúží scope, **aktualizovat `Sprintový plán – MVP verze STAVBAU.md`** (poznámka v daném sprintu).  
+## 5. Definice hotovo (DoD)
+- Splněná akceptační kritéria ze Step Planu.  
+- CI zelené, build/lint/testy OK.  
+- Dokumentace doplněna (`hotovo-todo-future.md`, sprint).  
+- Žádné blokující TODO v kódu.  
+- Zohledněny dopady na i18n a security.  
 
 ---
 
-
+## 6. Chování a mindset
+- **Profesionalita:** čistý a udržovatelný kód, dokumentace, SOLID/DDD.  
+- **Budoucnost:** žádné hacky, škálovatelnost, připravenost na rozšíření.  
+- **Analýza trhu:** pravidelně validovat směr vývoje, hledat příležitosti a rizika.  
+- **Zodpovědnost:** kód zapadá do architektury, žádné přepisování hotového bez důvodu.  
+- **Transparentnost:** každý krok musí být srozumitelný i zpětně.  
 
 ---
 
-## 6. Použití šablon
-- Pro každý commit a větší krok v projektu používej šablony z **`STAVBAU_TEMPLATES.md`**.  
-- Commit message musí následovat konvenci (Conventional Commits).  
-- Každý větší krok začni analýzou pomocí **Step Plan** šablony.  
+## 7. Použití šablon
+- Každý commit a krok → použít šablony z `STAVBAU_TEMPLATES.md`.  
+- Commity podle Conventional Commits.  
+- Každý větší krok začít analýzou přes Step Plan.  
+
+---
+
+## 8. Startovní pořadí
+**Backend:**  
+1. Zaškrtnout required status check po prvním zeleném CI.  
+2. Přidat CI badge do README.  
+3. Vytvořit tag `v0.1.0` a release s JAR artefaktem.  
+
+**Frontend:**  
+1. Vite React TS init (`create-vite@7.1.1`) → první commit + CI.  
+2. Alias `@→src`, TS strict, router + AuthContext, AuthGuard, axios instance.  
+3. (Volitelné) Tailwind + základní `stavbau-ui` komponenty.  
+4. `/docs` přiložit.  
+5. CI badge v README.  
+
+---
+
+## 9. Rizikové vlajky (kdy brzdit)
+- PR > 200 řádků bez rozdělení.  
+- Chybí Step Plan.  
+- Nesoulad s architekturou (struktury, modular monolith).  
+- Nejasný směr vůči business plánu.  
+
+---
+
+## 10. Operativní checklist
+- [ ] Backend: dokončit PR #1 → zaškrtnout required check → přidat CI badge → tag `v0.1.0`.  
+- [ ] Frontend: init skeleton + PR → po CI zaškrtnout required check → přidat CI badge.  
+- [ ] Checkpoint do `hotovo-todo-future.md` („Repo governance + CI + labels zavedeno“).  
+- [ ] Issues pro Sprint 1:  
+   - BE: RBAC základ.  
+   - FE: login page + `/auth/me` + refresh flow.  
+
+---
