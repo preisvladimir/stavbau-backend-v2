@@ -1,4 +1,5 @@
 # 🏗️ STAVBAU-V2
+[![Backend CI](https://github.com/preisvladimir/stavbau-backend-v2/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/preisvladimir/stavbau-backend-v2/actions/workflows/backend-ci.yml)
 
 STAVBAU-V2 je backend + frontend projekt vyvíjený jako **modular monolith**.  
 Cílem je vytvořit udržitelnou, profesionální a rozšiřitelnou SaaS platformu pro řízení stavebních projektů.
@@ -38,6 +39,4 @@ Vývoj se **řídí pravidly v [`STAVBAU_GUIDELINES.md`](./docs/STAVBAU_GUIDELIN
 
 ---
 ## 📜 Licence
-Projekt zatím není veřejně licencován – licence bude doplněna podle zvoleného modelu distribuce (MVP vs PRO verze).  
-
-![BE CI](https://github.com/preisvladimir/stavbau-backend-v2/actions/workflows/backend-ci.yml/badge.svg)
+Projekt zatím není veřejně licencován – licence bude doplněna podle zvoleného modelu distribuce (MVP vs PRO verze).
