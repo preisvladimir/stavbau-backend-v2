@@ -69,7 +69,22 @@
 - **Repo metainfra – návrh**: připraveny `.gitattributes` (LF default) a `.editorconfig` (konzistentní formát); doporučeno commitnout.
 - **Pokyny a šablony**: `STAVBAU_GUIDELINES.md`, `STAVBAU_TEMPLATES.md`, `POKYNY_GITHUB.md` a workflow šablony připraveny.
 
+### 9. 9. 2025 --- Plánování RBAC BE (MVP)
 
+- **🕒 Milník (plánování):** RBAC BE (MVP) – Step Plan schválen.
+- **TODO (Sprint 2):**
+    - Implementovat `security/rbac` (Scopes, CompanyRoleName, ProjectRoleName, BuiltInRoles).
+    - `RbacService` + `RbacServiceImpl`, `RbacMethodSecurityConfig`.
+    - Úpravy `AppUserPrincipal` a `JwtService` – claims: `companyRole`, `projectRoles[]`, `scopes[]`.
+    - `/auth/me` rozšířit o `companyRole`, `scopes[]`.
+    - Anotace pilotních endpointů (`projects:read`, `projects:create`).
+    - Doplnit i18n klíče pro 401/403 (auth.forbidden_missing_scope).
+    - Testy: unit (`BuiltInRolesTest`, `RbacServiceTest`), slice (`WebMvcTest` 401/403/200), integrační happy path.
+- **FUTURE:**
+    - Projektové role + `hasProjectScope` enforcement (Sprint 3).
+    - DB perzistence rolí/scopes (PRO fáze).
+    - Admin UI pro správu rolí.
+  
 ------------------------------------------------------------------------
 
 ## 📋 TODO (krátkodobé)
@@ -110,3 +125,24 @@
 -   Podpora **multi-tenantingu** (více firem v rámci jedné DB).\
 -   Integrace **externích API** (ARES, ČÚZK).\
 -   Připravit základní **frontend skeleton** (React + stavbau-ui).
+
+
+### 9. 9. 2025 — RBAC základ + JWT filtry (BE)
+
+**HOTOVO**
+- Přidán skeleton RBAC modulu (`security/rbac`): `Scopes`, `CompanyRoleName`, `ProjectRoleName`, `ProjectRoleAssignment`, `BuiltInRoles` (prázdné mapy pro MVP), `RbacService` + `RbacSpelEvaluator`, `RbacMethodSecurityConfig`. :contentReference[oaicite:0]{index=0}
+- `JwtService` rozšířen o RBAC claims (`companyRole`, `projectRoles[]`, `scopes[]`) + helpery `extract*`. :contentReference[oaicite:1]{index=1}
+- `JwtAuthenticationFilter` refaktor: mapuje JWT → `AppUserPrincipal`; generuje `ROLE_*` a `SCOPE_*` authorities. :contentReference[oaicite:2]{index=2}
+- `SecurityConfig` opraveno pořadí filtrů: **RateLimit → JWT → UsernamePasswordAuthenticationFilter** (oba ankory před vestavěný filtr).
+- Aplikace startuje, autentizace běží (login/refresh), základ pro `@PreAuthorize("@rbac…")` připraven. :contentReference[oaicite:3]{index=3}
+
+**TODO (Sprint 2)**
+- Naplnit `BuiltInRoles.companyRoleScopes` podle RBAC_2.1 (OWNER, COMPANY_ADMIN, …). :contentReference[oaicite:4]{index=4}
+- `/auth/me` rozšířit o `companyRole`, `projectRoles[]`, `scopes[]`; FE toggly budou čerpat z API. :contentReference[oaicite:5]{index=5}
+- Anotovat pilotní endpointy: `projects:read`, `projects:create` přes `@PreAuthorize("@rbac.hasScope('…')")`. :contentReference[oaicite:6]{index=6}
+- Testy: unit (`BuiltInRolesTest`, `RbacServiceImplTest`), slice (`@WebMvcTest` 401/403/200), integrační happy-path login → chráněný endpoint. :contentReference[oaicite:7]{index=7}
+- i18n: doplnit klíče pro 401/403 (`auth.forbidden_missing_scope`, …).
+
+**FUTURE**
+- Project role enforcement (`hasProjectScope`, `canReadProject`) + membership check (Sprint 3). :contentReference[oaicite:8]{index=8}
+- PRO fáze: RBAC v DB + admin UI, cache & invalidace. :contentReference[oaicite:9]{index=9}
