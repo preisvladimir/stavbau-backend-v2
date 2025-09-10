@@ -102,7 +102,7 @@
 ## FUTURE
 - Validace IČO mod 11 (BE), FE hinty dle ARES
 - Indexy pro vyhledávání: ico, okres_nuts_lau, dor_obec/psc (pokud bude potřeba)  
-------------------------------------------------------------------------
+
 
 ## 📋 TODO (krátkodobé)
 
