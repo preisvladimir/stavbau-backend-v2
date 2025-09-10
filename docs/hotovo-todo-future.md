@@ -84,7 +84,24 @@
     - Projektové role + `hasProjectScope` enforcement (Sprint 3).
     - DB perzistence rolí/scopes (PRO fáze).
     - Admin UI pro správu rolí.
-  
+
+## HOTOVO – 2025-09-10
+- DB init přes Flyway: companies, company_nace, users (V2025_09_10_000)
+- Doplňkové migrace: registered_address radek_adresy1/2 (V2025_09_10_001)
+- Sjednocení názvů: tabulka `companies`, FK users.company_id → companies(id)
+- MapStruct: vypnutý builder, ignorace auditních polí, AresCompanyMapper + CompanyMapper OK
+- ARES integrace: DTO (AresSubjectDto), mapper, service skeleton, WebFlux v pom.xml
+- RegistrationStatuses: dočasně @Transient
+
+## TODO (další sprint)
+- AresClient+Service testy (MockWebServer), AresCompanyMapper testy
+- Endpoint POST /api/companies/import/ares → persist & upsert
+- Security pravidla pro `/api/companies/lookup/**`
+- (Rozhodnout) Persist `RegistrationStatuses` – sloupce nebo JSONB snapshot
+
+## FUTURE
+- Validace IČO mod 11 (BE), FE hinty dle ARES
+- Indexy pro vyhledávání: ico, okres_nuts_lau, dor_obec/psc (pokud bude potřeba)  
 ------------------------------------------------------------------------
 
 ## 📋 TODO (krátkodobé)
