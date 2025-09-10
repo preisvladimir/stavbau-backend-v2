@@ -2,7 +2,7 @@ spring:
   application.name: stavbau-backend
   datasource: { url: jdbc:postgresql://localhost:5432/stavbau, username: stavbau, password: stavbau }
   jpa:
-    hibernate.ddl-auto: validate
+    hibernate.ddl-auto: validate # update (doplní tabulky po vymazání jen pro DEV!)  validate nech schéma řídit Flyway
     properties:
       hibernate:
         format_sql: true
@@ -10,6 +10,9 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+    baseline-on-migrate: false     # Povol jednorázové založení historie
+    baseline-description: "baseline before adopting Flyway"
+
 server:
   port: 8080
 
