@@ -85,7 +85,7 @@
     - DB perzistence rolí/scopes (PRO fáze).
     - Admin UI pro správu rolí.
 
-### 2025-09-10
+### 9. 9. 2025
 - DB init přes Flyway: companies, company_nace, users (V2025_09_10_000)
 - Doplňkové migrace: registered_address radek_adresy1/2 (V2025_09_10_001)
 - Sjednocení názvů: tabulka `companies`, FK users.company_id → companies(id)
