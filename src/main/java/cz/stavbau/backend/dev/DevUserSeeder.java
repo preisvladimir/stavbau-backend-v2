@@ -13,7 +13,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /** DEV ONLY: založí firmu + admin uživatele s heslem 'admin123'. */
-//@Component
+@Component
 @Profile({"dev","default"}) // běž i bez explicitního profilu v lokálu; v prod to vypni
 public class DevUserSeeder implements CommandLineRunner {
 
@@ -38,8 +38,8 @@ public class DevUserSeeder implements CommandLineRunner {
                 f.setAccessible(true);
                 f.set(nc, companyId);
             } catch (Exception ignored) {}
-            nc.setName("Preis Studio");
-            nc.setDefaultLocale("cs");
+            nc.setObchodniJmeno("Preis Studio");
+            nc.setIco("01820991");
             return companies.save(nc);
         });
 
@@ -60,7 +60,7 @@ public class DevUserSeeder implements CommandLineRunner {
         });
 
         // vždy nastav/aktualizuj heslo (pro jistotu)
-        u.setPasswordHash(encoder.encode("admin123"));
+        u.setPasswordHash(encoder.encode("BoRiS&&1974"));
         // token rotace defaults
         if (u.getTokenVersion() == 0) u.setTokenVersion(0);
         u.setRefreshTokenId(null);
