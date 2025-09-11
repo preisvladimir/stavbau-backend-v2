@@ -1,0 +1,24 @@
+version: "3.9"
+
+services:
+  backend:
+    # Build your Spring Boot backend image from the repo root (adjust if your Dockerfile is elsewhere)
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: stavbau-backend:dev
+    ports:
+      - "8080:8080"
+    # Compose automatically loads variables from a .env file in the same directory as this file.
+    # We forward MAPYCZ_API_KEY into the container environment so Spring can read ${MAPYCZ_API_KEY} in application.yml.
+    environment:
+      - MAPYCZ_API_KEY=${MAPYCZ_API_KEY}
+      - SPRING_PROFILES_ACTIVE=dev
+    restart: unless-stopped
+    # If you keep .env elsewhere, uncomment the next line and point to the file explicitly:
+    # env_file: .env
+
+# Optional named network (uncomment if you add DB/other services)
+# networks:
+#   default:
+#     name: stavbau-net

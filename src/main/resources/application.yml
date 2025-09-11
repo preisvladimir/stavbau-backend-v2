@@ -32,3 +32,8 @@ app:
 spring:
   config.activate.on-profile: dev
 logging.level.org.hibernate.SQL: DEBUG
+
+mapycz:
+  base-url: "https://api.mapy.cz"
+  api-key: "${MAPYCZ_API_KEY}"    # tajný klíč držíme v ENV/CI secrets
+  timeout-ms: 2500
