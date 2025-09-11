@@ -13,7 +13,7 @@ import java.util.Optional;
 @Component
 public class MapyCzClient {
 
-    private static final String SUGGEST_PATH = "/suggest"; // TODO: adjust to your provider endpoint
+    private static final String SUGGEST_PATH = "/v1/geocode";
     private final WebClient webClient;
     private final MapyCzProperties props;
 

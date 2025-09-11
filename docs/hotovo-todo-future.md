@@ -128,7 +128,15 @@
 - Validace PSČ podle země, normalizace diakritiky, detekce duplicit.
 - Mapové widgety (piny, bbox zoom) v projektu a fakturaci.
 
+### 11. 9. 2025 — Docker Compose + .gitignore pro GEO API key
 
+- Přidán `docker-compose.yml` s předáním **MAPYCZ_API_KEY** do služby `backend`.
+- Doplněna pravidla do `.gitignore` pro **.env** a **.env***.
+- Pozn.: Compose načítá `.env` automaticky ze stejné složky jako `docker-compose.yml`.
+
+#### TODO
+- Vložit `.env` do kořene repa (kde je `docker-compose.yml`) s řádkem `MAPYCZ_API_KEY=...`.
+- Spustit `docker compose up -d backend` a ověřit `/api/v1/geo/suggest`.
 ------------------------------------------------------------------------
 
 ## 📋 TODO (krátkodobé)
