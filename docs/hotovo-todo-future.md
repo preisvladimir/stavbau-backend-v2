@@ -102,6 +102,33 @@
 ## FUTURE
 - Validace IČO mod 11 (BE), FE hinty dle ARES
 - Indexy pro vyhledávání: ico, okres_nuts_lau, dor_obec/psc (pokud bude potřeba)  
+
+### 11. 9. 2025 — Analýza & plán integrace GEO (Mapy.cz API)
+
+**HOTOVO (analýza & plán):**
+- Provedena analýza balíčku **geo.zip** z verze 1.
+- Navržen **Step Plan** pro migraci do STAVBAU-V2: modular-by-feature, bezpečná konfigurace (API key v ENV), caching (Caffeine), testy (unit + integrační), FE hook (debounce input).
+
+**TODO (implementace):**
+- Vytvořit balíček `cz.stavbau.backend.geo` se strukturou `config/`, `service/`, `controller/`, `dto/`.
+- Přidat `MapyCzProperties` + `application.yml` (`mapycz.*` s `${MAPYCZ_API_KEY}`).
+- Implementovat `GeoConfig` (WebClient s timeouty, UA header, error filter).
+- Dopsat `AddressSuggestion` (všechna pole) a mapper z odpovědi Mapy.cz.
+- Opravit/doplnit `MapyCzGeoService.suggest(...)` – validace vstupů, normalizace `q`.
+- Přidat cache layer (Caffeine) pro suggest.
+- `GeoController` – `GET /api/geo/suggest`, zapojit rate-limit filtr.
+- Testy jednotkové + integrační (ok/chyby/timeouty/edge cases).
+- OpenAPI (schema DTO) + README pro geo modul.
+- FE: `api.geo.suggest()` + debounce input (demo stránka „Projekt – adresa“).
+
+**FUTURE (rozšíření):**
+- Reverse geocoding (lon/lat → adresa).
+- Geocoding přes více providerů (fallback).
+- Perzistence „posledních výběrů“ pro UX.
+- Validace PSČ podle země, normalizace diakritiky, detekce duplicit.
+- Mapové widgety (piny, bbox zoom) v projektu a fakturaci.
+
+
 ------------------------------------------------------------------------
 
 ## 📋 TODO (krátkodobé)
