@@ -1,16 +1,23 @@
 spring:
-  application.name: stavbau-backend
-  datasource: { url: jdbc:postgresql://localhost:5432/stavbau, username: stavbau, password: stavbau }
+  application:
+    name: stavbau-backend
+  datasource:
+    url: jdbc:postgresql://localhost:5432/stavbau
+    username: stavbau
+    password: stavbau
   jpa:
-    hibernate.ddl-auto: validate # update (doplní tabulky po vymazání jen pro DEV!)  validate nech schéma řídit Flyway
+    hibernate:
+      ddl-auto: validate
     properties:
       hibernate:
         format_sql: true
-        jdbc.lob.non_contextual_creation: true
+        jdbc:
+          lob:
+            non_contextual_creation: true
   flyway:
     enabled: true
     locations: classpath:db/migration
-    baseline-on-migrate: false     # Povol jednorázové založení historie
+    baseline-on-migrate: false
     baseline-description: "baseline before adopting Flyway"
 
 server:
@@ -19,21 +26,26 @@ server:
 app:
   security:
     cookies:
-      secure: false   # lokal: false; prod: true
+      secure: false
     bcrypt-cost: 12
     jwt:
       issuer: "stavbau"
       accessTokenTtlMinutes: 30
       refreshTokenTtlDays: 14
-      # POZOR: klíč bude v ENV/Secrets manageru; zde jen pro dev
       secret: "hkCeFiMnK/WnZlQn9JvxguLMB7LEBXxM05E86Gg2Eirg0CWmrKvH1dG0lfcTBwwECiIyw1/Cc4Mgk0qLA6rlpg=="
+
+# <<< PŘESUNUTO DO DEFAULTU
+mapycz:
+  base-url: "https://api.mapy.com"
+  api-key: "ZD4dB8zouM7Zn727KU6u_iTM2pOk31djjAnlqsq3jiQ"  # "${MAPYCZ_API_KEY}"  klíč držíme v ENV / CI secrets
+  timeout-ms: 2500
 
 ---
 spring:
-  config.activate.on-profile: dev
-logging.level.org.hibernate.SQL: DEBUG
+  config:
+    activate:
+      on-profile: dev
 
-mapycz:
-  base-url: "https://api.mapy.cz"
-  api-key: "${MAPYCZ_API_KEY}"    # tajný klíč držíme v ENV/CI secrets
-  timeout-ms: 2500
+logging:
+  level:
+    org.hibernate.SQL: DEBUG

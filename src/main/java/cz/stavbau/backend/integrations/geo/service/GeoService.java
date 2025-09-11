@@ -26,6 +26,26 @@ public class GeoService {
     }
 
     public Mono<List<AddressSuggestion>> suggest(String q, Integer limit, String lang) {
+        System.out.println("[service] query:" + q);
+        System.out.println("[service] lang:" + lang);
+        String nq = normalize(q);
+        if (nq.length() < 2) {
+            return Mono.just(List.of());
+        }
+        int capped = limit == null ? 7 : Math.max(1, Math.min(10, limit));
+        String cacheKey = "%s|%d|%s".formatted(nq, capped, lang == null ? "" : lang);
+        System.out.println("[service] limit:" + capped);
+        List<AddressSuggestion> cached = cache.getIfPresent(cacheKey);
+        if (cached != null) {
+            return Mono.just(cached);
+        }
+        System.out.println("[service] volání clienta...");
+        return client.suggestRaw(nq, capped, lang)
+                .map(this::mapToSuggestions)
+                .doOnNext(list -> cache.put(cacheKey, list));
+    }
+
+    public Mono<List<AddressSuggestion>> suggestOld(String q, Integer limit, String lang) {
         String nq = normalize(q);
         if (nq.length() < 2) {
             return Mono.just(List.of());
@@ -43,100 +63,155 @@ public class GeoService {
                 .doOnNext(list -> cache.put(cacheKey, list));
     }
 
+
     private String normalize(String s) {
         if (!StringUtils.hasText(s)) return "";
         return s.trim();
     }
 
     @SuppressWarnings("unchecked")
-    private List<AddressSuggestion> mapToSuggestions(Map<String, Object> raw) {
-        Object itemsObj = raw == null ? null : raw.get("items");
-        List<Map<String, Object>> items = (itemsObj instanceof List<?> l)
-                ? (List<Map<String, Object>>) (List<?>) l
-                : List.of();
+    private List<AddressSuggestion> mapToSuggestions(Object raw) {
+        // 1) Získej list položek bez nebezpečných castů
+        List<Map<String, Object>> items = List.of();
 
-        return items.stream()
-                .map(this::mapItem)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-    }
+        if (raw instanceof Map<?, ?> root) {
+            Object itemsObj = root.get("items");
+            if (itemsObj instanceof List<?> list) {
+                items = list.stream()
+                        .filter(Map.class::isInstance)
+                        .map(e -> (Map<String, Object>) e)
+                        .toList();
+            }
+        } else if (raw instanceof List<?> list) {
+            items = list.stream()
+                    .filter(Map.class::isInstance)
+                    .map(e -> (Map<String, Object>) e)
+                    .toList();
+        }
 
-    private AddressSuggestion mapItem(Map<String, Object> it) {
-        if (it == null) return null;
-        String name = str(it.get("name"));
-        String label = str(it.get("label"));
-        Map<String, Object> position = (Map<String, Object>) it.get("position");
-        Double lat = num(position == null ? null : position.get("lat"));
-        Double lon = num(position == null ? null : position.get("lon"));
+        Map<String, AddressSuggestion> uniq = new LinkedHashMap<>();
 
-        String location = str(it.get("location"));
-        String formatted = StringUtils.hasText(location) ?
-                ((StringUtils.hasText(name) ? name + ", " : "") + location) :
-                (StringUtils.hasText(name) ? name : label);
+        for (Map<String, Object> it : items) {
+            String name     = asString(it.get("name"));
+            String label    = asString(it.get("label"));
+            String type     = asString(it.get("type"));
+            String location = asString(it.get("location"));
+            String zip      = asString(it.get("zip"));
 
-        AddressSuggestion.BBox bbox = null;
-        Map<String, Object> bboxMap = (Map<String, Object>) it.get("bbox");
-        if (bboxMap != null) {
-            bbox = AddressSuggestion.BBox.builder()
-                    .minLat(num(bboxMap.get("minLat")))
-                    .minLon(num(bboxMap.get("minLon")))
-                    .maxLat(num(bboxMap.get("maxLat")))
-                    .maxLon(num(bboxMap.get("maxLon")))
+            // position může být Map, ale buďme opatrní
+            Map<String, Object> pos = asMap(it.get("position"));
+            Double lat = asDouble(pos != null ? pos.get("lat") : null);
+            Double lon = asDouble(pos != null ? pos.get("lon") : null);
+
+            // bbox může být Map (minLon/minLat/maxLon/maxLat) – jinak ignoruj
+            AddressSuggestion.BBox bbox = null;
+            Map<String, Object> bb = asMap(it.get("bbox"));
+            if (bb != null) {
+                bbox = AddressSuggestion.BBox.builder()
+                        .minLon(asDouble(bb.get("minLon")))
+                        .minLat(asDouble(bb.get("minLat")))
+                        .maxLon(asDouble(bb.get("maxLon")))
+                        .maxLat(asDouble(bb.get("maxLat")))
+                        .build();
+            }
+
+            // regionalStructure je List<Map>, ale ověř typy
+            List<AddressSuggestion.RegionItem> regional = List.of();
+            List<Object> rs = asList(it.get("regionalStructure"));
+            if (rs != null) {
+                regional = rs.stream()
+                        .filter(Map.class::isInstance)
+                        .map(o -> (Map<String, Object>) o)
+                        .map(r -> AddressSuggestion.RegionItem.builder()
+                                .name(asString(r.get("name")))
+                                .type(asString(r.get("type")))
+                                .isoCode(asString(r.get("isoCode")))
+                                .build())
+                        .toList();
+            }
+
+            // odvoď běžné části adresy z regionalStructure
+            Map<String, String> byType = new HashMap<>();
+            for (var r : regional) {
+                if (r.getType() != null && r.getName() != null) byType.put(r.getType(), r.getName());
+            }
+            String street           = byType.get("regional.street");
+            String municipality     = byType.get("regional.municipality");
+            String municipalityPart = byType.get("regional.municipality_part");
+            String region = null;
+            var regionsOnly = regional.stream()
+                    .filter(r -> "regional.region".equals(r.getType()))
+                    .map(AddressSuggestion.RegionItem::getName)
+                    .toList();
+            if (!regionsOnly.isEmpty()) region = regionsOnly.get(regionsOnly.size() - 1);
+            String country    = byType.get("regional.country");
+            String countryIso = regional.stream()
+                    .filter(r -> "regional.country".equals(r.getType()) && r.getIsoCode() != null)
+                    .map(AddressSuggestion.RegionItem::getIsoCode)
+                    .findFirst().orElse(null);
+
+            // houseNumber – jednoduchá heuristika z name
+            String houseNumber = extractHouseNumber(name);
+
+            // formatted: preferuj "name, location"
+            String formatted = (notBlank(name) && notBlank(location)) ? (name + ", " + location)
+                    : notBlank(name) ? name
+                    : notBlank(location) ? location
+                    : "";
+
+            var sug = AddressSuggestion.builder()
+                    .formatted(formatted)
+                    .name(name).label(label).type(type).location(location).zip(zip)
+                    .lat(lat).lon(lon).bbox(bbox)
+                    .regionalStructure(regional)
+                    .street(street).houseNumber(houseNumber)
+                    .municipality(municipality).municipalityPart(municipalityPart)
+                    .region(region).country(country).countryIsoCode(countryIso)
                     .build();
+
+            String key = (formatted + "|" + round(lat, 5) + "|" + round(lon, 5));
+            uniq.putIfAbsent(key, sug);
         }
 
-        List<AddressSuggestion.RegionItem> regions = List.<AddressSuggestion.RegionItem>of();
-        Object regObj = it.get("regionalStructure");
-        if (regObj instanceof List<?> rl) {
-            regions = rl.stream().map(o -> {
-                if (o instanceof Map<?,?> m) {
-                    return AddressSuggestion.RegionItem.builder()
-                            .type(str(m.get("type")))
-                            .name(str(m.get("name")))
-                            .code(str(m.get("code")))
-                            .build();
-                }
-                return null;
-            }).filter(Objects::nonNull).collect(Collectors.toList());
-        }
-
-        // Heuristika: extrakce street/houseNumber/municipality/region/zip/country
-        String street = null, houseNumber = null, municipality = null, municipalityPart = null, region = null, zip = null, country = null, countryIso = null;
-        Map<String, Object> components = (Map<String, Object>) it.get("components");
-        if (components != null) {
-            street = str(components.get("street"));
-            houseNumber = str(components.get("houseNumber"));
-            municipality = str(components.get("municipality"));
-            municipalityPart = str(components.get("municipalityPart"));
-            region = str(components.get("region"));
-            zip = str(components.get("zip"));
-            country = str(components.get("country"));
-            countryIso = str(components.get("countryIsoCode"));
-        }
-
-        return AddressSuggestion.builder()
-                .formatted(formatted)
-                .name(name)
-                .label(label)
-                .lat(lat)
-                .lon(lon)
-                .bbox(bbox)
-                .regionalStructure(regions)
-                .street(street)
-                .houseNumber(houseNumber)
-                .municipality(municipality)
-                .municipalityPart(municipalityPart)
-                .region(region)
-                .zip(zip)
-                .country(country)
-                .countryIsoCode(countryIso)
-                .build();
+        return new ArrayList<>(uniq.values());
     }
 
-    private String str(Object o) { return o == null ? null : String.valueOf(o); }
-    private Double num(Object o) {
-        if (o == null) return null;
+    private static Map<String, Object> asMap(Object o) {
+        return (o instanceof Map<?, ?> m) ? (Map<String, Object>) m : null;
+    }
+    private static List<Object> asList(Object o) {
+        return (o instanceof List<?> l) ? (List<Object>) l : null;
+    }
+    private static String asString(Object o) {
+        return (o == null) ? null : String.valueOf(o);
+    }
+    private static boolean notBlank(String s) {
+        return s != null && !s.isBlank();
+    }
+    private static Double asDouble(Object o) {
         if (o instanceof Number n) return n.doubleValue();
-        try { return Double.parseDouble(String.valueOf(o)); } catch (Exception e) { return null; }
+        if (o instanceof String s && !s.isBlank()) {
+            try { return Double.parseDouble(s); } catch (NumberFormatException ignored) {}
+        }
+        return null;
     }
+    private static double round(Double v, int places) {
+        if (v == null) return 0d;
+        double p = Math.pow(10, places);
+        return Math.round(v * p) / p;
+    }
+    private String extractHouseNumber(String name) {
+        if (name == null) return null;
+        var m = java.util.regex.Pattern.compile("(\\d+[\\w]*\\/?\\d*[\\w]*)$").matcher(name.trim());
+        return m.find() ? m.group(1) : null;
+    }
+
+
+    private String s(Object o) { return o == null ? null : String.valueOf(o); }
+    private Double n(Object o) {
+        if (o instanceof Number num) return num.doubleValue();
+        if (o instanceof String str && !str.isBlank()) try { return Double.parseDouble(str); } catch (NumberFormatException ignored) {}
+        return null;
+    }
+
 }

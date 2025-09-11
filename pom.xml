@@ -20,10 +20,14 @@
 
         <!-- optional -->
         <hibernate.types.version>2.21.1</hibernate.types.version>
-        <springdoc.version>2.5.0</springdoc.version>
+
+        <!-- OpenAPI/Swagger: sjednocená verze pro celý projekt -->
+        <springdoc.version>2.6.0</springdoc.version>
+
         <testcontainers.version>1.20.1</testcontainers.version>
         <bucket4j.version>7.6.0</bucket4j.version>
         <jjwt.version>0.11.5</jjwt.version>
+        <mockwebserver.version>4.12.0</mockwebserver.version>
     </properties>
 
     <dependencyManagement>
@@ -39,15 +43,29 @@
     </dependencyManagement>
 
     <dependencies>
-        <!-- Spring Boot starters -->
+        <!-- Web (servlet stack). Držíme MVC jako hlavní web stack.
+             POZN.: I když používáme WebClient (reactive), aplikace běží v SERVLET režimu.
+             Když je v classpath web i webflux, Spring zvolí SERVLET (MVC). -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+
+        <!-- WebFlux pouze kvůli WebClientu a reaktivním typům v servisní vrstvě.
+             Kontrolery mohou vracet Mono, Spring MVC je umí adaptovat. -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
         </dependency>
+
+        <!-- OpenAPI + Swagger UI (SERVLET/MVC varianta – NE webflux-ui).
+             Důvod: projekt běží v SERVLET režimu, vyhneme se duplikaci beanů. -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${springdoc.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
@@ -106,13 +124,6 @@
             <version>${mapstruct.version}</version>
         </dependency>
 
-        <!-- OpenAPI (springdoc) -->
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>${springdoc.version}</version>
-        </dependency>
-
         <!-- Rate-limiting (Bucket4j) -->
         <dependency>
             <groupId>com.github.vladimir-bukhtoyarov</groupId>
@@ -127,30 +138,43 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- Cache pro GEO apod. -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
+
         <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- Integrační testy WebClientu (MockWebServer) -->
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>mockwebserver</artifactId>
+            <version>${mockwebserver.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Testcontainers PostgreSQL -->
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>postgresql</artifactId>
             <version>${testcontainers.version}</version>
             <scope>test</scope>
         </dependency>
-
-        <dependency>
-            <groupId>com.github.ben-manes.caffeine</groupId>
-            <artifactId>caffeine</artifactId>
-        </dependency>
     </dependencies>
 
     <build>
         <plugins>
+            <!-- Spring Boot plugin s explicitní verzí (nepoužíváme parent POM). -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring-boot.version}</version>
             </plugin>
 
             <!-- MapStruct + Lombok annotation processing -->
@@ -161,6 +185,9 @@
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
+                    <!-- Pozn.: Pokud bys chtěl místo pluginu používat standardní dependency
+                         'annotationProcessor', můžeme přehodit konfiguraci.
+                         Aktuální setup je v pořádku. -->
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.mapstruct</groupId>

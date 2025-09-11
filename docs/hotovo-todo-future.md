@@ -137,6 +137,13 @@
 #### TODO
 - Vložit `.env` do kořene repa (kde je `docker-compose.yml`) s řádkem `MAPYCZ_API_KEY=...`.
 - Spustit `docker compose up -d backend` a ověřit `/api/v1/geo/suggest`.
+
+### 12. 9. 2025 — GEO fix Swagger + Mapy.com
+- GeoController: explicitní `@RequestParam(name=...)` → Swagger generuje `q/limit/lang` (ne arg0/1/2).
+- maven-compiler: `<parameters>true</parameters>` kvůli názvům paramů.
+- MapyCzClient: `/v1/geocode` + `query=`.
+- GeoService: bbox z listu [minLon,minLat,maxLon,maxLat]; regionalStructure.isoCode.
+- Smoke test /api/v1/geo/suggest OK.
 ------------------------------------------------------------------------
 
 ## 📋 TODO (krátkodobé)
