@@ -85,6 +85,26 @@
     - DB perzistence rolí/scopes (PRO fáze).
     - Admin UI pro správu rolí.
 
+### 9. 9. 2025 — RBAC základ + JWT filtry (BE)
+
+**HOTOVO**
+- Přidán skeleton RBAC modulu (`security/rbac`): `Scopes`, `CompanyRoleName`, `ProjectRoleName`, `ProjectRoleAssignment`, `BuiltInRoles` (prázdné mapy pro MVP), `RbacService` + `RbacSpelEvaluator`, `RbacMethodSecurityConfig`. :contentReference[oaicite:0]{index=0}
+- `JwtService` rozšířen o RBAC claims (`companyRole`, `projectRoles[]`, `scopes[]`) + helpery `extract*`. :contentReference[oaicite:1]{index=1}
+- `JwtAuthenticationFilter` refaktor: mapuje JWT → `AppUserPrincipal`; generuje `ROLE_*` a `SCOPE_*` authorities. :contentReference[oaicite:2]{index=2}
+- `SecurityConfig` opraveno pořadí filtrů: **RateLimit → JWT → UsernamePasswordAuthenticationFilter** (oba ankory před vestavěný filtr).
+- Aplikace startuje, autentizace běží (login/refresh), základ pro `@PreAuthorize("@rbac…")` připraven. :contentReference[oaicite:3]{index=3}
+
+**TODO (Sprint 2)**
+- Naplnit `BuiltInRoles.companyRoleScopes` podle RBAC_2.1 (OWNER, COMPANY_ADMIN, …). :contentReference[oaicite:4]{index=4}
+- `/auth/me` rozšířit o `companyRole`, `projectRoles[]`, `scopes[]`; FE toggly budou čerpat z API. :contentReference[oaicite:5]{index=5}
+- Anotovat pilotní endpointy: `projects:read`, `projects:create` přes `@PreAuthorize("@rbac.hasScope('…')")`. :contentReference[oaicite:6]{index=6}
+- Testy: unit (`BuiltInRolesTest`, `RbacServiceImplTest`), slice (`@WebMvcTest` 401/403/200), integrační happy-path login → chráněný endpoint. :contentReference[oaicite:7]{index=7}
+- i18n: doplnit klíče pro 401/403 (`auth.forbidden_missing_scope`, …).
+
+**FUTURE**
+- Project role enforcement (`hasProjectScope`, `canReadProject`) + membership check (Sprint 3). :contentReference[oaicite:8]{index=8}
+- PRO fáze: RBAC v DB + admin UI, cache & invalidace. :contentReference[oaicite:9]{index=9}
+
 ## HOTOVO – 2025-09-10
 - DB init přes Flyway: companies, company_nace, users (V2025_09_10_000)
 - Doplňkové migrace: registered_address radek_adresy1/2 (V2025_09_10_001)
@@ -134,16 +154,18 @@
 - Doplněna pravidla do `.gitignore` pro **.env** a **.env***.
 - Pozn.: Compose načítá `.env` automaticky ze stejné složky jako `docker-compose.yml`.
 
-#### TODO
-- Vložit `.env` do kořene repa (kde je `docker-compose.yml`) s řádkem `MAPYCZ_API_KEY=...`.
-- Spustit `docker compose up -d backend` a ověřit `/api/v1/geo/suggest`.
-
 ### 12. 9. 2025 — GEO fix Swagger + Mapy.com
 - GeoController: explicitní `@RequestParam(name=...)` → Swagger generuje `q/limit/lang` (ne arg0/1/2).
 - maven-compiler: `<parameters>true</parameters>` kvůli názvům paramů.
 - MapyCzClient: `/v1/geocode` + `query=`.
 - GeoService: bbox z listu [minLon,minLat,maxLon,maxLat]; regionalStructure.isoCode.
 - Smoke test /api/v1/geo/suggest OK.
+
+### 12. 9. 2025 — Integrations/Weather (Meteostat RapidAPI)
+- Přidán modul `integrations/weather` (WebClient, klient, service, controller).
+- Endpoint: `GET /api/integrations/weather/summary?lat&lon&date[&alt]`.
+- Účel: inline použití v Deníku (automatické doplnění počasí k záznamu).
+
 ------------------------------------------------------------------------
 
 ## 📋 TODO (krátkodobé)
@@ -154,11 +176,12 @@
     limitů).\
 -   Doplnit CI/CD pipeline (GitHub Actions nebo GitLab CI).\
 -   Připravit **Sprint 2**: první business funkce (projekty).
-
+-   Cache (per lat,lon,date), rate-limit profil, RBAC scope `diary:write`.
+-   Fallback provider + robustnější klasifikace COCO → label.
+-   Unit/IT testy + metriky (latence, hit/miss cache).
+- 
 
 - **Backend**
-  - Commitnout `.gitattributes` a `.editorconfig` do `stavbau-backend-v2`.
-  - Přidat CI badge do `README.md`.
   - Zapnout **Branch protection** na `main` a vyžadovat passing checks.
   - Po prvním zeleném běhu CI otagovat `v0.1.0` (navazuje na `CHANGELOG.md`).
 
@@ -184,24 +207,3 @@
 -   Podpora **multi-tenantingu** (více firem v rámci jedné DB).\
 -   Integrace **externích API** (ARES, ČÚZK).\
 -   Připravit základní **frontend skeleton** (React + stavbau-ui).
-
-
-### 9. 9. 2025 — RBAC základ + JWT filtry (BE)
-
-**HOTOVO**
-- Přidán skeleton RBAC modulu (`security/rbac`): `Scopes`, `CompanyRoleName`, `ProjectRoleName`, `ProjectRoleAssignment`, `BuiltInRoles` (prázdné mapy pro MVP), `RbacService` + `RbacSpelEvaluator`, `RbacMethodSecurityConfig`. :contentReference[oaicite:0]{index=0}
-- `JwtService` rozšířen o RBAC claims (`companyRole`, `projectRoles[]`, `scopes[]`) + helpery `extract*`. :contentReference[oaicite:1]{index=1}
-- `JwtAuthenticationFilter` refaktor: mapuje JWT → `AppUserPrincipal`; generuje `ROLE_*` a `SCOPE_*` authorities. :contentReference[oaicite:2]{index=2}
-- `SecurityConfig` opraveno pořadí filtrů: **RateLimit → JWT → UsernamePasswordAuthenticationFilter** (oba ankory před vestavěný filtr).
-- Aplikace startuje, autentizace běží (login/refresh), základ pro `@PreAuthorize("@rbac…")` připraven. :contentReference[oaicite:3]{index=3}
-
-**TODO (Sprint 2)**
-- Naplnit `BuiltInRoles.companyRoleScopes` podle RBAC_2.1 (OWNER, COMPANY_ADMIN, …). :contentReference[oaicite:4]{index=4}
-- `/auth/me` rozšířit o `companyRole`, `projectRoles[]`, `scopes[]`; FE toggly budou čerpat z API. :contentReference[oaicite:5]{index=5}
-- Anotovat pilotní endpointy: `projects:read`, `projects:create` přes `@PreAuthorize("@rbac.hasScope('…')")`. :contentReference[oaicite:6]{index=6}
-- Testy: unit (`BuiltInRolesTest`, `RbacServiceImplTest`), slice (`@WebMvcTest` 401/403/200), integrační happy-path login → chráněný endpoint. :contentReference[oaicite:7]{index=7}
-- i18n: doplnit klíče pro 401/403 (`auth.forbidden_missing_scope`, …).
-
-**FUTURE**
-- Project role enforcement (`hasProjectScope`, `canReadProject`) + membership check (Sprint 3). :contentReference[oaicite:8]{index=8}
-- PRO fáze: RBAC v DB + admin UI, cache & invalidace. :contentReference[oaicite:9]{index=9}
