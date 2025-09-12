@@ -40,6 +40,13 @@ mapycz:
   api-key: "ZD4dB8zouM7Zn727KU6u_iTM2pOk31djjAnlqsq3jiQ"  # "${MAPYCZ_API_KEY}"  klíč držíme v ENV / CI secrets
   timeout-ms: 2500
 
+meteostat:
+  base-url: "https://meteostat.p.rapidapi.com"
+  rapidapi:
+    host: "meteostat.p.rapidapi.com"
+    key: "440c5b540cmsh1379b04a05dc3eap1fde53jsn01f3e9c63e1e"   # nastav v ENV / docker secrets, NEcommitovat!
+
+
 ---
 spring:
   config:
