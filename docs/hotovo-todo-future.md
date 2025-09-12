@@ -166,6 +166,29 @@
 - Endpoint: `GET /api/integrations/weather/summary?lat&lon&date[&alt]`.
 - Účel: inline použití v Deníku (automatické doplnění počasí k záznamu).
 
+
+### 12. 9. 2025 — Sprint 4: Finance & Dokumentace (MVP start)
+**HOTOVO (plán):**
+- Detailní Step Plan pro moduly Invoices & Files (BE/FE/DB/i18n/RBAC).
+- Návrh DB schémat (Invoice, InvoiceLine, NumberSeries, StoredFile, FileTag, FileLink).
+- API kontrakty v1 pro faktury a soubory.
+- Akceptační kritéria + test plan.
+
+**TODO (implementace):**
+- [BE] Flyway migrace `invoices` + `files`.
+- [BE] Services: NumberSeriesService, InvoiceService, InvoicePdfService, StoredFileService.
+- [BE] Controllers + RBAC anotace + Swagger.
+- [FE] Stránky /invoices a /files, formuláře, RBAC guardy.
+- [FE] API klienti invoices/files, i18n texty.
+- [QA] Unit/Integration/E2E testy, CI green.
+
+**FUTURE (PRO rozšíření):**
+- Verzování souborů, soft-delete/restore.
+- Rozšířené číselné řady (více patternů, per projekt).
+- Šablony PDF (branding per company), vícejazyčné PDF.
+- S3/MinIO storage, AV scanning, signed URLs.
+
+
 ------------------------------------------------------------------------
 
 ## 📋 TODO (krátkodobé)
