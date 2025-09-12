@@ -20,4 +20,7 @@ public final class BuiltInRoles {
     public static final Map<ProjectRoleName, Set<String>> PROJECT_ROLE_SCOPES = Map.of(
             // bude doplněno v kroku se zavedením Project/ProjectMember
     );
+
+    Set<String> INVOICE_SCOPES = Set.of("invoices:read","invoices:write","invoices:delete","invoices:export");
+    Set<String> FILE_SCOPES = Set.of("files:read","files:write","files:delete","files:tag");
 }
