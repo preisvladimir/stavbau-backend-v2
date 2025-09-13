@@ -136,6 +136,14 @@ public class InvoiceServiceImpl implements InvoiceService {
         inv.setStatus(InvoiceStatus.PAID);
         invoiceRepo.save(inv);
     }
+    
+    @Override
+    @Transactional
+    public void changeStatus(UUID invoiceId, InvoiceStatus status) {
+        Invoice inv = invoiceRepo.findById(invoiceId).orElseThrow();
+        inv.setStatus(status);
+        invoiceRepo.save(inv);
+    }
 
     @Override
     @Transactional

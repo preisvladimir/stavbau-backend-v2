@@ -35,4 +35,6 @@ public interface InvoiceService {
     Page<Invoice> search(UUID companyId, Optional<UUID> projectId, Optional<InvoiceStatus> status,
                          Optional<String> q, Optional<LocalDate> dateFrom, Optional<LocalDate> dateTo,
                          Pageable pageable);
+
+    void changeStatus(UUID invoiceId, InvoiceStatus status);
 }
