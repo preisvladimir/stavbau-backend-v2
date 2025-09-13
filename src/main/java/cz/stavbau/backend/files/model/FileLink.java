@@ -3,8 +3,6 @@ package cz.stavbau.backend.files.model;
 import jakarta.persistence.*;
 import java.util.UUID;
 
-public enum LinkTarget { COMPANY, PROJECT, INVOICE }
-
 @Entity
 @Table(name = "file_links")
 public class FileLink {

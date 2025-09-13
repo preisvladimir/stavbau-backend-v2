@@ -1,3 +1,4 @@
+BACKEND
 cz.stavbau.backend/
 ├─ StavbauBackendApplication.java
 ├─ config/
@@ -128,3 +129,77 @@ cz.stavbau.backend/
    ├─ storage/ LocalFsStorage.java, S3Storage.java
    ├─ mail/ MailConfig.java
    └─ scheduling/ ScheduledJobs.java
+
+FRONTEND
+src/
+├─ app/
+│  ├─ main.tsx                         // bootstrap Reactu (providers: i18n, AuthProvider, ToastProvider, Router)
+│  ├─ App.tsx                          // mount routeru + globální ErrorBoundary
+│  └─ providers/                       // (vol.) separované providery
+│
+├─ routes/
+│  ├─ router.tsx                       // createBrowserRouter: public (/login), private (/app/*)
+│  ├─ AppLayout.tsx                    // topbar + sidebar + <Outlet/> (private shell)
+│  └─ components/
+│     ├─ Topbar.tsx                    // avatar, jazyk, logout, env badge
+│     ├─ Sidebar.tsx                   // navigace podle scopes (Dashboard, Projects…)
+│     └─ LanguageToggle.tsx            // přepínání cs/en (i18next)
+│
+├─ lib/
+│  ├─ api/
+│  │  ├─ client.ts                     // Axios instance (baseURL, JSON) + registrace interceptorů
+│  │  ├─ interceptors.ts               // Authorization: Bearer, 401→refresh→retry, 403/429 UX
+│  │  └─ types.ts                      // sdílené DTO typy (Login/Me/Refresh, PageResponse apod.)
+│  ├─ rbac/
+│  │  ├─ hasScope.ts                   // čistá utilita (anyOf/allOf)
+│  │  └─ ScopeGuard.tsx                // komponenta pro kontrolu scopes (UI toggly)
+│  ├─ utils/
+│  │  ├─ env.ts                        // čtení VITE_* proměnných
+│  │  ├─ time.ts                       // práce s expiresAt (ISO), isExpired(), secondsLeft()
+│  │  └─ formatting.ts                 // měna, data, čísla podle i18n (zrcadlí BE FormattingUtils)
+│  └─ ui/
+│     ├─ ToastProvider.tsx             // shadcn/ui toast system
+│     └─ EmptyState.tsx, ErrorState.tsx, Loading.tsx
+│
+├─ i18n/
+│  ├─ index.ts                         // inicializace i18next (resources, fallbackLng, ns: common, auth, errors)
+│  ├─ cs/
+│  │  ├─ common.json
+│  │  ├─ errors.json                   // 401/403/429/validační hlášky (RHF+Zod)
+│  │  ├─ auth.json                     // login/me/refresh texty
+│  │  └─ projects.json
+│  └─ en/ (stejná struktura jako cs/)
+│
+├─ features/
+│  ├─ auth/
+│  │  ├─ pages/
+│  │  │  └─ LoginPage.tsx              // form (RHF+Zod), loading, i18n, error handling
+│  │  ├─ context/
+│  │  │  └─ AuthContext.tsx            // user, companyRole, scopes, tokens, expiresAt
+│  │  ├─ hooks/
+│  │  │  └─ useAuth.ts                 // helper hook
+│  │  ├─ services/
+│  │  │  └─ AuthService.ts             // /auth/login, /auth/me, /auth/refresh
+│  │  ├─ utils/
+│  │  │  └─ mapAuthErrors.ts           // HTTP → i18n klíče
+│  │  └─ guards/
+│  │     ├─ ProtectedRoute.tsx         // vyžaduje přihlášení
+│  │     └─ ScopeGuard.tsx             // vyžaduje scope
+│  │
+│  ├─ dashboard/
+│  │  └─ pages/DashboardPage.tsx
+│  ├─ projects/
+│  │  ├─ pages/ProjectsListPage.tsx, ProjectNewPage.tsx
+│  │  ├─ components/ProjectsTable.tsx, ProjectForm.tsx
+│  │  ├─ services/ProjectsService.ts
+│  │  └─ hooks/useProjects.ts, useCreateProject.ts
+│  └─ …
+│
+├─ components/
+│  ├─ form/ InputField.tsx, SelectField.tsx
+│  ├─ layout/
+│  └─ icons/
+│
+├─ styles/ index.css, tokens.css
+├─ tests/ lib/api/__tests__/interceptors.test.ts
+└─ e2e/ smoke.login.spec.ts            // login → dashboard

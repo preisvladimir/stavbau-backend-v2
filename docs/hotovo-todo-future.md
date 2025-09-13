@@ -218,3 +218,21 @@
 - Integrace se službou e-mailu: `InvoiceEmailService` (odeslání faktur zákazníkům).
 - Rozšíření `FileStorage` o S3 implementaci (cloud).
 - Verzionování souborů a archivace (PRO verze).
+
+### 13. 9. 2025 — FE Auth MVP skeleton
+
+**HOTOVO**
+- Přidán skeleton autentizace na FE: `/login`, `AuthContext`, Axios klient + interceptory (TODO), guardy (`ProtectedRoute`, `ScopeGuard`), router a layout, i18n (common/auth/errors).
+- Vytvořeny DTO typy: `LoginRequest/Response`, `RefreshRequest/Response`, `MeResponse`.
+
+**TODO (další PR)**
+- Implementace RHF + Zod validace ve `LoginPage`.
+- Implementace interceptorů včetně refresh singleflight a 401→retry.
+- Napojení `/auth/me` a naplnění `AuthContext` (user, role, scopes).
+- UI toggle podle scopes v Sidebar/Projects.
+- Unit & e2e testy dle plánu.
+
+**FUTURE**
+- Persist bez localStorage (rehydratace přes `/auth/me` po refreshi).
+- HttpOnly cookie pro refresh (pokud BE umožní) + CSRF varianta.
+- Captcha/slowdown při opakovaném 401/429.
