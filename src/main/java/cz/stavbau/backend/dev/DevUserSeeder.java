@@ -13,7 +13,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /** DEV ONLY: založí firmu + admin uživatele s heslem 'admin123'. */
-//@Component
+@Component
 @Profile({"dev","default"}) // běž i bez explicitního profilu v lokálu; v prod to vypni
 public class DevUserSeeder implements CommandLineRunner {
 

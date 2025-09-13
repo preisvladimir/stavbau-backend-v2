@@ -7,7 +7,7 @@ spring:
     password: stavbau
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     properties:
       hibernate:
         format_sql: true
@@ -15,7 +15,7 @@ spring:
           lob:
             non_contextual_creation: true
   flyway:
-    enabled: true
+    enabled: false
     locations: classpath:db/migration
     baseline-on-migrate: false
     baseline-description: "baseline before adopting Flyway"
