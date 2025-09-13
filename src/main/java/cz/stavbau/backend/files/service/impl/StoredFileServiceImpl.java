@@ -4,6 +4,7 @@ import cz.stavbau.backend.files.model.*;
 import cz.stavbau.backend.files.repo.*;
 import cz.stavbau.backend.files.service.StoredFileService;
 import cz.stavbau.backend.files.storage.FileStorage;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -12,6 +13,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+@Service
 public class StoredFileServiceImpl implements StoredFileService {
 
     private final StoredFileRepository fileRepo;
@@ -82,8 +84,6 @@ public class StoredFileServiceImpl implements StoredFileService {
         StoredFile sf = fileRepo.findById(fileId).orElseThrow();
         UUID companyId = sf.getCompanyId();
 
-        // remove existing joins (simple approach: delete all and re-add)
-        // could be optimized by diffing
         tagJoinRepo.deleteAll(
             tagJoinRepo.findAll().stream().filter(j -> j.getId().fileId.equals(fileId)).toList()
         );

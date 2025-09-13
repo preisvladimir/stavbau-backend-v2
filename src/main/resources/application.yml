@@ -61,7 +61,7 @@ files:
   storage:
     type: local
     local:
-      base-path: ${USER_HOME}/stavbau-data/files
+      base-path: /mnt/data/stavbau-data/files
   upload:
     max-size-mb: 25
     allowed-mime:

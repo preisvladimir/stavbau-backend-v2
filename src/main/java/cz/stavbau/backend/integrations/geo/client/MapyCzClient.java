@@ -2,6 +2,7 @@ package cz.stavbau.backend.integrations.geo.client;
 
 import cz.stavbau.backend.integrations.geo.config.MapyCzProperties;
 import cz.stavbau.backend.integrations.geo.dto.AddressSuggestion;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -18,8 +19,8 @@ public class MapyCzClient {
     private final WebClient webClient;
     private final MapyCzProperties props;
 
-    public MapyCzClient(WebClient geoWebClient, MapyCzProperties props) {
-        this.webClient = geoWebClient;
+    public MapyCzClient(@Qualifier("geoWebClient") WebClient client, MapyCzProperties props) {
+        this.webClient = client;
         this.props = props;
     }
 
