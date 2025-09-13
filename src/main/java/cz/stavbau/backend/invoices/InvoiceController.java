@@ -1,4 +1,4 @@
-package cz.stavbau.backend.invoices.api;
+package cz.stavbau.backend.invoices;
 
 import cz.stavbau.backend.invoices.api.dto.*;
 import cz.stavbau.backend.invoices.model.InvoiceStatus;

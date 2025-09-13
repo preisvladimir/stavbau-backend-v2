@@ -6,9 +6,13 @@ import cz.stavbau.backend.invoices.model.InvoiceStatus;
 import cz.stavbau.backend.invoices.model.VatMode;
 import cz.stavbau.backend.invoices.repo.InvoiceLineRepository;
 import cz.stavbau.backend.invoices.repo.InvoiceRepository;
+import cz.stavbau.backend.invoices.repo.InvoiceSpecs;
 import cz.stavbau.backend.invoices.repo.NumberSeriesRepository;
 import cz.stavbau.backend.invoices.service.InvoiceService;
 import cz.stavbau.backend.invoices.service.NumberSeriesService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +20,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -24,7 +29,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     private final InvoiceRepository invoiceRepo;
     private final InvoiceLineRepository lineRepo;
     private final NumberSeriesService numberSeriesService;
-    private final NumberSeriesRepository numberSeriesRepo; // reserved for validation / existence
+    private final NumberSeriesRepository numberSeriesRepo;
 
     public InvoiceServiceImpl(InvoiceRepository invoiceRepo,
                               InvoiceLineRepository lineRepo,
@@ -62,7 +67,6 @@ public class InvoiceServiceImpl implements InvoiceService {
     @Override
     @Transactional
     public void addOrReplaceLines(UUID invoiceId, List<LineCreate> lines) {
-        // Remove existing lines
         List<InvoiceLine> existing = lineRepo.findByInvoiceId(invoiceId);
         lineRepo.deleteAll(existing);
 
@@ -75,7 +79,6 @@ public class InvoiceServiceImpl implements InvoiceService {
             il.setUnit(l.unit());
             il.setUnitPrice(l.unitPrice());
             il.setVatRate(l.vatRate());
-            // line_total = quantity * unit_price (bez DPH)
             BigDecimal lineTotal = l.quantity().multiply(l.unitPrice()).setScale(2, RoundingMode.HALF_UP);
             il.setLineTotal(lineTotal);
             lineRepo.save(il);
@@ -95,7 +98,6 @@ public class InvoiceServiceImpl implements InvoiceService {
         for (InvoiceLine il : lines) {
             subtotal = subtotal.add(il.getLineTotal());
             if (inv.getVatMode() == VatMode.STANDARD) {
-                // VAT per line: line_total * vatRate/100, round to 2 decimals (CZ uses standard rounding on totals)
                 BigDecimal lineVat = il.getLineTotal().multiply(il.getVatRate()).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
                 vat = vat.add(lineVat);
             }
@@ -117,28 +119,12 @@ public class InvoiceServiceImpl implements InvoiceService {
         if (inv.getStatus() != InvoiceStatus.DRAFT) {
             throw new IllegalStateException("Invoice must be DRAFT to ISSUE");
         }
-        // assign number from default "INV" series
         String number = numberSeriesService.generateNextNumber(inv.getCompanyId(), "INV", inv.getIssueDate());
         inv.setNumber(number);
         inv.setStatus(InvoiceStatus.ISSUED);
         invoiceRepo.save(inv);
         return number;
     }
-
-    @Override
-    @Transactional
-    public void changeStatus(UUID invoiceId,InvoiceStatus status) {
-        Invoice inv = invoiceRepo.findById(invoiceId).orElseThrow();
-        if (inv.getStatus() != InvoiceStatus.DRAFT) {
-            throw new IllegalStateException("Invoice must be DRAFT to ISSUE");
-        }
-        // assign number from default "INV" series
-       // String number = numberSeriesService.generateNextNumber(inv.getCompanyId(), "INV", inv.getIssueDate());
-        //inv.setNumber(number);
-        inv.setStatus(status);
-        invoiceRepo.save(inv);
-    }
-
 
     @Override
     @Transactional
@@ -165,5 +151,23 @@ public class InvoiceServiceImpl implements InvoiceService {
     @Override
     public InvoiceStatus getStatus(UUID invoiceId) {
         return invoiceRepo.findById(invoiceId).map(Invoice::getStatus).orElseThrow();
+    }
+
+    @Override
+    public Invoice get(UUID invoiceId) {
+        return invoiceRepo.findById(invoiceId).orElseThrow();
+    }
+
+    @Override
+    public Page<Invoice> search(UUID companyId, Optional<UUID> projectId, Optional<InvoiceStatus> status,
+                                Optional<String> q, Optional<LocalDate> dateFrom, Optional<LocalDate> dateTo,
+                                Pageable pageable) {
+        Specification<Invoice> spec = Specification.where(InvoiceSpecs.company(companyId));
+        if (projectId.isPresent()) spec = spec.and(InvoiceSpecs.project(projectId.get()));
+        if (status.isPresent()) spec = spec.and(InvoiceSpecs.status(status.get()));
+        if (dateFrom.isPresent()) spec = spec.and(InvoiceSpecs.dateFrom(dateFrom.get()));
+        if (dateTo.isPresent()) spec = spec.and(InvoiceSpecs.dateTo(dateTo.get()));
+        if (q.isPresent() && !q.get().isBlank()) spec = spec.and(InvoiceSpecs.q(q.get()));
+        return invoiceRepo.findAll(spec, pageable);
     }
 }

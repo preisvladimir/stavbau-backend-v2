@@ -1,9 +1,14 @@
 package cz.stavbau.backend.invoices.service;
 
+import cz.stavbau.backend.invoices.model.Invoice;
 import cz.stavbau.backend.invoices.model.InvoiceStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface InvoiceService {
@@ -17,7 +22,7 @@ public interface InvoiceService {
 
     void recalcTotals(UUID invoiceId);
 
-    String issue(UUID invoiceId); // returns assigned number
+    String issue(UUID invoiceId);
 
     void markPaid(UUID invoiceId);
 
@@ -25,5 +30,9 @@ public interface InvoiceService {
 
     InvoiceStatus getStatus(UUID invoiceId);
 
-    void changeStatus(UUID invoiceId, InvoiceStatus status);
+    Invoice get(UUID invoiceId);
+
+    Page<Invoice> search(UUID companyId, Optional<UUID> projectId, Optional<InvoiceStatus> status,
+                         Optional<String> q, Optional<LocalDate> dateFrom, Optional<LocalDate> dateTo,
+                         Pageable pageable);
 }
