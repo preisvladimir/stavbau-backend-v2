@@ -1,12 +1,380 @@
-create table companies (datum_aktualizace_ares date, datum_vzniku date, kod_kraje varchar(4), kod_statu varchar(2), standardizace_adresy boolean, typ_cislo_domovni varchar(4), cz_nace_prevazujici varchar(6), ares_last_sync_at timestamp(6) with time zone, created_at timestamp(6) with time zone, financni_urad_code varchar(8), ico varchar(8) not null unique, kategorie_poctu_pracovniku varchar(8), kod_okresu varchar(8), pravni_forma_code varchar(8), updated_at timestamp(6) with time zone, kod_casti_obce varchar(12), kod_obce varchar(12), cislo_domovni varchar(16), created_by uuid, id uuid not null, institucionalni_sektor2010 varchar(16), kod_adresniho_mista varchar(16), kod_ulice varchar(16), okres_nuts_lau varchar(16), psc varchar(16), updated_by uuid, zakladni_uzemni_jednotka varchar(16), nazev_kraje varchar(64), nazev_okresu varchar(64), nazev_statu varchar(64), nazev_casti_obce varchar(128), nazev_obce varchar(128), nazev_ulice varchar(128), textova_adresa varchar(512), obchodni_jmeno varchar(255), radek_adresy1 varchar(255), radek_adresy2 varchar(255), ares_raw jsonb, primary key (id));
-create table company_nace (nace_code varchar(6) not null, company_id uuid not null, primary key (nace_code, company_id));
-create table file_links (file_id uuid not null, target_id uuid not null, target_type varchar(255) not null check (target_type in ('COMPANY','PROJECT','INVOICE')), primary key (file_id, target_id, target_type));
-create table file_tag_join (file_id uuid not null, tag_id uuid not null, primary key (file_id, tag_id));
-create table file_tags (company_id uuid not null, id uuid not null, name varchar(64) not null, primary key (id), constraint ux_file_tags_company_name unique (company_id, name));
-create table invoice_lines (line_total numeric(18,2) not null, quantity numeric(18,3) not null, unit_price numeric(18,2) not null, vat_rate numeric(5,2) not null, id uuid not null, invoice_id uuid not null, unit varchar(32) not null, item_name varchar(256) not null, primary key (id));
-create table invoices (currency varchar(3) not null, due_date date not null, issue_date date not null, subtotal numeric(18,2) not null, tax_date date, total numeric(18,2) not null, vat_total numeric(18,2) not null, company_id uuid not null, id uuid not null, project_id uuid, status varchar(16) not null check (status in ('DRAFT','ISSUED','PAID','CANCELLED')), customer_json jsonb not null, number varchar(255), supplier_json jsonb not null, vat_mode varchar(255) not null check (vat_mode in ('NONE','STANDARD')), notes oid, primary key (id));
-create table number_series (counter_value integer not null, counter_year integer not null, is_default boolean not null, version integer not null, company_id uuid not null, id uuid not null, key varchar(32) not null, pattern varchar(64) not null, primary key (id), constraint ux_number_series_company_year_key unique (company_id, counter_year, key));
-create table stored_files (created_at timestamp(6) with time zone not null, size_bytes bigint not null, company_id uuid not null, id uuid not null, uploader_id uuid not null, sha256 varchar(64) not null, storage_key varchar(512) not null, mime_type varchar(255) not null, original_name varchar(255) not null, primary key (id));
-create table users (token_version integer not null, created_at timestamp(6) with time zone, updated_at timestamp(6) with time zone, locale varchar(10), company_id uuid not null, created_by uuid, id uuid not null, refresh_token_id uuid, updated_by uuid, email varchar(320) not null unique, password_hash varchar(255) not null, primary key (id));
-create index ix_company_nuts on companies (okres_nuts_lau);
-alter table if exists company_nace add constraint FK4ujxyrmd05of02ih46ql46wrw foreign key (company_id) references companies;
+﻿--
+-- PostgreSQL database dump
+--
+
+\restrict DZCyENOa6tuE9agHKIMKnAab1oCDi14GzkGDFMKgbdCfuBlQiyDR8Y2gfWQqvom
+
+-- Dumped from database version 16.10
+-- Dumped by pg_dump version 16.10
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
+--
+
+CREATE SCHEMA public;
+
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: companies; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.companies (
+    id uuid NOT NULL,
+    created_at timestamp(6) with time zone,
+    created_by uuid,
+    updated_at timestamp(6) with time zone,
+    updated_by uuid,
+    radek_adresy1 character varying(255),
+    radek_adresy2 character varying(255),
+    ares_last_sync_at timestamp(6) with time zone,
+    ares_raw jsonb,
+    cz_nace_prevazujici character varying(6),
+    datum_aktualizace_ares date,
+    datum_vzniku date,
+    financni_urad_code character varying(8),
+    ico character varying(8) NOT NULL,
+    institucionalni_sektor2010 character varying(16),
+    kategorie_poctu_pracovniku character varying(8),
+    obchodni_jmeno character varying(255),
+    okres_nuts_lau character varying(16),
+    pravni_forma_code character varying(8),
+    cislo_domovni character varying(16),
+    kod_adresniho_mista character varying(16),
+    kod_casti_obce character varying(12),
+    kod_kraje character varying(4),
+    kod_obce character varying(12),
+    kod_okresu character varying(8),
+    kod_statu character varying(2),
+    kod_ulice character varying(16),
+    nazev_casti_obce character varying(128),
+    nazev_kraje character varying(64),
+    nazev_obce character varying(128),
+    nazev_okresu character varying(64),
+    nazev_statu character varying(64),
+    nazev_ulice character varying(128),
+    psc character varying(16),
+    standardizace_adresy boolean,
+    textova_adresa character varying(512),
+    typ_cislo_domovni character varying(4),
+    zakladni_uzemni_jednotka character varying(16)
+);
+
+
+--
+-- Name: company_nace; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.company_nace (
+    company_id uuid NOT NULL,
+    nace_code character varying(6) NOT NULL
+);
+
+
+--
+-- Name: file_links; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.file_links (
+    file_id uuid NOT NULL,
+    target_id uuid NOT NULL,
+    target_type character varying(255) NOT NULL,
+    CONSTRAINT file_links_target_type_check CHECK (((target_type)::text = ANY ((ARRAY['COMPANY'::character varying, 'PROJECT'::character varying, 'INVOICE'::character varying])::text[])))
+);
+
+
+--
+-- Name: file_tag_join; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.file_tag_join (
+    file_id uuid NOT NULL,
+    tag_id uuid NOT NULL
+);
+
+
+--
+-- Name: file_tags; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.file_tags (
+    id uuid NOT NULL,
+    company_id uuid NOT NULL,
+    name character varying(64) NOT NULL
+);
+
+
+--
+-- Name: flyway_schema_history; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.flyway_schema_history (
+    installed_rank integer NOT NULL,
+    version character varying(50),
+    description character varying(200) NOT NULL,
+    type character varying(20) NOT NULL,
+    script character varying(1000) NOT NULL,
+    checksum integer,
+    installed_by character varying(100) NOT NULL,
+    installed_on timestamp without time zone DEFAULT now() NOT NULL,
+    execution_time integer NOT NULL,
+    success boolean NOT NULL
+);
+
+
+--
+-- Name: invoice_lines; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.invoice_lines (
+    id uuid NOT NULL,
+    invoice_id uuid NOT NULL,
+    item_name character varying(256) NOT NULL,
+    line_total numeric(18,2) NOT NULL,
+    quantity numeric(18,3) NOT NULL,
+    unit character varying(32) NOT NULL,
+    unit_price numeric(18,2) NOT NULL,
+    vat_rate numeric(5,2) NOT NULL
+);
+
+
+--
+-- Name: invoices; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.invoices (
+    id uuid NOT NULL,
+    company_id uuid NOT NULL,
+    currency character varying(3) NOT NULL,
+    customer_json jsonb NOT NULL,
+    due_date date NOT NULL,
+    issue_date date NOT NULL,
+    notes oid,
+    number character varying(255),
+    project_id uuid,
+    status character varying(16) NOT NULL,
+    subtotal numeric(18,2) NOT NULL,
+    supplier_json jsonb NOT NULL,
+    tax_date date,
+    total numeric(18,2) NOT NULL,
+    vat_mode character varying(255) NOT NULL,
+    vat_total numeric(18,2) NOT NULL,
+    CONSTRAINT invoices_status_check CHECK (((status)::text = ANY ((ARRAY['DRAFT'::character varying, 'ISSUED'::character varying, 'PAID'::character varying, 'CANCELLED'::character varying])::text[]))),
+    CONSTRAINT invoices_vat_mode_check CHECK (((vat_mode)::text = ANY ((ARRAY['NONE'::character varying, 'STANDARD'::character varying])::text[])))
+);
+
+
+--
+-- Name: number_series; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.number_series (
+    id uuid NOT NULL,
+    company_id uuid NOT NULL,
+    counter_value integer NOT NULL,
+    counter_year integer NOT NULL,
+    is_default boolean NOT NULL,
+    key character varying(32) NOT NULL,
+    pattern character varying(64) NOT NULL,
+    version integer NOT NULL
+);
+
+
+--
+-- Name: stored_files; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.stored_files (
+    id uuid NOT NULL,
+    company_id uuid NOT NULL,
+    created_at timestamp(6) with time zone NOT NULL,
+    mime_type character varying(255) NOT NULL,
+    original_name character varying(255) NOT NULL,
+    sha256 character varying(64) NOT NULL,
+    size_bytes bigint NOT NULL,
+    storage_key character varying(512) NOT NULL,
+    uploader_id uuid NOT NULL
+);
+
+
+--
+-- Name: users; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.users (
+    id uuid NOT NULL,
+    created_at timestamp(6) with time zone,
+    created_by uuid,
+    updated_at timestamp(6) with time zone,
+    updated_by uuid,
+    company_id uuid NOT NULL,
+    email character varying(320) NOT NULL,
+    locale character varying(10),
+    password_hash character varying(255) NOT NULL,
+    refresh_token_id uuid,
+    token_version integer NOT NULL
+);
+
+
+--
+-- Name: companies companies_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.companies
+    ADD CONSTRAINT companies_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: company_nace company_nace_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.company_nace
+    ADD CONSTRAINT company_nace_pkey PRIMARY KEY (company_id, nace_code);
+
+
+--
+-- Name: file_links file_links_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.file_links
+    ADD CONSTRAINT file_links_pkey PRIMARY KEY (file_id, target_id, target_type);
+
+
+--
+-- Name: file_tag_join file_tag_join_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.file_tag_join
+    ADD CONSTRAINT file_tag_join_pkey PRIMARY KEY (file_id, tag_id);
+
+
+--
+-- Name: file_tags file_tags_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.file_tags
+    ADD CONSTRAINT file_tags_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: flyway_schema_history flyway_schema_history_pk; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.flyway_schema_history
+    ADD CONSTRAINT flyway_schema_history_pk PRIMARY KEY (installed_rank);
+
+
+--
+-- Name: invoice_lines invoice_lines_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.invoice_lines
+    ADD CONSTRAINT invoice_lines_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: invoices invoices_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.invoices
+    ADD CONSTRAINT invoices_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: number_series number_series_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.number_series
+    ADD CONSTRAINT number_series_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: stored_files stored_files_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.stored_files
+    ADD CONSTRAINT stored_files_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: users uk_6dotkott2kjsp8vw4d0m25fb7; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT uk_6dotkott2kjsp8vw4d0m25fb7 UNIQUE (email);
+
+
+--
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: companies ux_company_ico; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.companies
+    ADD CONSTRAINT ux_company_ico UNIQUE (ico);
+
+
+--
+-- Name: file_tags ux_file_tags_company_name; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.file_tags
+    ADD CONSTRAINT ux_file_tags_company_name UNIQUE (company_id, name);
+
+
+--
+-- Name: number_series ux_number_series_company_year_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.number_series
+    ADD CONSTRAINT ux_number_series_company_year_key UNIQUE (company_id, counter_year, key);
+
+
+--
+-- Name: flyway_schema_history_s_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX flyway_schema_history_s_idx ON public.flyway_schema_history USING btree (success);
+
+
+--
+-- Name: ix_company_nuts; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_company_nuts ON public.companies USING btree (okres_nuts_lau);
+
+
+--
+-- Name: company_nace fk4ujxyrmd05of02ih46ql46wrw; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.company_nace
+    ADD CONSTRAINT fk4ujxyrmd05of02ih46ql46wrw FOREIGN KEY (company_id) REFERENCES public.companies(id);
+
+
+--
+-- PostgreSQL database dump complete
+--
+
+\unrestrict DZCyENOa6tuE9agHKIMKnAab1oCDi14GzkGDFMKgbdCfuBlQiyDR8Y2gfWQqvom
+

@@ -5,10 +5,13 @@ spring:
     url: jdbc:postgresql://localhost:5432/stavbau
     username: stavbau
     password: stavbau
+    hikari:
+      connectionInitSql: "SET search_path TO public"
   jpa:
     hibernate:
       ddl-auto: validate
     properties:
+      hibernate.default_schema: public
       hibernate:
         format_sql: true
         jdbc:
