@@ -24,4 +24,6 @@ public interface InvoiceService {
     void cancel(UUID invoiceId);
 
     InvoiceStatus getStatus(UUID invoiceId);
+
+    void changeStatus(UUID invoiceId, InvoiceStatus status);
 }

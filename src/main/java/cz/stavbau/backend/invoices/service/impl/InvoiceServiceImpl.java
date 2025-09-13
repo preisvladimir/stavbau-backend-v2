@@ -127,6 +127,21 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     @Override
     @Transactional
+    public void changeStatus(UUID invoiceId,InvoiceStatus status) {
+        Invoice inv = invoiceRepo.findById(invoiceId).orElseThrow();
+        if (inv.getStatus() != InvoiceStatus.DRAFT) {
+            throw new IllegalStateException("Invoice must be DRAFT to ISSUE");
+        }
+        // assign number from default "INV" series
+       // String number = numberSeriesService.generateNextNumber(inv.getCompanyId(), "INV", inv.getIssueDate());
+        //inv.setNumber(number);
+        inv.setStatus(status);
+        invoiceRepo.save(inv);
+    }
+
+
+    @Override
+    @Transactional
     public void markPaid(UUID invoiceId) {
         Invoice inv = invoiceRepo.findById(invoiceId).orElseThrow();
         if (inv.getStatus() != InvoiceStatus.ISSUED) {
