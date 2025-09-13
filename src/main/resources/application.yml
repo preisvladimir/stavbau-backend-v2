@@ -6,19 +6,17 @@ spring:
     username: stavbau
     password: stavbau
   jpa:
-    hibernate:
-      ddl-auto: update
+    hibernate.ddl-auto: none
     properties:
-      hibernate:
-        format_sql: true
-        jdbc:
-          lob:
-            non_contextual_creation: true
+      jakarta.persistence.schema-generation.scripts.action: create
+      jakarta.persistence.schema-generation.scripts.create-target: src/main/resources/db/migration/V1__init.sql
+      jakarta.persistence.schema-generation.create-source: metadata
+      hibernate.hbm2ddl.delimiter: ;
   flyway:
     enabled: false
     locations: classpath:db/migration
-    baseline-on-migrate: false
-    baseline-description: "baseline before adopting Flyway"
+    schemas: public
+    clean-disabled: false  # jen dočasně na reset
 
 server:
   port: 8080
