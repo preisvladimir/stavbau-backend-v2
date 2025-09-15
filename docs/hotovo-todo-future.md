@@ -111,6 +111,7 @@
 - Sjednocení názvů: tabulka `companies`, FK users.company_id → companies(id)
 - MapStruct: vypnutý builder, ignorace auditních polí, AresCompanyMapper + CompanyMapper OK
 - ARES integrace: DTO (AresSubjectDto), mapper, service skeleton, WebFlux v pom.xml
+- AresCompanyMapper – sjednoceny ignore mapping pro single i legacy tvary payloadu.
 - RegistrationStatuses: dočasně @Transient
 
 ## TODO (další sprint)
