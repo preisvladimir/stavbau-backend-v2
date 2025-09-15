@@ -2,7 +2,6 @@ package cz.stavbau.backend.integrations.ares;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.stavbau.backend.integrations.ares.dto.AresSubjectDto;
-import cz.stavbau.backend.integrations.ares.dto.AresSubjectDtoOld;
 import cz.stavbau.backend.tenants.mapping.AresCompanyMapper;
 import cz.stavbau.backend.tenants.model.Company;
 import org.springframework.stereotype.Service;
@@ -25,11 +24,6 @@ public class AresService {
     public AresSubjectDto fetchRaw(String ico) {
         return client.fetchByIco(ico);
     }
-
-    public AresSubjectDtoOld fetchRawOld(String ico) {
-        return client.fetchByIcoOld(ico);
-    }
-
 
     /** Legacy větev – když pracuješ s AresSubjectDto.Zaznam (z pole zaznamy[]) */
     public Company mapToCompany(AresSubjectDto.Zaznam record, Map<String, Object> raw) {

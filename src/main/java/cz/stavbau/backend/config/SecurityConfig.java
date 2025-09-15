@@ -49,7 +49,7 @@ public class SecurityConfig {
                                 "/api/v1/ping"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/geo/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/companies/lookup/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/companies/lookup/**", "/api/v1/companies/register").permitAll()
                         .anyRequest().authenticated()
                 )
 
