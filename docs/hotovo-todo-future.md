@@ -291,3 +291,25 @@
 - UX při bruteforce/429 (cooldown, captcha).
 - Rozšíření UI knihovny (`DataTable`, `Modal`, `EmptyState`) jako plnohodnotný „stavbau-ui“ balík pro všechny feature moduly.
 - Konsolidace design tokens (`tokens.css`) a theming (dark mode).
+
+## 🧭 Rozhodnutí architektury — 15. 9. 2025
+**Téma:** Registrace firmy & členství (Sprint 2)  
+**Rozhodnutí:** Zavedeme `CompanyMember` pro RBAC/membership (OWNER atd.). `User` zůstává štíhlý (auth). Kontaktní/fakturační údaje budou řešeny samostatným modulem **contacts/** a přes **invoices/Customer**. Připravíme migrační cestu `company_members.contact_id` (po zavedení contacts).  
+**Důvod:** Čisté oddělení Auth vs. Business, soulad s modular-monolith by feature a RBAC 2.1, snížení reworku.  
+**Dopady:** DB constraint „1 OWNER per company“, i18n klíče, rate-limit na public endpointu, bez autologinu (verifikace později).
+
+## ✅ HOTOVO – 15. 9. 2025
+- Schválen ADR: CompanyMember (MVP) + future Contacts/Customer.
+- Upřesněna akceptační kritéria a test plan pro registraci firmy + OWNER.
+
+## 🛠 TODO (Sprint 2/1 – BE)
+- [ ] Flyway: `company_members` + unique owner per company, uniq `companies(ico)`, uniq `lower(users.email)`.
+- [ ] Registrační služba: vytvořit Company, User (email+passwordHash+companyId), CompanyMember(OWNER).
+- [ ] i18n: `company.exists`, `user.email.exists`, validační klíče (cs/en).
+- [ ] MockMvc + @DataJpaTest: happy path, duplicity, unique OWNER, i18n.
+
+## 🔭 FUTURE
+- Contacts modul (Contact/Person + Address) a napojení `company_members.contact_id`.
+- E-mail verifikace + autologin po potvrzení.
+- Admin správa členů a rolí (team:* scopes).
+
