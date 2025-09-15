@@ -313,3 +313,30 @@
 - E-mail verifikace + autologin po potvrzení.
 - Admin správa členů a rolí (team:* scopes).
 
+## ✅ HOTOVO – 15. 9. 2025
+- DB: unikátní index `lower(users.email)` a `companies(ico)`.
+- DB: zavedena tabulka `company_members` + constraint „1 OWNER na firmu“.
+- BE: `UserRepository` doplněn o `existsByEmailIgnoreCase` a `findByEmailIgnoreCase`.
+- BE: `CompanyRepository` s `findByIco` a `existsByIco`.
+- BE: přidána entita a repo `CompanyMember`.
+
+## 🛠 TODO (Sprint 2/1 – registrace)
+- [ ] Doplňit registrační službu: vytvoření `Company`, `User` (email+passwordHash+companyId), `CompanyMember(OWNER)`.
+- [ ] Public endpoint `/api/v1/tenants/register` (permitAll + rate-limit).
+- [ ] Integrační testy: happy path, duplicita IČO / e-mail, unikátní OWNER, i18n.
+
+## ✅ HOTOVO – 16. 9. 2025
+- BE registrace firmy: fungující endpoint `POST /api/v1/tenants/register` (public).
+- Vytvoření Company, User (email+passwordHash+companyId), CompanyMember(OWNER).
+- Opraven NPE: inicializace `Company.sidlo` před mapováním adresy.
+- Ověřeno přes Swagger/cURL (201 Created).
+
+## 🛠 TODO (Sprint 2/1 – BE)
+- [ ] Dopsat integrační testy: 409 duplicitní IČO/e-mail, i18n, unique OWNER (DB).
+- [ ] Omezit/odstranit DEV exception handler (detail DB chyb) mimo `local` profil.
+- [ ] Nastavit rate-limit pro `/api/v1/tenants/register`.
+- [ ] Swagger: doplnit `@Operation`, `@ApiResponse(409)` + example payloady.
+
+## 🔭 FUTURE
+- E-mail verifikace + autologin po potvrzení.
+- Contacts modul (napojení na členy přes `contact_id`).

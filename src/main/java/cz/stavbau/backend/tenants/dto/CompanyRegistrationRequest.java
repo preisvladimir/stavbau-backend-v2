@@ -1,9 +1,7 @@
-// FILE: tenants/dto/CompanyRegistrationRequest.java
 package cz.stavbau.backend.tenants.dto;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
-import java.util.Objects;
 
 public record CompanyRegistrationRequest(
         @Valid @NotNull CompanyDto company,
@@ -12,7 +10,7 @@ public record CompanyRegistrationRequest(
 ) {
     public record CompanyDto(
             @NotBlank @Pattern(regexp = "\\d{8}", message = "{validation.ico.invalid}") String ico,
-            @Pattern(regexp = "^[A-Z]{2}\\d[\\dA-Z]*$", message = "{validation.dic.invalid}") String dic,
+            String dic,
             @NotBlank String name,
             @Valid @NotNull AddressDto address,
             String legalFormCode
@@ -26,18 +24,12 @@ public record CompanyRegistrationRequest(
     public record OwnerDto(
             @NotBlank @Email String email,
             @NotBlank @Size(min = 8, max = 128) String password,
-            @NotBlank String firstName,
-            @NotBlank String lastName,
-            String phone
+            String firstName,         // MVP: neperzistujeme
+            String lastName,          // MVP: neperzistujeme
+            String phone              // MVP: neperzistujeme
     ) {}
     public record ConsentsDto(
             @AssertTrue(message = "{validation.terms.required}") boolean termsAccepted,
             Boolean marketing
     ) {}
-
-    public CompanyRegistrationRequest {
-        Objects.requireNonNull(company);
-        Objects.requireNonNull(owner);
-        Objects.requireNonNull(consents);
-    }
 }

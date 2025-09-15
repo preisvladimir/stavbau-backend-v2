@@ -2,6 +2,8 @@ package cz.stavbau.backend.common.api;
 
 import cz.stavbau.backend.integrations.ares.exceptions.AresNotFoundException;
 import cz.stavbau.backend.integrations.ares.exceptions.AresUnavailableException;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.*;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
@@ -9,10 +11,11 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.validation.BindException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.http.ProblemDetail;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.Map;
 
-@RestControllerAdvice
+@ControllerAdvice
 public class ApiExceptionHandler {
     @ExceptionHandler(BindException.class)
     public ProblemDetail handleValidation(BindException ex){
@@ -55,4 +58,5 @@ public class ApiExceptionHandler {
         return ResponseEntity.badRequest().body(Map.of("error","validation_error","message",
                 ex.getBindingResult().getAllErrors().get(0).getDefaultMessage()));
     }
+
 }

@@ -1,4 +1,3 @@
-// FILE: tenants/dto/CompanyRegistrationResponse.java
 package cz.stavbau.backend.tenants.dto;
 
 import java.util.UUID;

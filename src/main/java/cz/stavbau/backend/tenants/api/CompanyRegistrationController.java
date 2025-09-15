@@ -1,4 +1,3 @@
-// FILE: tenants/api/CompanyRegistrationController.java
 package cz.stavbau.backend.tenants.api;
 
 import cz.stavbau.backend.tenants.dto.CompanyRegistrationRequest;
@@ -6,20 +5,26 @@ import cz.stavbau.backend.tenants.dto.CompanyRegistrationResponse;
 import cz.stavbau.backend.tenants.service.CompanyRegistrationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@RestController
-@RequiredArgsConstructor
-@RequestMapping("/api/v1/companies")
-public class CompanyRegistrationController {
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
-    private final CompanyRegistrationService service;
+@RestController
+@RequestMapping("/api/v1/tenants")
+@Tag(name = "Tenants – registrace", description = "Veřejná registrace firmy a vlastníka (OWNER)")
+public class CompanyRegistrationController {
+    @Autowired
+    CompanyRegistrationService service;
 
     @PostMapping("/register")
-    public ResponseEntity<CompanyRegistrationResponse> register(
-            @RequestBody @Valid CompanyRegistrationRequest request
-    ) {
+    @Operation(summary = "Registrace firmy + OWNER", description = "Public endpoint (bez JWT), vytvoří Company, User a CompanyMember(OWNER).")
+    @ApiResponse(responseCode = "201", description = "Vytvořeno")
+    @ApiResponse(responseCode = "409", description = "Duplicitní IČO nebo e-mail")
+    public ResponseEntity<CompanyRegistrationResponse> register(@Valid @RequestBody CompanyRegistrationRequest request) {
         var result = service.register(request);
         return ResponseEntity.status(201).body(result);
     }
