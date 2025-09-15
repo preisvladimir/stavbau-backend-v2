@@ -49,6 +49,7 @@ public class SecurityConfig {
                                 "/api/v1/ping"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/geo/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/companies/lookup/**").permitAll()
                         .anyRequest().authenticated()
                 )
 

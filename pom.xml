@@ -206,6 +206,7 @@
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
+                    <parameters>true</parameters>
                     <!-- Pozn.: Pokud bys chtěl místo pluginu používat standardní dependency
                          'annotationProcessor', můžeme přehodit konfiguraci.
                          Aktuální setup je v pořádku. -->

@@ -1,4 +1,4 @@
-package cz.stavbau.backend.integrations.ares.mapper;
+package cz.stavbau.backend.tenants.mapping;
 
 import cz.stavbau.backend.common.mapping.MapStructCentralConfig;
 import cz.stavbau.backend.integrations.ares.dto.AresSubjectDto;
@@ -6,13 +6,18 @@ import cz.stavbau.backend.tenants.model.Company;
 import cz.stavbau.backend.tenants.model.RegisteredAddress;
 import org.mapstruct.*;
 
+import java.time.OffsetDateTime;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Mapper(config = MapStructCentralConfig.class)
 public interface AresCompanyMapper {
 
-    @Mapping(target = "id", ignore = true)                 // JPA generuje
-    @Mapping(target = "createdAt", ignore = true)          // auditing spravuje Spring
+    // ---------- LEGACY/ARRAY: AresSubjectDto.Zaznam ----------
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "updatedBy", ignore = true)
@@ -23,23 +28,35 @@ public interface AresCompanyMapper {
     @Mapping(target = "financniUradCode", source = "financniUrad")
     @Mapping(target = "datumVzniku", source = "datumVzniku")
     @Mapping(target = "datumAktualizaceAres", source = "datumAktualizace")
-    @Mapping(target = "aresLastSyncAt", expression = "java(java.time.OffsetDateTime.now())")
+    @Mapping(target = "aresLastSyncAt", expression = "java(OffsetDateTime.now())")
+
     @Mapping(target = "czNacePrevazujici", source = "czNacePrevazujici")
     @Mapping(target = "zakladniUzemniJednotka", source = "zakladniUzemniJednotka")
     @Mapping(target = "okresNutsLau", source = "okresNutsLau")
     @Mapping(target = "institucionalniSektor2010", source = "statistickeUdaje.institucionalniSektor2010")
     @Mapping(target = "kategoriePoctuPracovniku", source = "statistickeUdaje.kategoriePoctuPracovniku")
-    @Mapping(target = "sidlo", source = "sidlo")
-    @Mapping(target = "adresaDorucovaci", ignore = true)   // ARES ji nevrací
-    @Mapping(target = "registrace", ignore = true)         // zatím nepoužíváme
-    @Mapping(target = "aresRaw", ignore = true)            // doplníme AfterMapping
-    @Mapping(target = "czNace", source = "czNace")
-    Company toEntity(AresSubjectDto.Zaznam src, @Context Map<String, Object> raw);
 
+    @Mapping(target = "sidlo", source = "sidlo")
+    @Mapping(target = "adresaDorucovaci", ignore = true) // ARES vrací jen textové řádky, vlastní doručovací neplníme
+    @Mapping(target = "registrace", ignore = true)       // MVP: @Transient v entitě
+    @Mapping(target = "aresRaw", ignore = true)          // doplníme @AfterMapping
+    @Mapping(target = "czNace", source = "czNace")
+    Company fromLegacy(AresSubjectDto.Zaznam src, @Context Map<String, Object> raw);
+
+    // ---------- SINGLE-OBJECT: AresSubjectDto ----------
+    @InheritConfiguration(name = "fromLegacy")
+    // pole, která v single payloadu zpravidla nejsou → ignorujeme, ať build projde na všech odpovědích
+    @Mapping(target = "institucionalniSektor2010", ignore = true)
+    @Mapping(target = "kategoriePoctuPracovniku", ignore = true)
+    @Mapping(target = "zakladniUzemniJednotka", ignore = true)
+    @Mapping(target = "okresNutsLau", ignore = true)
+    Company fromSingle(AresSubjectDto src, @Context Map<String, Object> raw);
+
+    // ---------- pomocné mapování ----------
     RegisteredAddress mapAddress(AresSubjectDto.Sidlo src);
 
-    default java.util.Set<String> mapNace(java.util.List<String> list) {
-        return list == null ? new java.util.LinkedHashSet<>() : new java.util.LinkedHashSet<>(list);
+    default Set<String> mapNace(List<String> list) {
+        return list == null ? new LinkedHashSet<>() : new LinkedHashSet<>(list);
     }
 
     @AfterMapping
