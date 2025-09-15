@@ -4,9 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.stavbau.backend.integrations.ares.AresService;
 import cz.stavbau.backend.integrations.ares.dto.AresSubjectDto;
-import cz.stavbau.backend.integrations.ares.dto.AresSubjectDtoOld;
 import cz.stavbau.backend.tenants.dto.CompanyDto;
-import cz.stavbau.backend.tenants.dto.CompanyPreviewDto;
 import cz.stavbau.backend.tenants.mapping.AresCompanyMapper;
 import cz.stavbau.backend.tenants.mapping.CompanyMapper;
 import cz.stavbau.backend.tenants.model.Company;
@@ -50,31 +48,4 @@ public class CompanyService {
         return companyMapper.toDto(company);
     }
 
-    /**
-     * OLD VERze Načte firmu z ARES podle IČO a vrátí CompanyDto připravené pro FE formulář.
-     * (MVP: neukládá do DB, jen předvyplnění — uložení přidáme v dalším kroku.)
-     */
-    @Transactional(readOnly = true)
-    public CompanyPreviewDto lookupByAresOld(String ico) {
-        // 1) Získáme ARES odpověď (DTO)
-        AresSubjectDtoOld dto = aresService.fetchRawOld(ico);
-        var sidlo = dto.getSidlo() == null ? null : CompanyPreviewDto.Sidlo.builder()
-                .textovaAdresa(dto.getSidlo().getTextovaAdresa())
-                .psc(dto.getSidlo().getPsc() == null ? null : String.valueOf(dto.getSidlo().getPsc()))
-                .nazevObce(dto.getSidlo().getNazevObce())
-                .nazevUlice(dto.getSidlo().getNazevUlice())
-                .cisloDomovni(dto.getSidlo().getCisloDomovni() == null ? null : String.valueOf(dto.getSidlo().getCisloDomovni()))
-                .build();
-
-        var out = CompanyPreviewDto.builder()
-                .ico(dto.getIco())
-                .obchodniJmeno(dto.getObchodniJmeno())
-                .pravniFormaCode(dto.getPravniForma())
-                .datumVzniku(dto.getDatumVzniku() == null ? null : dto.getDatumVzniku().toString())
-                .sidlo(sidlo)
-                .build();
-
-
-        return out;
-    }
 }
