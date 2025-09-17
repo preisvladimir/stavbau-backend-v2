@@ -2,7 +2,13 @@ package cz.stavbau.backend.tenants.web;
 
 import cz.stavbau.backend.integrations.ares.exceptions.AresNotFoundException;
 import cz.stavbau.backend.tenants.dto.CompanyDto;
+import cz.stavbau.backend.tenants.dto.CompanyLookupPreviewDto;
+import cz.stavbau.backend.tenants.mapping.AresPreviewMapper;
+import cz.stavbau.backend.tenants.model.Company;
 import cz.stavbau.backend.tenants.service.CompanyService;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +26,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public class CompanyLookupController {
 
     private final CompanyService companyService;
+    private final AresPreviewMapper previewMapper;
 
     @Operation(
             summary = "Načti firmu z ARES podle IČO (bez uložení)",
@@ -42,5 +49,28 @@ public class CompanyLookupController {
         }
         return ResponseEntity.ok(dto);
     }
-
+    @GetMapping("/ares/preview")
+    @Operation(
+            summary = "ARES preview (normalized for FE)",
+            description = "Returns FE-ready preview of company data from ARES for form prefill. RAW `/ares` stays as-is.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(schema = @Schema(implementation = CompanyLookupPreviewDto.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found (code=ares_not_found)"),
+                    @ApiResponse(responseCode = "503", description = "ARES unavailable (code=ares_unavailable)"),
+                    @ApiResponse(responseCode = "429", description = "Rate limit (code=rate_limit)")
+            }
+    )
+    public ResponseEntity<CompanyLookupPreviewDto> getPreview(
+            @RequestParam @Pattern(regexp = "\\d{8}") String ico
+    ) {
+        // Použijeme existující service, která vrací CompanyDto (normalizace na BE)
+        CompanyDto dto = companyService.lookupByAres(ico);
+        if (dto == null) {
+            // Máte-li global exception handler pro RFC7807, hoďte jeho NotFound s code=ares_not_found.
+            // Jinak pro MVP lze vrátit 404 bez těla a FE to zmapuje na i18n.
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(previewMapper.toPreview(dto));
+    }
 }

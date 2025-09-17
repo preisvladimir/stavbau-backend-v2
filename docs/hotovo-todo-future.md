@@ -340,3 +340,15 @@
 ## 🔭 FUTURE
 - E-mail verifikace + autologin po potvrzení.
 - Contacts modul (napojení na členy přes `contact_id`).
+
+## 🛠 TODO – Sprint 2/2 (FE)
+- [ ] FE Registration Wizard (3 kroky): ARES → náhled/edit → owner+submit.
+- [ ] Validace (Zod): ico, company, address, owner, terms.
+- [ ] API vrstva: `api/companies.aresLookup`, `api/tenants.registerTenant`.
+- [ ] i18n cs/en (errors.*, validation.*, labels.*, steps.*).
+- [ ] Error mapping: 409 company.exists/user.email.exists, 400 validation, 429 rate limit.
+- [ ] UX: loading/disabled, retry, sessionStorage, a11y fokus.
+- [ ] Testy: RTL (unit/integration) + e2e (happy/duplicitní scénáře).
+
+## ✅ HOTOVO – 16. 9. 2025
+- Schválen a připraven FE Step Plan pro registraci (3 kroky) vč. DTO, validací, i18n, UX a test plánu.

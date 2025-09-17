@@ -34,6 +34,7 @@ public class CompanyService {
      */
     @Transactional(readOnly = true)
     public CompanyDto lookupByAres(String ico) {
+
         AresSubjectDto resp = aresService.fetchRaw(ico);
         if (resp == null) return null;
 
