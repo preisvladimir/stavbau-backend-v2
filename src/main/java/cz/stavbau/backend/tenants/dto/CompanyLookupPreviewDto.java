@@ -9,6 +9,7 @@ public record CompanyLookupPreviewDto(
         @Schema(example = "CZ12345678", nullable = true) String dic,
         @Schema(example = "Dagmar Horová") String name,
         @Schema(example = "101", description = "ARES/ROS legal form code", nullable = true) String legalFormCode,
+        String legalFormName,
         AddressDto address
 ) {
     @Schema(description = "Simple address shape for FE forms.")

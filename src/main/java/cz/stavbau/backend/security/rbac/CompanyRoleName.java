@@ -11,6 +11,7 @@ public enum CompanyRoleName {
     HR_MANAGER,
     AUDITOR_READONLY,
     INTEGRATION,
+    MEMBER,
     VIEWER,
     SUPERADMIN
 }

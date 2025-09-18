@@ -3,13 +3,18 @@ package cz.stavbau.backend.tenants.mapping;
 import cz.stavbau.backend.tenants.dto.CompanyDto;
 import cz.stavbau.backend.tenants.dto.CompanyLookupPreviewDto;
 import cz.stavbau.backend.tenants.dto.RegisteredAddressDto;
+import cz.stavbau.backend.tenants.ref.LegalFormRegistry;
 import org.springframework.stereotype.Component;
 
 @Component
 public class AresPreviewMapper {
+   private final LegalFormRegistry legalForms;
+   public AresPreviewMapper(LegalFormRegistry legalForms) { this.legalForms = legalForms; }
 
  public CompanyLookupPreviewDto toPreview(CompanyDto src) {
-             var addr = src.getSidlo();
+        var addr = src.getSidlo();
+        var legalFormCode = src.getPravniFormaCode();
+        var legalFormName = legalForms.resolve(legalFormCode).orElse(null);
         var previewAddress = new CompanyLookupPreviewDto.AddressDto(
                 buildStreet(addr),
                 safe(addr != null ? addr.getNazevObce() : null),
@@ -20,7 +25,8 @@ public class AresPreviewMapper {
                 safe(src.getIco()),
                 null, // ARES spolehlivě DIČ nedává → FE vyplní/změní ručně
                 safe(src.getObchodniJmeno()),
-                safe(src.getPravniFormaCode()),
+                safe(legalFormCode),
+                safe(legalFormName),
                 previewAddress
         );
     }
