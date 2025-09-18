@@ -352,3 +352,10 @@
 
 ## ✅ HOTOVO – 16. 9. 2025
 - Schválen a připraven FE Step Plan pro registraci (3 kroky) vč. DTO, validací, i18n, UX a test plánu.
+
+### 18. 9. 2025 — Team (Company Members) — BE skeleton
+- **Přidáno:** TeamMembersController (POST/GET/PATCH/DELETE skeleton), DTO (`CreateMemberRequest`, `UpdateMemberRequest`, `MemberDto`, `MemberListResponse`), `TeamService` + `TeamServiceImpl` (stubs), `MemberMapper` (stub), WebMvcTest stub.
+- **Security:** RBAC scopy a companyId guard **zatím ne** (půjde do PR 3/N).
+- **i18n:** Seed klíče v `errors_cs/en`.
+- **Swagger:** Tag `Team` + základní operace.
+- **Dopad:** Bez DB změn; CI zelené.
