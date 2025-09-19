@@ -359,3 +359,17 @@
 - **i18n:** Seed klíče v `errors_cs/en`.
 - **Swagger:** Tag `Team` + základní operace.
 - **Dopad:** Bez DB změn; CI zelené.
+
+## ✅ HOTOVO (19. 9. 2025)
+- Zavedeno jednotné i18n API: `cz.stavbau.backend.common.i18n.Messages`.
+- Zavedena hierarchie doménových výjimek: `DomainException`, `ConflictException`.
+- Refactor `CompanyRegistrationServiceImpl` na `Messages` + `ConflictException`.
+- Doplněny základní unit testy pro `Messages`.
+
+## 📌 TODO
+- Projít ostatní služby a nahradit lokální `msg()` + vnořené výjimky.
+- Rozšířit `ApiExceptionHandler` o jednotné mapování všech `DomainException` s RFC7807.
+- (Volitelné) Zavést `ErrorCode` enum a metodu `messages.msg(ErrorCode, args...)`.
+
+## 💡 FUTURE
+- Centralizovat validační kódy do `validation.properties` a sjednotit klíče napříč moduly.
