@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.OffsetDateTime;
 import java.util.UUID;
 @Getter
 @Setter
@@ -32,5 +33,15 @@ public class User extends BaseEntity {
     /** Aktuálně platný refresh token (jti). */
     @Column(name = "refresh_token_id")
     private UUID refreshTokenId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "state", nullable = false, length = 16)
+    private UserState state = UserState.ACTIVE;
+
+    @Column(name = "password_needs_reset", nullable = false)
+    private boolean passwordNeedsReset = false;
+
+    @Column(name = "invited_at")
+    private OffsetDateTime invitedAt;
 
 }

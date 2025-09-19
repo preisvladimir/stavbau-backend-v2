@@ -13,6 +13,10 @@ import cz.stavbau.backend.tenants.repo.CompanyRepository;
 import cz.stavbau.backend.tenants.service.CompanyRegistrationService;
 import cz.stavbau.backend.users.model.User;
 import cz.stavbau.backend.users.repo.UserRepository;
+
+import cz.stavbau.backend.common.exception.ConflictException;
+import cz.stavbau.backend.common.i18n.Messages;
+
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
@@ -26,7 +30,7 @@ import java.util.Locale;
 @RequiredArgsConstructor
 public class CompanyRegistrationServiceImpl implements CompanyRegistrationService {
 
-    private final MessageSource messages;
+    private final Messages messages;
     private final CompanyRepository companyRepository;
     private final UserRepository userRepository;
     private final CompanyMemberRepository memberRepository;
@@ -35,26 +39,24 @@ public class CompanyRegistrationServiceImpl implements CompanyRegistrationServic
     @Override
     @Transactional
     public CompanyRegistrationResponse register(CompanyRegistrationRequest req) {
-        var locale = Locale.getDefault(); // v reálu čti z vašeho LocaleResolveru
 
-        // 1) Duplicitní ICO?
+        // 1) Duplicitní IČO?
         if (companyRepository.existsByIco(req.company().ico())) {
-            throw new ConflictException(msg("company.exists", locale));
+            throw new ConflictException(messages.msg("company.exists"));
         }
 
         // 2) Duplicitní e-mail (case-insensitive)?
         var email = req.owner().email().trim();
         if (userRepository.existsByEmailIgnoreCase(email)) {
-            throw new ConflictException(msg("user.email.exists", locale));
+            throw new ConflictException(messages.msg("user.email.exists"));
         }
 
         // 3) Company
         var c = new Company();
         c.setIco(req.company().ico());
-       // c.setDic(req.company().dic());
         c.setObchodniJmeno(req.company().name());
         c.setPravniFormaCode(req.company().legalFormCode());
-// bezpečně založ Sidlo
+
         var sidlo = (c.getSidlo() != null) ? c.getSidlo() : new RegisteredAddress();
         sidlo.setNazevUlice(req.company().address().street());
         sidlo.setNazevObce(req.company().address().city());
@@ -64,17 +66,17 @@ public class CompanyRegistrationServiceImpl implements CompanyRegistrationServic
 
         try { c = companyRepository.saveAndFlush(c); }
         catch (DataIntegrityViolationException ex) {
-            throw new ConflictException(msg("company.exists", locale));
+            throw new ConflictException(messages.msg("company.exists"), ex);
         }
 
-        // 4) User (Auth-only data + companyId)
+        // 4) User
         var u = new User();
         u.setEmail(email);
         u.setPasswordHash(passwordEncoder.encode(req.owner().password()));
         u.setCompanyId(c.getId());
         try { u = userRepository.saveAndFlush(u); }
         catch (DataIntegrityViolationException ex) {
-            throw new ConflictException(msg("user.email.exists", locale));
+            throw new ConflictException(messages.msg("user.email.exists"), ex);
         }
 
         // 5) Membership (OWNER)
@@ -85,14 +87,5 @@ public class CompanyRegistrationServiceImpl implements CompanyRegistrationServic
         memberRepository.save(m);
 
         return CompanyRegistrationResponse.created(c.getId(), u.getId());
-    }
-
-    private String msg(String code, Locale locale) {
-        return messages.getMessage(code, null, code, locale);
-    }
-
-    // Jednoduchá doménová výjimka pro 409 (ApiExceptionHandler ji zmapuje na RFC7807)
-    public static class ConflictException extends RuntimeException {
-        public ConflictException(String message) { super(message); }
     }
 }
