@@ -44,6 +44,7 @@ public final class Scopes {
 
     // Team – výběr
     public static final String TEAM_READ       = "team:read";
+    public static final String TEAM_WRITE      = "team:write";
     public static final String TEAM_ADD        = "team:add";
     public static final String TEAM_REMOVE     = "team:remove";
     public static final String TEAM_UPDATE_ROLE= "team:update_role";
