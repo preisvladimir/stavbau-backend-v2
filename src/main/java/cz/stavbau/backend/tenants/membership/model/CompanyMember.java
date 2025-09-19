@@ -27,4 +27,14 @@ public class CompanyMember extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false, length = 32)
     private CompanyRoleName role;
+
+    @Column(name = "first_name", length = 100)
+    private String firstName;
+
+    @Column(name = "last_name", length = 100)
+    private String lastName;
+
+    @Column(name = "phone", length = 40)
+    private String phone;
+
 }

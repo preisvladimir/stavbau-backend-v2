@@ -12,10 +12,15 @@ public interface MemberMapper {
     @Mapping(target = "memberId", source = "member.id")
     @Mapping(target = "userId",   source = "user.id")
     @Mapping(target = "email",    source = "user.email")
+
+    // role vracíme jako skutečnou company roli (OWNER/COMPANY_ADMIN/VIEWER…)
     @Mapping(target = "role",     expression = "java(member.getCompanyRole().name())")
-    @Mapping(target = "firstName", source = "user.firstName")
-    @Mapping(target = "lastName",  source = "user.lastName")
-    @Mapping(target = "phone",     source = "user.phone")
+
+    // ↓ změna: bereme z CompanyMember (User to nemá mít)
+    @Mapping(target = "firstName", source = "member.firstName")
+    @Mapping(target = "lastName",  source = "member.lastName")
+    @Mapping(target = "phone",     source = "member.phone")
+
     @Mapping(target = "status",    source = "status")
     MemberDto toDto(User user, CompanyMember member, String status);
 }
