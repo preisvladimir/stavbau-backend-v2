@@ -373,3 +373,14 @@
 
 ## 💡 FUTURE
 - Centralizovat validační kódy do `validation.properties` a sjednotit klíče napříč moduly.
+
+### 19. 9. 2025 — Team (Company Members) — PR 2B (BE service)
+
+- **Implementováno:** `TeamServiceImpl` (add/list/update/remove) + lokální helpery (normalizeEmail/validateEmail/requireTeamRole) + mapování **TeamRole→CompanyRoleName** (`ADMIN→COMPANY_ADMIN`, `MEMBER→VIEWER`).
+- **Invite flow (MVP):** nový uživatel se zakládá se `state=INVITED`, `passwordNeedsReset=true`, `invitedAt=now()`, `passwordHash=BCrypt(random)`. `MemberDto.status` je odvozený (`INVITED|CREATED`).
+- **Mapper:** `MemberMapper` čte jméno/telefon z `CompanyMember` (`firstName/lastName/phone`).
+- **Guardy & konflikty:** 403 `errors.forbidden.company.mismatch` (companyId mismatch), 403 `errors.owner.last_owner_forbidden` (zákaz změny/odebrání OWNERa), 409 `member.exists`, 409 `user.assigned_to_other_company`, 404 `errors.not.found.member`.
+- **i18n:** doplněno `errors.forbidden.company.mismatch` (cs/en) a `errors.validation.role.invalid`.
+- **Security:** RBAC scopy `team:read|write` a controller guard na `{companyId}` budou řešené v **PR 3/N** (žádná změna `SecurityConfig` v tomto PR).
+- **DB:** bez změn schématu; pokud chyběly sloupce `first_name/last_name/phone` u `company_members`, doplněn minor patch `V2025_09_19_002__company_member_contact_fields.sql`.
+- **CI:** unit testy (invited flow, user v jiné firmě, OWNER guard) — **zelené**.
