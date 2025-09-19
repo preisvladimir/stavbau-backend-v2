@@ -14,7 +14,7 @@ public interface MemberMapper {
     @Mapping(target = "email",    source = "user.email")
 
     // role vracíme jako skutečnou company roli (OWNER/COMPANY_ADMIN/VIEWER…)
-    @Mapping(target = "role",     expression = "java(member.getCompanyRole().name())")
+    @Mapping(target = "role",     expression = "java(member.getRole().name())")
 
     // ↓ změna: bereme z CompanyMember (User to nemá mít)
     @Mapping(target = "firstName", source = "member.firstName")
