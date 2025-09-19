@@ -11,6 +11,5 @@ public interface CompanyMemberRepository extends JpaRepository<CompanyMember, UU
     boolean existsByCompanyIdAndRole(UUID companyId, CompanyRoleName role);
     boolean existsByCompanyIdAndUserId(UUID companyId, UUID userId);
     List<CompanyMember> findByCompanyId(UUID companyId);
-    long countByCompanyIdAndCompanyRole(UUID companyId, CompanyRoleName role);
     long countByCompanyIdAndRole(UUID companyId, CompanyRoleName role);
 }

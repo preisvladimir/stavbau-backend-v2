@@ -1,80 +1,113 @@
 package cz.stavbau.backend.team.api;
 
+import cz.stavbau.backend.common.exception.ForbiddenException;
+import cz.stavbau.backend.common.i18n.Messages;
+import cz.stavbau.backend.security.AppUserPrincipal; // <- dle tvého projektu
+import cz.stavbau.backend.security.rbac.Scopes;
 import cz.stavbau.backend.team.api.dto.*;
 import cz.stavbau.backend.team.service.TeamService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.responses.*;
-import io.swagger.v3.oas.annotations.media.*;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
-@Validated
 @RestController
 @RequestMapping("/api/v1/tenants/{companyId}/members")
 @Tag(name = "Team", description = "Správa členů firmy (Team / Company Members)")
+@RequiredArgsConstructor
 public class TeamMembersController {
 
     private final TeamService teamService;
+    private final Messages messages;
 
-    public TeamMembersController(TeamService teamService) {
-        this.teamService = teamService;
+    // -- helpers --
+
+    private void assertCompanyContext(UUID companyId, AppUserPrincipal principal) {
+        if (principal == null || principal.getCompanyId() == null || !companyId.equals(principal.getCompanyId())) {
+            throw new ForbiddenException(messages.msg("errors.forbidden.company.mismatch"));
+        }
     }
+
+    // Pokud chceš být 100% tolerantní k typu, můžeš nechat i tuto variantu:
+     private void assertCompanyContext(UUID companyId, Object principal) {
+        if (principal instanceof AppUserPrincipal p && p.getCompanyId() != null && companyId.equals(p.getCompanyId())) {
+             return;
+         }
+         throw new ForbiddenException(messages.msg("errors.forbidden.company.mismatch"));
+    }
+
+    // -- endpoints --
 
     @Operation(summary = "Přidat člena firmy (ADMIN/MEMBER)")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Member created",
-                    content = @Content(schema = @Schema(implementation = MemberDto.class))),
+                         content = @Content(schema = @Schema(implementation = MemberDto.class))),
             @ApiResponse(responseCode = "400", description = "Validation error"),
-            @ApiResponse(responseCode = "403", description = "Forbidden (companyId mismatch / no scope)"),
+            @ApiResponse(responseCode = "403", description = "Forbidden (companyId mismatch / missing scope)"),
             @ApiResponse(responseCode = "409", description = "Conflict (member exists / user assigned to other company)")
     })
     @PostMapping
+    @PreAuthorize("@rbac.hasScope('" + Scopes.TEAM_WRITE + "')")
     public ResponseEntity<MemberDto> addMember(
             @PathVariable("companyId") UUID companyId,
-            @Valid @RequestBody CreateMemberRequest req
+            @Valid @RequestBody CreateMemberRequest req,
+            @AuthenticationPrincipal AppUserPrincipal principal
     ) {
-        // RBAC + companyId guard přidáme v PR 3/N
-        MemberDto created = teamService.addMember(companyId, req);
+        assertCompanyContext(companyId, principal);
+        var created = teamService.addMember(companyId, req);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @Operation(summary = "Seznam členů firmy")
     @GetMapping
+    @PreAuthorize("@rbac.hasScope('" + Scopes.TEAM_READ + "')")
     public ResponseEntity<MemberListResponse> listMembers(
-            @PathVariable("companyId") UUID companyId
+            @PathVariable("companyId") UUID companyId,
+            @AuthenticationPrincipal AppUserPrincipal principal
     ) {
-        MemberListResponse list = teamService.listMembers(companyId);
+        assertCompanyContext(companyId, principal);
+        var list = teamService.listMembers(companyId);
         return ResponseEntity.ok(list);
     }
 
     @Operation(summary = "Změna role člena (ADMIN↔MEMBER)")
     @PatchMapping("/{memberId}")
+    @PreAuthorize("@rbac.hasScope('" + Scopes.TEAM_WRITE + "')")
     public ResponseEntity<MemberDto> updateRole(
             @PathVariable("companyId") UUID companyId,
             @PathVariable("memberId") UUID memberId,
-            @Valid @RequestBody UpdateMemberRequest req
+            @Valid @RequestBody UpdateMemberRequest req,
+            @AuthenticationPrincipal AppUserPrincipal principal
     ) {
-        MemberDto updated = teamService.updateRole(companyId, memberId, req);
+        assertCompanyContext(companyId, principal);
+        var updated = teamService.updateRole(companyId, memberId, req);
         return ResponseEntity.ok(updated);
     }
 
     @Operation(summary = "Odebrat člena")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Deleted"),
-            @ApiResponse(responseCode = "403", description = "Forbidden (last OWNER)"),
+            @ApiResponse(responseCode = "403", description = "Forbidden (last OWNER / mismatch / missing scope)"),
             @ApiResponse(responseCode = "404", description = "Member not found")
     })
     @DeleteMapping("/{memberId}")
+    @PreAuthorize("@rbac.hasScope('" + Scopes.TEAM_WRITE + "')")
     public ResponseEntity<Void> deleteMember(
             @PathVariable("companyId") UUID companyId,
-            @PathVariable("memberId") UUID memberId
+            @PathVariable("memberId") UUID memberId,
+            @AuthenticationPrincipal AppUserPrincipal principal
     ) {
+        assertCompanyContext(companyId, principal);
         teamService.removeMember(companyId, memberId);
         return ResponseEntity.noContent().build();
     }
