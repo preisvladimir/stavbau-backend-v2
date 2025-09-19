@@ -384,3 +384,63 @@
 - **Security:** RBAC scopy `team:read|write` a controller guard na `{companyId}` budou řešené v **PR 3/N** (žádná změna `SecurityConfig` v tomto PR).
 - **DB:** bez změn schématu; pokud chyběly sloupce `first_name/last_name/phone` u `company_members`, doplněn minor patch `V2025_09_19_002__company_member_contact_fields.sql`.
 - **CI:** unit testy (invited flow, user v jiné firmě, OWNER guard) — **zelené**.
+
+### 20. 9. 2025 — Sprint 2/1: Team (Company Members) — checkpoint
+
+**Hotovo (BE)**
+- PR 2A: Přidán stav uživatele a invite flagy
+    - `users.state (INVITED|ACTIVE|DISABLED|LOCKED)`, `users.password_needs_reset`, `users.invited_at`.
+    - `User` rozšířen o nové fieldy; JPA smoke test OK.
+- PR 2B: Implementována business logika TeamService
+    - `TeamServiceImpl` (add/list/update/remove), lokální helpery (normalizeEmail/validateEmail/requireTeamRole, generateRandomSecret).
+    - Mapování **TeamRole → CompanyRoleName** (`ADMIN→COMPANY_ADMIN`, `MEMBER→VIEWER`).
+    - Guardy a konflikty: `member.exists`, `user.assigned_to_other_company`, `errors.owner.last_owner_forbidden`, `errors.not.found.member`.
+    - `MemberMapper` čte `firstName/lastName/phone` z `CompanyMember`.
+    - (Pokud chybělo) mikro migrace `company_members.{first_name,last_name,phone}` doplněna.
+- PR 3: Controller + RBAC + companyId guard
+    - `TeamMembersController` (POST/GET/PATCH/DELETE) + `@PreAuthorize` (`team:read|team:write`).
+    - `BuiltInRoles`: OWNER/COMPANY_ADMIN → read+write; VIEWER/AUDITOR_READONLY → read.
+    - Company guard: path `{companyId}` vs principal.companyId (přes `@AuthenticationPrincipal`).
+    - Swagger: sekce **Team** viditelná a běží.
+    - Drobné výjimky: `NotFoundException`, `ForbiddenException` doplněny.
+    - Oprava utilu/varianty pro `currentCompanyId()` (Optional nebo obalení v controlleru).
+
+**Hotovo (i18n & errors)**
+- Přidány/ujasněny klíče:
+    - `errors.forbidden.company.mismatch` (cs/en),
+    - `errors.validation.role.invalid`,
+    - re-use: `errors.member.exists`, `errors.user.assigned_to_other_company`, `errors.owner.last_owner_forbidden`, `errors.not.found.member`, `errors.validation.email`.
+
+**Hotovo (FE příprava)**
+- Vyjasněna integrace FE skeletonu (PR 4/N) bez duplicit: použít `lib/api/client.ts`, sdílené typy v `lib/api/types.ts`.
+- Připraven prompt pro nové vlákno: **PR 4/N — FE skeleton: Team** (route `/app/team`, TeamPage, TeamService nad existujícím klientem, i18n, msw, smoke test).
+
+**Dopad na security**
+- Aktivní scopy `team:read|team:write` + přiřazení k rolím v `BuiltInRoles`.
+- CompanyId guard na všech Team endpointech (403 při mismatch).
+- Rate-limit zatím **neaktivován** pro tyto endpointy (viz TODO).
+
+---
+
+**TODO (nejbližší)**
+- **PR 3a:** zapnout rate-limit (např. 5/min) pro `POST /members` a `DELETE /members/{memberId}`; i18n `errors.rate.limit` + RFC7807 mapping na 429.
+- **PR 4/N (FE skeleton):**
+    - Route `/app/team` s `ProtectedRoute` + `ScopeGuard(['team:read'])`.
+    - `TeamService` **nad** `lib/api/client.ts` (žádný nový Axios klient).
+    - Typy **do** `lib/api/types.ts` (TeamRole, MemberDto, MemberListResponse, Create/UpdateMemberRequest).
+    - `TeamPage` (tabulka, loading/empty/error).
+    - i18n `team.json` (cs/en) + připojení do initu.
+    - MSW handler GET (prázdný seznam) + smoke test.
+- **PR 5/N (FE actions):** Add member (modal), Change role, Remove (confirm), error mapping (RFC7807→i18n), MSW pro POST/PATCH/DELETE, testy (unit + msw).
+- **PR 6/N (E2E):** základní e2e scénář (login → /app/team → add → change role → remove), CI job.
+
+**Future (po MVP)**
+- Invite e-mail flow: invitation token + expirace, resend, aktivace účtu (endpoint), audit.
+- Paging/sorting pro `GET /members` + filtr role.
+- Konsolidace ProblemDetails (stálý `code` na BE, sdílený FE mapper).
+- Audit log rozšířit (structured logging, korelace, metriky).
+- Přechod na **contacts/**: `company_members.contact_id` + přesun osobních údajů (zpětně kompatibilní mapper).
+- Rozšíření RBAC (jemné scopy `team:add|remove|update_role` pro PRO tarif).
+- Swagger: doplnit příklady request/response (201/409/403/404/429) a kódy chyb.
+
+
