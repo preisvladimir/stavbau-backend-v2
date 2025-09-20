@@ -2,6 +2,8 @@ package cz.stavbau.backend.security;
 
 import cz.stavbau.backend.security.rbac.CompanyRoleName;
 import cz.stavbau.backend.security.rbac.ProjectRoleAssignment;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.Serializable;
 import java.util.*;
@@ -10,12 +12,17 @@ import java.util.*;
  * Principal nesený v SecurityContextu.
  * Jediný zdroj pravdy pro FE toggly (role/scopes) a tenancy (companyId).
  */
+@Getter
 public class AppUserPrincipal implements Serializable {
 
+    @Setter
     private UUID userId;
+    @Setter
     private UUID companyId;
+    @Setter
     private String email;
 
+    @Setter
     private CompanyRoleName companyRole;                 // může být null
     private List<ProjectRoleAssignment> projectRoles;    // může být prázdné
     private Set<String> scopes;                          // může být prázdné
@@ -37,24 +44,10 @@ public class AppUserPrincipal implements Serializable {
         this.scopes = scopes != null ? Set.copyOf(scopes) : Set.of();
     }
 
-    public UUID getUserId() { return userId; }
-    public void setUserId(UUID userId) { this.userId = userId; }
-
-    public UUID getCompanyId() { return companyId; }
-    public void setCompanyId(UUID companyId) { this.companyId = companyId; }
-
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-
-    public CompanyRoleName getCompanyRole() { return companyRole; }
-    public void setCompanyRole(CompanyRoleName companyRole) { this.companyRole = companyRole; }
-
-    public List<ProjectRoleAssignment> getProjectRoles() { return projectRoles; }
     public void setProjectRoles(List<ProjectRoleAssignment> projectRoles) {
         this.projectRoles = projectRoles != null ? List.copyOf(projectRoles) : List.of();
     }
 
-    public Set<String> getScopes() { return scopes; }
     public void setScopes(Set<String> scopes) { this.scopes = scopes != null ? Set.copyOf(scopes) : Set.of(); }
 
     // Pohodlné helpers (může využít RbacService)

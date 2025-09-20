@@ -1,6 +1,8 @@
 package cz.stavbau.backend.security.rbac;
 
 import java.util.*;
+
+import static cz.stavbau.backend.security.rbac.Scopes.*;
 import static java.util.Map.entry;
 
 /**
@@ -11,18 +13,23 @@ public final class BuiltInRoles {
 
     private BuiltInRoles() {}
 
-    // --- Scopes z jiných modulů (ponecháváme zde jako jednoduché konstanty) ---
-    public static final Set<String> INVOICE_SCOPES = Set.of(
-            "invoices:read","invoices:write","invoices:delete","invoices:export"
-    );
-    public static final Set<String> FILE_SCOPES = Set.of(
-            "files:read","files:write","files:delete","files:tag"
-    );
-
     // --- Team (MVP) – agregované scopy ---
-    private static final Set<String> TEAM_RW = Set.of(Scopes.TEAM_READ, Scopes.TEAM_WRITE);
-    private static final Set<String> TEAM_R  = Set.of(Scopes.TEAM_READ);
+    // POZN.: v Scopes nemáme TEAM_WRITE; "write" znamená add/remove/update_role.
+    private static final Set<String> TEAM_RW = Set.of(TEAM_READ, TEAM_ADD, TEAM_REMOVE, TEAM_UPDATE_ROLE);
+    private static final Set<String> TEAM_R  = Set.of(TEAM_READ);
 
+    // Základní „admin“ balík – jak jsme měli dříve (můžeš zúžit podle potřeby)
+    private static final Set<String> ADMINISTRATION_BASE = Set.of(
+            DASHBOARD_VIEW,
+            PROJECTS_READ, PROJECTS_CREATE, PROJECTS_UPDATE, PROJECTS_DELETE, PROJECTS_ARCHIVE, PROJECTS_ASSIGN,
+            LOGBOOK_READ, LOGBOOK_CREATE, LOGBOOK_UPDATE, LOGBOOK_DELETE, LOGBOOK_EXPORT,
+            BUDGET_READ, BUDGET_CREATE, BUDGET_UPDATE, BUDGET_DELETE, BUDGET_APPROVE, BUDGET_EXPORT,
+            FILES_READ, FILES_UPLOAD, FILES_UPDATE, FILES_DELETE, FILES_DOWNLOAD, FILES_SHARE,
+            TEAM_READ, TEAM_ADD, TEAM_REMOVE, TEAM_UPDATE_ROLE,
+            ADMIN_USERS_READ, ADMIN_USERS_MANAGE, INTEGRATIONS_MANAGE
+    );
+
+    @SafeVarargs
     private static Set<String> union(Set<String>... sets) {
         Set<String> out = new HashSet<>();
         for (Set<String> s : sets) out.addAll(s);
@@ -31,32 +38,26 @@ public final class BuiltInRoles {
 
     /** Company role → scopes (MVP). */
     public static final Map<CompanyRoleName, Set<String>> COMPANY_ROLE_SCOPES = Map.ofEntries(
-            // OWNER: vše z admina + team:* (MVP = read+write). Viz RBAC 2.1 „OWNER → vše + team:*“. :contentReference[oaicite:1]{index=1}
-            entry(CompanyRoleName.OWNER, union(TEAM_RW /*, další company/global scopy dle potřeby */)),
-
-            // COMPANY_ADMIN: team:* (MVP = read+write). :contentReference[oaicite:2]{index=2}
-            entry(CompanyRoleName.COMPANY_ADMIN, TEAM_RW),
-
-            // VIEWER: read-only (včetně team:read). :contentReference[oaicite:3]{index=3}
-            entry(CompanyRoleName.VIEWER, TEAM_R),
-
-            // AUDITOR_READONLY: *:read – v MVP explicitně přidáme team:read. :contentReference[oaicite:4]{index=4}
+            entry(CompanyRoleName.SUPERADMIN,  union(ADMINISTRATION_BASE)),
+            entry(CompanyRoleName.OWNER,       union(ADMINISTRATION_BASE)),
+            // Pokud chceš mít COMPANY_ADMIN omezenější než OWNER, zúžím: např. bez BUDGET_APPROVE / ADMIN_USERS_MANAGE
+            entry(CompanyRoleName.COMPANY_ADMIN, union(ADMINISTRATION_BASE)),
+            // Lehká váha – jen teamové operace (MVP varianta)
+            entry(CompanyRoleName.HR_MANAGER,  TEAM_RW),
             entry(CompanyRoleName.AUDITOR_READONLY, TEAM_R),
+            entry(CompanyRoleName.VIEWER,      TEAM_R),
 
-            // Ostatní role zatím bez team pravomocí v MVP:
-            entry(CompanyRoleName.ACCOUNTANT, Set.of()),
-            entry(CompanyRoleName.PURCHASING, Set.of()),
+            // Ostatní role – zatím bez team pravomocí v MVP (necháváme prázdné sety, ať je to explicitní)
+            entry(CompanyRoleName.ACCOUNTANT,  Set.of()),
+            entry(CompanyRoleName.PURCHASING,  Set.of()),
             entry(CompanyRoleName.DOC_CONTROLLER, Set.of()),
-            entry(CompanyRoleName.FLEET_MANAGER, Set.of()),
-            entry(CompanyRoleName.HR_MANAGER, Set.of()),
+            entry(CompanyRoleName.FLEET_MANAGER,  Set.of()),
             entry(CompanyRoleName.INTEGRATION, Set.of()),
-            entry(CompanyRoleName.MEMBER, Set.of()),
-            // SUPERADMIN – provozní all-access; v MVP necháme prázdné a řešíme separátně v SecurityConfig. :contentReference[oaicite:5]{index=5}
-            entry(CompanyRoleName.SUPERADMIN, Set.of())
+            // POZN.: pokud v enumu nemáš MEMBER a používáme MANAGER, změň to na MANAGER:
+            // entry(CompanyRoleName.MANAGER, Set.of())
+            entry(CompanyRoleName.MANAGER, Set.of())
     );
 
-    /** Project role → scopes (připravíme pro Sprint 3 – zatím prázdné). */
-    public static final Map<ProjectRoleName, Set<String>> PROJECT_ROLE_SCOPES = Map.of(
-            // bude doplněno v kroku se zavedením Project/ProjectMember
-    );
+    /** Project role → scopes (Sprint 3; zatím prázdné). */
+    public static final Map<ProjectRoleName, Set<String>> PROJECT_ROLE_SCOPES = Map.of();
 }

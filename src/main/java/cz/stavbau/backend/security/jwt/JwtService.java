@@ -29,6 +29,8 @@ public class JwtService {
     private final String issuer;
     private final long accessTtlSeconds;
     private final long refreshTtlSeconds;
+    /** Feature flag: zda přidávat RBAC claimy (companyRole, projectRoles, scopes). */
+    private final boolean rbacClaimsEnabled;
 
     // === Claim keys (stabilní názvy pro FE/BE integraci) ===
     /** Company (tenant) UUID (string). */
@@ -42,16 +44,23 @@ public class JwtService {
     /** Scopes (array of strings "area:action"). */
     public static final String CLAIM_SCOPES        = "scopes";
 
+
     public JwtService(
             @Value("${app.security.jwt.secret}") String secret,
             @Value("${app.security.jwt.issuer:stavbau}") String issuer,
             @Value("${app.security.jwt.accessTokenTtlMinutes:30}") long accessTtlMinutes,
-            @Value("${app.security.jwt.refreshTokenTtlDays:14}") long refreshTtlDays
+            @Value("${app.security.jwt.refreshTokenTtlDays:14}") long refreshTtlDays,
+            @Value("${app.security.jwt.rbacClaimsEnabled:true}") boolean rbacClaimsEnabled
     ) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.issuer = issuer;
         this.accessTtlSeconds = accessTtlMinutes * 60;
         this.refreshTtlSeconds = refreshTtlDays * 24 * 60 * 60;
+        this.rbacClaimsEnabled = rbacClaimsEnabled;
+    }
+
+    public boolean isRbacClaimsEnabled() {
+        return rbacClaimsEnabled;
     }
 
     /**

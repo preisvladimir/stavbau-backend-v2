@@ -6,6 +6,7 @@ public enum CompanyRoleName {
     COMPANY_ADMIN,
     ACCOUNTANT,
     PURCHASING,
+    MANAGER,
     DOC_CONTROLLER,
     FLEET_MANAGER,
     HR_MANAGER,
@@ -13,5 +14,6 @@ public enum CompanyRoleName {
     INTEGRATION,
     MEMBER,
     VIEWER,
-    SUPERADMIN
+    SUPERADMIN;
+
 }
