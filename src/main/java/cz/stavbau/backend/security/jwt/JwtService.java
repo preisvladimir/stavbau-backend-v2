@@ -2,6 +2,7 @@ package cz.stavbau.backend.security.jwt;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +31,7 @@ public class JwtService {
     private final long accessTtlSeconds;
     private final long refreshTtlSeconds;
     /** Feature flag: zda přidávat RBAC claimy (companyRole, projectRoles, scopes). */
+    @Getter
     private final boolean rbacClaimsEnabled;
 
     // === Claim keys (stabilní názvy pro FE/BE integraci) ===
@@ -57,10 +59,6 @@ public class JwtService {
         this.accessTtlSeconds = accessTtlMinutes * 60;
         this.refreshTtlSeconds = refreshTtlDays * 24 * 60 * 60;
         this.rbacClaimsEnabled = rbacClaimsEnabled;
-    }
-
-    public boolean isRbacClaimsEnabled() {
-        return rbacClaimsEnabled;
     }
 
     /**

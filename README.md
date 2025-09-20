@@ -18,6 +18,7 @@ Cílem je vytvořit udržitelnou, profesionální a rozšiřitelnou SaaS platfor
 
 Veškerá projektová dokumentace se nachází ve složce [`/docs`](./docs):
 
+- [Pokyny pro ChatGPT](./docs/POKYNY_CHATGPT.md)
 - [STAVBAU_GUIDELINES.md](./docs/STAVBAU_GUIDELINES.md) – hlavní pravidla, workflow, governance, mindset, checklist
 - [REPO_GUIDELINES.md](./docs/REPO_GUIDELINES.md) – pravidla pro GitHub (PR/CI/labels/CODEOWNERS, governance)
 - [STAVBAU_TEMPLATES.md](./docs/STAVBAU_TEMPLATES.md) – šablony Commit + Step Plan

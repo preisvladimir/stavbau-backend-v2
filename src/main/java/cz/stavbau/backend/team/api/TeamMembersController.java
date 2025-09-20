@@ -70,7 +70,7 @@ public class TeamMembersController {
 
     @Operation(summary = "Seznam členů firmy")
     @GetMapping
-    @PreAuthorize("@rbac.hasScope('" + Scopes.TEAM_READ + "')")
+    //@PreAuthorize("@rbac.hasScope('" + Scopes.TEAM_READ + "')")
     public ResponseEntity<MemberListResponse> listMembers(
             @PathVariable("companyId") UUID companyId,
             @AuthenticationPrincipal AppUserPrincipal principal

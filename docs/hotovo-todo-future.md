@@ -459,3 +459,42 @@
 - **Docs:** Doplněn odstavec o konvenci ID (UUID pouze `id`) do `STAVBAU_GUIDELINES.md`.
 - **OpenAPI:** Snippet `/auth/me` aktualizován – `id`, `companyId`, `companyRole`, `projectRoles[]`, `scopes[]`.
 - **Dopad:** Konsolidace ID konvencí pro všechny entity a DTO → do budoucna nebude nutný rework.
+
+### 21. 9. 2025 — RBAC & AuthService refactor
+
+- **RBAC rozšíření**
+    - Přidány jemné scopy `team:add`, `team:remove`, `team:update_role`.
+    - Rozšířen `BuiltInRoles.COMPANY_ROLE_SCOPES` podle návrhu z `RBAC_2.1_STAVBAU_V2.md`.
+    - `/auth/me` nyní vrací i `companyRole`, `projectRoles[]`, `scopes[]`.
+
+- **AuthController → AuthService**
+    - Vytvořena servisní třída `AuthService` (metody `login`, `refresh`, `logout`, `buildMeResponse`).
+    - Controller refaktorován na tenkou vrstvu – pouze deleguje na `AuthService`.
+    - Zavedeno DTO `RefreshResponse` pro konzistentní odpověď `/auth/refresh`.
+    - Návratové typy z `AuthService` refaktorovány: místo celého `Set-Cookie` header stringu vrací čistý `cookieValue` a DTO (`AuthResponse` / `RefreshResponse`).
+    - V `AuthController` tím odpadl hack se `substring("Set-Cookie: ".length())`.
+
+- **Konzistence ID**
+    - Zavedena konvence: všechny entity dědí z `BaseEntity` (`id: UUID`).
+    - Upraveno `MeResponse` a `AuthController` – FE dostává jednotně pole `id`.
+    - Doplněna dokumentace do `STAVBAU_GUIDELINES.md` + snippet do `openapi.yml`.
+
+---
+
+## 🔜 TODO (další sprint)
+
+- **Testy**
+    - Unit testy: `BuiltInRolesTest`, `AuthServiceTest` (happy path login/refresh, 401 při špatném hesle, 403 při scope chybě).
+    - Slice testy: `@WebMvcTest` pro `AuthController` (`/login`, `/refresh`, `/me`).
+    - Integrační testy: end-to-end login → refresh → přístup k chráněnému endpointu.
+
+- **i18n**
+    - Přidat klíče `auth.invalid_credentials`, `auth.refresh_revoked`, `auth.forbidden_missing_scope`.
+
+---
+
+## 💡 FUTURE
+
+- Migrace RBAC do DB (`role_definitions`, `scope_definitions`, `role_scopes`).
+- FE hooky: `useHasScope(scope)`, `ScopeGuard`.
+- Admin UI pro správu rolí a scopes.
