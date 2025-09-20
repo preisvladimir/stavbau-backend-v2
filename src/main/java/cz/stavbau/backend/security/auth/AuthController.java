@@ -112,6 +112,8 @@ public class AuthController {
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body(new AuthResponse(access, "Bearer"));
     }
+
+
     /** LOGIN: vydá access + nastaví HttpOnly refresh cookie (rotace jti). */
     @PostMapping("/loginnew")
     public ResponseEntity<AuthResponse> loginnew(@RequestBody LoginRequest req) {
