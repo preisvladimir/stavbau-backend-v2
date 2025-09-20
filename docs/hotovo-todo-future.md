@@ -452,7 +452,6 @@
 - **Docs:** Aktualizováno `RBAC_2.1_STAVBAU_V2.md` (scopes, mapping).
 - **Výsledek:** `/auth/me` vrací kompletní RBAC kontext; login je stabilní i při chybách v RBAC části (fail-safe fallback).
 
-
 ### 21. 9. 2025 — Konvence ID a /auth/me rozšíření
 
 - **BE:** Upraveno `MeResponse` (pole `id` místo `userId`) a příslušný controller.
@@ -478,6 +477,36 @@
     - Zavedena konvence: všechny entity dědí z `BaseEntity` (`id: UUID`).
     - Upraveno `MeResponse` a `AuthController` – FE dostává jednotně pole `id`.
     - Doplněna dokumentace do `STAVBAU_GUIDELINES.md` + snippet do `openapi.yml`.
+
+## 2025-09-21 — PR 4/N — FE skeleton: Team / Company Members
+
+### HOTOVO
+- **Router:** přidána chráněná route `/app/team` (ProtectedRoute + ScopeGuard `required=['team:read']`, bez nové router instance).
+- **TeamPage:** skeleton (stavy `loading / empty / error`, tabulka: *E-mail*, *Role* — company role z BE, *Jméno*, *Telefon*); čtení `companyId` z Auth (`useAuthContext`).
+- **API typy (centrálně):** `lib/api/types.ts` rozšířeno o `TeamRole`, `CompanyRole`, `MemberDto`, `MemberListResponse`, `CreateMemberRequest`, `UpdateMemberRequest`.
+- **TeamService:** `features/team/api/team.service.ts` (pouze existující `lib/api/client.ts`; metody `list/add/update/remove`; normalizace `memberId → id`; guard na `cancel`/`abort`; sdílené mapování chyb).
+- **Sdílené mapování chyb:** `lib/api/problem.ts` (`toApiProblem`, `ApiError`, `mapAndThrow`) a zapojení v TeamService.
+- **i18n:** přidán namespace `team` (cs/en) + registrace v `src/i18n/index.ts`.
+- **MSW:** handler `GET /api/v1/tenants/:companyId/members` → `{ items: [] }`; agregace v `mocks/handlers`, worker v DEV, `setupTests.ts` pro Vitest.
+- **Testy:** smoke test `TeamPage` (render title „Tým“) s mock Auth (scopes `['team:read']`, `companyId`).
+
+### DoD / ověřeno
+- Build + testy + MSW **OK**; `/app/team` je chráněná a načte prázdný seznam.
+- **Bez nového Axios klienta** (použit `lib/api/client.ts`), typy jsou **centrálně** v `lib/api/types.ts`, error-mapper je **sdílený** v `lib/api/problem.ts`.
+- **Žádné duplicity** souborů vůči stávajícímu repo stavu.
+- Commity dle **Conventional Commits**, PR popis + štítky + **CODEOWNERS**.
+
+### TODO (PR 5/N)
+- Akce na TeamPage: **add/remove/update role** (scope `team:write`), formuláře a validace.
+- MSW + testy pro **POST/PATCH/DELETE**; zobrazení field-errors z BE.
+- i18n labely pro company role/status; UI badge pro `status`.
+- (Volitelně) mapování `CompanyRole → i18n` na jednom místě.
+
+### FUTURE
+- Paging/filtrace/řazení + hledání (email/jméno).
+- Detail člena + proklik na profil.
+- Contract testy FE/BE a E2E flow.
+- Výkon: virtualizace tabulky pro velké seznamy.
 
 ---
 
