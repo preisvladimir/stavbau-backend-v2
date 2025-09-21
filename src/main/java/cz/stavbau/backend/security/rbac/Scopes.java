@@ -47,6 +47,7 @@ public final class Scopes {
     public static final String TEAM_WRITE      = "team:write";
     public static final String TEAM_ADD        = "team:add";
     public static final String TEAM_REMOVE     = "team:remove";
+    public static final String TEAM_UPDATE     = "team:update";
     public static final String TEAM_UPDATE_ROLE= "team:update_role";
 
     // Admin / Integrations – výběr

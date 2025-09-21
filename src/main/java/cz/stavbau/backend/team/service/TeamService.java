@@ -7,6 +7,7 @@ import java.util.UUID;
 public interface TeamService {
     MemberDto addMember(UUID companyId, CreateMemberRequest req);
     MemberListResponse listMembers(UUID companyId);
-    MemberDto updateRole(UUID companyId, UUID memberId, UpdateMemberRequest req);
+    MemberDto updateProfile(UUID companyId, UUID memberId, UpdateMemberProfileRequest req);
+    MemberDto updateRole(UUID companyId, UUID memberId, UpdateMemberRoleRequest req);
     void removeMember(UUID companyId, UUID memberId);
 }

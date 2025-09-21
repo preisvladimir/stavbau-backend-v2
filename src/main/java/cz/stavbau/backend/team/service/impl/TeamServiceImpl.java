@@ -5,10 +5,7 @@ import cz.stavbau.backend.common.exception.ForbiddenException;
 import cz.stavbau.backend.common.exception.NotFoundException;
 import cz.stavbau.backend.common.i18n.Messages;
 import cz.stavbau.backend.security.rbac.CompanyRoleName;
-import cz.stavbau.backend.team.api.dto.CreateMemberRequest;
-import cz.stavbau.backend.team.api.dto.MemberDto;
-import cz.stavbau.backend.team.api.dto.MemberListResponse;
-import cz.stavbau.backend.team.api.dto.UpdateMemberRequest;
+import cz.stavbau.backend.team.api.dto.*;
 import cz.stavbau.backend.team.mapping.MemberMapper;
 import cz.stavbau.backend.team.model.TeamRole;
 import cz.stavbau.backend.team.service.TeamService;
@@ -118,7 +115,35 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     @Transactional
-    public MemberDto updateRole(UUID companyId, UUID memberId, UpdateMemberRequest req) {
+    public MemberDto updateProfile(UUID companyId, UUID memberId, UpdateMemberProfileRequest req) {
+        CompanyMember member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new NotFoundException(messages.msg("errors.not.found.member")));
+
+        // Guard: členství musí patřit do dané firmy
+        if (!companyId.equals(member.getCompanyId())) {
+            throw new ForbiddenException(messages.msg("errors.forbidden.company.mismatch"));
+        }
+
+        // Normalizace vstupů (trim → null)
+        String firstName = normalizeBlankToNull(req.firstName());
+        String lastName  = normalizeBlankToNull(req.lastName());
+        String phone     = normalizeBlankToNull(req.phone());
+
+        member.setFirstName(firstName);
+        member.setLastName(lastName);
+        member.setPhone(phone);
+        memberRepository.save(member);
+
+        User user = userRepository.findById(member.getUserId())
+                .orElseThrow(() -> new NotFoundException(messages.msg("errors.not.found.member")));
+
+        // Status držíme konzistentní s ostatními odpověďmi (např. "CREATED")
+        return memberMapper.toDto(user, member, "CREATED");
+    }
+
+    @Override
+    @Transactional
+    public MemberDto updateRole(UUID companyId, UUID memberId, UpdateMemberRoleRequest req) {
         CompanyMember member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new NotFoundException(messages.msg("errors.not.found.member")));
 
@@ -132,8 +157,7 @@ public class TeamServiceImpl implements TeamService {
             throw new ForbiddenException(messages.msg("errors.owner.last_owner_forbidden"));
         }
 
-        TeamRole teamRole = requireTeamRole(req.role());
-        CompanyRoleName newRole = mapTeamRoleToCompanyRole(teamRole);
+        CompanyRoleName newRole = companyRoleName(req.role());
 
         member.setRole(newRole);
         memberRepository.save(member);
@@ -193,9 +217,23 @@ public class TeamServiceImpl implements TeamService {
         }
     }
 
+    private CompanyRoleName companyRoleName(String raw) {
+        try {
+            return CompanyRoleName.valueOf(raw.trim().toUpperCase(Locale.ROOT));
+        } catch (Exception ex) {
+            throw new ValidationException(messages.msg("errors.validation.role.invalid"));
+        }
+    }
+
     private String generateRandomSecret() {
         byte[] buf = new byte[24];
         new SecureRandom().nextBytes(buf);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(buf);
+    }
+
+    private String normalizeBlankToNull(String s) {
+        if (s == null) return null;
+        String t = s.trim();
+        return t.isEmpty() ? null : t;
     }
 }

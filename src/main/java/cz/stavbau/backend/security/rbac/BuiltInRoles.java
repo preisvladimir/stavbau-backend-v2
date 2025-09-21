@@ -15,8 +15,18 @@ public final class BuiltInRoles {
 
     // --- Team (MVP) – agregované scopy ---
     // POZN.: v Scopes nemáme TEAM_WRITE; "write" znamená add/remove/update_role.
-    private static final Set<String> TEAM_RW = Set.of(TEAM_READ, TEAM_ADD, TEAM_REMOVE, TEAM_UPDATE_ROLE);
+    private static final Set<String> TEAM_RW = Set.of(TEAM_READ, TEAM_ADD, TEAM_REMOVE, TEAM_UPDATE, TEAM_UPDATE_ROLE);
     private static final Set<String> TEAM_R  = Set.of(TEAM_READ);
+
+    private static final Set<String> SUPERADMIN_BASE = Set.of(
+            DASHBOARD_VIEW,
+            TEAM_WRITE,
+            PROJECTS_READ, PROJECTS_CREATE, PROJECTS_UPDATE, PROJECTS_DELETE, PROJECTS_ARCHIVE, PROJECTS_ASSIGN,
+            LOGBOOK_READ, LOGBOOK_CREATE, LOGBOOK_UPDATE, LOGBOOK_DELETE, LOGBOOK_EXPORT,
+            BUDGET_READ, BUDGET_CREATE, BUDGET_UPDATE, BUDGET_DELETE, BUDGET_APPROVE, BUDGET_EXPORT,
+            FILES_READ, FILES_UPLOAD, FILES_UPDATE, FILES_DELETE, FILES_DOWNLOAD, FILES_SHARE,
+            ADMIN_USERS_READ, ADMIN_USERS_MANAGE, INTEGRATIONS_MANAGE
+    );
 
     // Základní „admin“ balík – jak jsme měli dříve (můžeš zúžit podle potřeby)
     private static final Set<String> ADMINISTRATION_BASE = Set.of(
@@ -25,9 +35,11 @@ public final class BuiltInRoles {
             LOGBOOK_READ, LOGBOOK_CREATE, LOGBOOK_UPDATE, LOGBOOK_DELETE, LOGBOOK_EXPORT,
             BUDGET_READ, BUDGET_CREATE, BUDGET_UPDATE, BUDGET_DELETE, BUDGET_APPROVE, BUDGET_EXPORT,
             FILES_READ, FILES_UPLOAD, FILES_UPDATE, FILES_DELETE, FILES_DOWNLOAD, FILES_SHARE,
-            TEAM_READ, TEAM_ADD, TEAM_REMOVE, TEAM_UPDATE_ROLE,
+            TEAM_READ, TEAM_ADD, TEAM_REMOVE, TEAM_UPDATE_ROLE, TEAM_UPDATE,
             ADMIN_USERS_READ, ADMIN_USERS_MANAGE, INTEGRATIONS_MANAGE
     );
+
+
 
     @SafeVarargs
     private static Set<String> union(Set<String>... sets) {
@@ -38,7 +50,7 @@ public final class BuiltInRoles {
 
     /** Company role → scopes (MVP). */
     public static final Map<CompanyRoleName, Set<String>> COMPANY_ROLE_SCOPES = Map.ofEntries(
-            entry(CompanyRoleName.SUPERADMIN,  union(ADMINISTRATION_BASE)),
+            entry(CompanyRoleName.SUPERADMIN,  union(SUPERADMIN_BASE)),
             entry(CompanyRoleName.OWNER,       union(ADMINISTRATION_BASE)),
             // Pokud chceš mít COMPANY_ADMIN omezenější než OWNER, zúžím: např. bez BUDGET_APPROVE / ADMIN_USERS_MANAGE
             entry(CompanyRoleName.COMPANY_ADMIN, union(ADMINISTRATION_BASE)),

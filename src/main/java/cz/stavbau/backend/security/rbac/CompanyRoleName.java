@@ -15,5 +15,4 @@ public enum CompanyRoleName {
     MEMBER,
     VIEWER,
     SUPERADMIN;
-
 }

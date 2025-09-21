@@ -57,7 +57,7 @@ public class TeamMembersController {
             @ApiResponse(responseCode = "409", description = "Conflict (member exists / user assigned to other company)")
     })
     @PostMapping
-    @PreAuthorize("@rbac.hasScope('" + Scopes.TEAM_WRITE + "')")
+    @PreAuthorize("@rbac.hasAnyScope('" + Scopes.TEAM_WRITE + "','" + Scopes.TEAM_ADD + "')")
     public ResponseEntity<MemberDto> addMember(
             @PathVariable("companyId") UUID companyId,
             @Valid @RequestBody CreateMemberRequest req,
@@ -70,7 +70,7 @@ public class TeamMembersController {
 
     @Operation(summary = "Seznam členů firmy")
     @GetMapping
-    //@PreAuthorize("@rbac.hasScope('" + Scopes.TEAM_READ + "')")
+    @PreAuthorize("@rbac.hasScope('" + Scopes.TEAM_READ + "')")
     public ResponseEntity<MemberListResponse> listMembers(
             @PathVariable("companyId") UUID companyId,
             @AuthenticationPrincipal AppUserPrincipal principal
@@ -80,13 +80,27 @@ public class TeamMembersController {
         return ResponseEntity.ok(list);
     }
 
+    @Operation(summary = "Aktualizace profilových údajů člena (jméno/příjmení/telefon)")
+    @PatchMapping("/{memberId}/profile")
+    @PreAuthorize("@rbac.hasAnyScope('" + Scopes.TEAM_WRITE + "','" + Scopes.TEAM_UPDATE + "')")
+    public ResponseEntity<MemberDto> updateProfile(
+            @PathVariable("companyId") UUID companyId,
+            @PathVariable("memberId") UUID memberId,
+            @Valid @RequestBody UpdateMemberProfileRequest req,
+            @AuthenticationPrincipal AppUserPrincipal principal
+    ) {
+        assertCompanyContext(companyId, principal);
+        var updated = teamService.updateProfile(companyId, memberId, req);
+        return ResponseEntity.ok(updated);
+    }
+
     @Operation(summary = "Změna role člena (ADMIN↔MEMBER)")
     @PatchMapping("/{memberId}")
-    @PreAuthorize("@rbac.hasScope('" + Scopes.TEAM_WRITE + "')")
+    @PreAuthorize("@rbac.hasAnyScope('" + Scopes.TEAM_WRITE + "','" + Scopes.TEAM_UPDATE_ROLE + "')")
     public ResponseEntity<MemberDto> updateRole(
             @PathVariable("companyId") UUID companyId,
             @PathVariable("memberId") UUID memberId,
-            @Valid @RequestBody UpdateMemberRequest req,
+            @Valid @RequestBody UpdateMemberRoleRequest req,
             @AuthenticationPrincipal AppUserPrincipal principal
     ) {
         assertCompanyContext(companyId, principal);
@@ -101,7 +115,7 @@ public class TeamMembersController {
             @ApiResponse(responseCode = "404", description = "Member not found")
     })
     @DeleteMapping("/{memberId}")
-    @PreAuthorize("@rbac.hasScope('" + Scopes.TEAM_WRITE + "')")
+    @PreAuthorize("@rbac.hasAnyScope('" + Scopes.TEAM_WRITE + "','" + Scopes.TEAM_REMOVE + "')")
     public ResponseEntity<Void> deleteMember(
             @PathVariable("companyId") UUID companyId,
             @PathVariable("memberId") UUID memberId,
