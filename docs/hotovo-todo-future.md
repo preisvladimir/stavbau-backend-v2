@@ -648,28 +648,16 @@ Form validace: společný useZodForm/useForm helper (podle potřeby).
 RBAC FE: centralizovat mapování scopů → UI capabilities.
 
 ## ✅ HOTOVO – 22. 9. 2025
-- **Repo audit – DataTable v2 (krok 0 z plánu)**: připraven kontrolní checklist (DataTable.tsx, UI kit, utils, i18n, MSW, testy, lint).
-    - Rozhodovací brány pro PR 1:
-        - (a) pokud je v projektu `@tanstack/react-table`, re-use a tenký wrapper,
-        - (b) jinak headless core s možností budoucí adopce TanStack bez rozbití API.
-    - Připraveny grep příkazy a místa v repu pro rychlé ověření stavu.
+- FE test runner: přidán `vitest.config.ts` s aliasem `@ -> ./src` a `vite-tsconfig-paths`.
+- Vite config sjednocen s aliasy.
+- Importy upraveny na explicitní soubory (`empty-state`), sjednocen název `datatable.tsx`.
 
-## 📌 TODO
-- Dodat link/umístění `DataTable.tsx` (nebo vložit obsah do vlákna) pro finální audit a rovnou rozjet **PR 1**.
-
-## ✅ HOTOVO – 22. 9. 2025
-- **Repo audit – DataTable v2 (krok 0/PR 0):** Ověřen FE repo a umístění komponenty (`src/components/ui/stavbau-ui/datatable.tsx`), potvrzena absence `@tanstack/react-table`. Zvolen směr **headless core + prezentační skeleton** pro PR 1, s připraveností na budoucí adapter.
-
-## 📌 TODO
-- Připravit **PR 1 – Core API & skeleton (bez toolbaru)**: `useDataTableCore` + `DataTable` render (thead/tbody), stavy loading/empty, a11y, i18n kostra `datatable.*`, základní testy.
+## ▶️ TODO
+- Ověřit `npx vitest --config vitest.config.ts`.
+- Po průchodu testů navázat **PR 2 – Sorting + MSW demo**.
 
 ## ✅ HOTOVO – 22. 9. 2025
-- **FE – DataTable v2 (PR 1/5)**: Přidán tenký wrapper nad @tanstack/react-table.
-    - Nový headless hook `useDataTableCore` a prezentační komponenta `DataTable`.
-    - Stavy: loading skeleton, empty (EmptyState), základní a11y.
-    - i18n klíče `datatable.empty.*`, základní testy.
+- FE testy: přidán testovací i18n init (src/test/i18n.ts) + import v setupTests; odstraněno varování NO_I18NEXT_INSTANCE.
 
-## ▶️ TODO (navazuje)
-- **PR 2 – Sorting (controlled/uncontrolled) + MSW demo**:
-    - Header interakce (aria-sort, Shift = multi-sort), MSW handler `GET /api/v1/demo/list?sort[]=...`
-    - Testy klikací logiky a a11y.
+## ▶️ TODO
+- PR 2 – Sorting (controlled/uncontrolled) + MSW demo (header kliky, aria-sort, testy).
