@@ -692,6 +692,7 @@ RBAC FE: centralizovat mapování scopů → UI capabilities.
 - FE – DataTable v2 (PR 1 restart): Přidán bezpečný shell nad @tanstack/react-table.
     - Bez i18n/MSW, bez dopadu na běh appky.
     - Základní test (render/skeleton/rows).
+    - Node & CI sjednocení, lockfile regenerován, testy OK.
 
 ## ▶️ TODO
 - PR 2 – Sorting (controlled/uncontrolled) + a11y (aria-sort).
