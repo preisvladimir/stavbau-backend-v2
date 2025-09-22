@@ -699,3 +699,10 @@ RBAC FE: centralizovat mapování scopů → UI capabilities.
 - PR 3 – Paging (server/client) + Pager.
 - PR 4 – Toolbar (search, visibility, density, i18n klíče).
 - PR 5 – Row actions slot + příklad integrace (TeamPage).
+
+## ✅ HOTOVO – 23. 9. 2025
+- DataTableV2 PR2: opraveno volání toggleSorting (shift předáván jako multi, ne desc).
+- Test `datatable-v2.sort.spec.tsx` prochází (aria-sort cyklus OK).
+
+## ▶️ TODO
+- PR 3 – Paging (server/client) + Pager komponenta + testy.
