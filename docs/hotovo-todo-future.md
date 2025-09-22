@@ -662,3 +662,14 @@ RBAC FE: centralizovat mapování scopů → UI capabilities.
 
 ## 📌 TODO
 - Připravit **PR 1 – Core API & skeleton (bez toolbaru)**: `useDataTableCore` + `DataTable` render (thead/tbody), stavy loading/empty, a11y, i18n kostra `datatable.*`, základní testy.
+
+## ✅ HOTOVO – 22. 9. 2025
+- **FE – DataTable v2 (PR 1/5)**: Přidán tenký wrapper nad @tanstack/react-table.
+    - Nový headless hook `useDataTableCore` a prezentační komponenta `DataTable`.
+    - Stavy: loading skeleton, empty (EmptyState), základní a11y.
+    - i18n klíče `datatable.empty.*`, základní testy.
+
+## ▶️ TODO (navazuje)
+- **PR 2 – Sorting (controlled/uncontrolled) + MSW demo**:
+    - Header interakce (aria-sort, Shift = multi-sort), MSW handler `GET /api/v1/demo/list?sort[]=...`
+    - Testy klikací logiky a a11y.
