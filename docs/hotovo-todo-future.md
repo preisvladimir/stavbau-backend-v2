@@ -706,3 +706,10 @@ RBAC FE: centralizovat mapování scopů → UI capabilities.
 
 ## ▶️ TODO
 - PR 3 – Paging (server/client) + Pager komponenta + testy.
+
+## ✅ HOTOVO – 23. 9. 2025
+- FE – DataTableV2 (PR 3): Paging (client/server), pager UI, a11y.
+- Testy: client paging (2/strana, navigace), controlled režim (onPageChange + rerender).
+
+## ▶️ TODO
+- PR 4 – Toolbar: search, column visibility, density; připravit i18n klíče.
