@@ -661,3 +661,40 @@ RBAC FE: centralizovat mapování scopů → UI capabilities.
 
 ## ▶️ TODO
 - PR 2 – Sorting (controlled/uncontrolled) + MSW demo (header kliky, aria-sort, testy).
+
+## ✅ HOTOVO – 22. 9. 2025
+- FE – DataTable v2 (PR 2/5): Sorting (controlled/uncontrolled) přes TanStack.
+    - Header interakce (klik/shift-klik/klávesy), aria-sort indikace.
+    - i18n klíče `datatable.sort.*`.
+    - Testy: cyklování řazení + ověření pořadí.
+    - MSW: demo handler `/api/v1/demo/list` se `sort[]`.
+
+## ▶️ TODO
+- PR 3 – Paging (server/client) + pager komponenta + testy.
+
+## ✅ HOTOVO – 22. 9. 2025
+- Revert DataTable v2 (f2a0a6f..HEAD) proveden na větvi hotfix/revert-datatable a odeslán jako PR.
+
+## ▶️ TODO
+- Merge PR do main a ověřit `npm ci && npm run dev`.
+- Nastavit branch protection na main.
+- Založit `feature/datatable-v2` a doručit PR 1 (TanStack wrapper) izolovaně od runtime.
+
+## ✅ HOTOVO – 23. 9. 2025
+- Test stack: doinstalován vitest@^3, jsdom@^25, vite-tsconfig-paths@^5.
+- tsconfig.types doplněn o "vitest/globals"; restart TS serveru.
+
+## ▶️ TODO
+- Spustit `npx vitest` (ověřit).
+- Poté PR 1 (DataTableV2 shell) + mini test.
+
+## ✅ HOTOVO – 22. 9. 2025
+- FE – DataTable v2 (PR 1 restart): Přidán bezpečný shell nad @tanstack/react-table.
+    - Bez i18n/MSW, bez dopadu na běh appky.
+    - Základní test (render/skeleton/rows).
+
+## ▶️ TODO
+- PR 2 – Sorting (controlled/uncontrolled) + a11y (aria-sort).
+- PR 3 – Paging (server/client) + Pager.
+- PR 4 – Toolbar (search, visibility, density, i18n klíče).
+- PR 5 – Row actions slot + příklad integrace (TeamPage).
