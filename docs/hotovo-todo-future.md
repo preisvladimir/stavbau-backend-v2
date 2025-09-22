@@ -527,3 +527,122 @@
 - Migrace RBAC do DB (`role_definitions`, `scope_definitions`, `role_scopes`).
 - FE hooky: `useHasScope(scope)`, `ScopeGuard`.
 - Admin UI pro správu rolí a scopes.
+
+## 2025-09-21 — FE Team / Layout / UI (PR 4/N + část 5/N)
+✅ Hotovo
+
+Routing & Guards
+
+Přidána route /app/team v src/routes/router.tsx přes ProtectedRoute + ScopeGuard(['team:read']).
+
+Opraveno API ScopeGuard (prop anyOf), sjednocené použití.
+
+Auth
+
+useAuth()/useAuthContext() bez state wrapperu; čtení user.companyId.
+
+Typy (lib/api/types.ts)
+
+TeamRole = 'ADMIN' | 'MEMBER'.
+
+CompanyRole (OWNER, COMPANY_ADMIN, …, SUPERADMIN).
+
+MemberDto, MemberListResponse, CreateMemberRequest, UpdateMemberRequest, UpdateMemberRoleRequest.
+
+API klient
+
+features/team/api/team.service.ts (bez nového axios klienta; používá lib/api/client.ts), normalizace payloadů z BE.
+
+Sdílené mapování chyb lib/api/problem.ts + ApiError.
+
+TeamPage (features/team/pages/TeamPage.tsx)
+
+Skeleton tabulky (email, role, jméno, telefon) + loading/empty/error.
+
+Add Member panel (email, role, jméno, příjmení, telefon) + tolerantní validace e-mailu.
+
+Update Role (inline select) s FE/BE guardy:
+
+Nelze nastavovat SUPERADMIN ani OWNER z tenant UI.
+
+Nelze měnit roli člena s OWNER (hlídá FE i BE).
+
+FE ochrana „last owner“ (nelze „sundat“ posledního vlastníka).
+
+Edit Profile přes MemberEditModal (PATCH detailu člena; připraveno na rozšiřování polí).
+
+Delete Member (guard posledního OWNERa + chybové stavy).
+
+Integrace DataTable (@/components/ui/stavbau-ui) + akční sloupec s ikonami.
+
+UI používá Button a ikony z @/components/icons.
+
+Zobrazení deleteError inline pod řádkem (fix „never read“).
+
+i18n
+
+team.json (cs/en): title, columns, actions, errors (notAssignable, onlySuperadminOwner, lastOwner) a placeholdery.
+
+MSW
+
+Základní handler GET /api/v1/tenants/:companyId/members (prázdný/ukázkový list) zapojen do mocks/handlers.
+
+UI/UX – společné komponenty
+
+SearchInput (aliasy ikon, default styly pro left/right ikonu).
+
+patterns.ts (EMAIL_INPUT_PATTERN, EMAIL_REGEX, EMAIL_REGEX_STRICT) a sjednocené používání.
+
+Sidebar: aktivní stav + „sticky“ indikátor (pseudo-element), util getNavClass({isActive}), a11y + i18n.
+
+AppLayout: integrace prvků z v1 bez duplicit
+
+FabProvider, MobileFab (≤ md), MobileBottomBar (≤ md).
+
+TopbarActions slot (desktop) – jediný zdroj pravdy pro stránkové akce.
+
+Topbar upraven, Sidebar zachován.
+
+RBAC scopy (FE)
+
+Add: team:write | team:add
+
+Update role: team:write | team:update_role
+
+Delete: team:write | team:remove
+
+Read: team:read
+
+🧪 Test/Infra
+
+Založen smoke test pro TeamPage (render title) – (doplnit, pokud ještě není).
+
+Ignorování cancel chyb (Axios/Abort/ApiError) ve všech efektech.
+
+📝 BE poznámky (sladěno s FE)
+
+POST (přidání): @PreAuthorize("@rbac.hasAnyScope('team:write','team:add')").
+
+PATCH role: @PreAuthorize("@rbac.hasAnyScope('team:write','team:update_role')"), zákaz změny OWNER, validace role.
+
+PATCH detailu membera: navrženo (jméno/příjmení/telefon) – sladěno s FE modalem.
+
+DELETE: zákaz smazání posledního OWNERa, guard companyId; scopy: team:write | team:remove.
+
+⏭ Todo (další PR 5/N kroky)
+
+MSW: doplnit handlery POST/PATCH/DELETE + field-errors.
+
+Testy: integrační testy (add/update/delete), i18n klíče, a11y (axe).
+
+TeamPage: badge pro status, centralizované mapování CompanyRole → i18n.
+
+Topbar: volitelně rozšířit „right actions“ slot pro více tlačítek (multi-fab).
+
+🔭 Future
+
+DataTable v2: server-side paging/sorting/filters, column visibility, density, toolbar, export, mobilní „cards“ layout, virtualizace (dle potřeby). → Zahájeno novým vláknem (Step Plan připraven).
+
+Form validace: společný useZodForm/useForm helper (podle potřeby).
+
+RBAC FE: centralizovat mapování scopů → UI capabilities.
