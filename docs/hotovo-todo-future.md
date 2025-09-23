@@ -715,10 +715,21 @@ RBAC FE: centralizovat mapování scopů → UI capabilities.
 - PR 4 – Toolbar: search, column visibility, density; připravit i18n klíče.
 
 ## ✅ HOTOVO – 23. 9. 2025
-- Test env: přidána i18n inicializace v setupu (cs/en common).
-- UI: opraven label ve visibility listu (string vs funkce header).
-- Testy: stabilní výběr summary (getByRole button) místo text regex kolize.
-- Všechny testy DataTableV2 (shell/sort/paging/toolbar) OK.
+- FE – DataTableV2 (PR 4): Toolbar (search state, column visibility, density).
+- i18n: přidány klíče common.datatable.* (cs/en).
+- Testy: visibility toggle, density toggle.
+
+## ▶️ TODO
+- PR 4.1 – Toolbar pokračování: page size selector (5/10/20), reset filtrů, export CSV (volitelné).
+- PR 5 – Row actions slot + integrace v TeamPage.
+
+## ✅ HOTOVO – 23. 9. 2025
+- FE – DataTableV2 (PR 4.1): page size selector (5/10/20) + Reset filtrů.
+- Testy: page size (client/server), reset stavů.
+
+## ▶️ TODO
+- PR 5 – Row actions slot + integrace (TeamPage).
+- PR X – (volitelně) export CSV v Toolbaru.
 
 ## ▶️ TODO
 - PR 5 – Row actions slot + integrace v TeamPage (guardy, a11y).
