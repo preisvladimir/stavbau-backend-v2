@@ -762,3 +762,44 @@ RBAC FE: centralizovat mapování scopů → UI capabilities.
 - Virt. dlouhých seznamů (do 1k+ položek) – až bude potřeba.
 - label/description props přímo v Select (interní <label>)
 
+## ✅ HOTOVO — DataTableV2 (23. 9. 2025)
+
+### Funkcionalita
+- **Základní shell**
+    - Plně typovaná generická komponenta `DataTableV2<T>`
+    - Podpora variant vzhledu: `plain` a `surface`
+    - Responsivní chování, konzistentní design se zbytkem `stavbau-ui`
+
+- **Toolbar**
+    - 🔍 **SearchInput** (náš vlastní) s i18n texty
+    - 👁 **ColumnVisibilityMenu** s podporou variant (`details`/`popover`)
+    - 🔢 **PageSize Select** – počet záznamů na stránku (napojený na náš `Select`)
+    - 📏 **DensitySelect** – výběr hustoty řádků (`compact`, `cozy`, `comfortable`)
+    - 🔄 **Reset filters** tlačítko (resetuje stav tabulky)
+    - 📊 Indikátor stránky `p / c`
+
+- **Hlavní tabulka**
+    - Sorting (cyklus none → asc → desc, shift-click = multi-sort)
+    - Paging (`page`, `pageSize`, `pageCount`, prev/next)
+    - Row click handler (`onRowClick`)
+    - Slot pro **rowActions** (např. ikony pro editaci/smazání)
+    - EmptyState (včetně i18n textů)
+    - Skeleton loading stavy
+
+- **UX / i18n**
+    - Všechny texty přes `react-i18next` (`common.json`)
+    - Přístupnost: aria atributy (`aria-sort`, `aria-label`, `aria-live`)
+    - Testy: unit testy pro shell, sorting, toolbar, actions
+
+---
+
+## 🛠️ FUTURE — DataTableV2
+
+- [ ] **Server-side režim** (props `manualSorting`, `manualPaging`, API integrace)
+- [ ] **Persistované preference uživatele** (uložení sloupců/density/pageSize do localStorage nebo BE)
+- [ ] **Exporty** (CSV, XLSX, PDF)
+- [ ] **Drag & drop reordering** sloupců
+- [ ] **Inline editace buněk** (RHF + validace)
+- [ ] **Filtrace per-column** (dropdowny, datumové range, multiselect)
+- [ ] **Virtualizace řádků** (pro velké datasety)
+- [ ] **Dark mode ladění** (ověřit kontrasty pro všechny varianty)
