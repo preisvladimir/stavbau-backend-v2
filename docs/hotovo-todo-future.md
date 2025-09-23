@@ -741,3 +741,14 @@ RBAC FE: centralizovat mapování scopů → UI capabilities.
 - PR 6: per-row async stav (spinner/disable) sjednotit přes helper (useAsyncAction) + toast pattern.
 - PR 7: server-side režim (page, sort, filters) napojit na TeamService.list s query parametry.
 - PR 8: přepnout column visibility trigger z <details>/<summary> na <button> + popover (lepší a11y).
+
+## ✅ HOTOVO – DataTableV2 theme toggle
+- props: variant: 'surface' | 'plain' (default 'plain')
+- props: className: string
+- shell aplikuje variantu na wrapper (card/border/zebra pro 'surface')
+
+## ✅ HOTOVO – DataTableV2 Toolbar: SearchInput (preset v1)
+- Nahrazen plain <input> → <SearchInput /> z UI kitu
+- A11y: ariaLabel, placeholder (i18n-ready)
+- Vizuál: v1 preset = shoda s původním vzhledem
+
