@@ -848,3 +848,9 @@ RBAC FE: centralizovat mapování scopů → UI capabilities.
 **Poznámky:**
 - PR dělit do malých kroků (~200 LOC).
 - Po každém merge přidat checkpoint do této časové osy.
+
+### ✅ 2025-09-24 — DataTableV2 Responsive (Step 5/6)
+
+- Přidána dokumentace `src/components/ui/stavbau-ui/datatable/README.md`.
+- Popsány breakpoints (<md, md–lg, ≥lg), metadata `stbMobile`, props, styly, a11y.
+- Příklady použití pro uživatele, faktury, projekty.
