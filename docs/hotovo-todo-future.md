@@ -713,3 +713,12 @@ RBAC FE: centralizovat mapování scopů → UI capabilities.
 
 ## ▶️ TODO
 - PR 4 – Toolbar: search, column visibility, density; připravit i18n klíče.
+
+## ✅ HOTOVO – 23. 9. 2025
+- Test env: přidána i18n inicializace v setupu (cs/en common).
+- UI: opraven label ve visibility listu (string vs funkce header).
+- Testy: stabilní výběr summary (getByRole button) místo text regex kolize.
+- Všechny testy DataTableV2 (shell/sort/paging/toolbar) OK.
+
+## ▶️ TODO
+- PR 5 – Row actions slot + integrace v TeamPage (guardy, a11y).
