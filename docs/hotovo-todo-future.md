@@ -752,3 +752,13 @@ RBAC FE: centralizovat mapování scopů → UI capabilities.
 - A11y: ariaLabel, placeholder (i18n-ready)
 - Vizuál: v1 preset = shoda s původním vzhledem
 
+## ✅ HOTOVO – UI Select (native)
+- Nová komponenta <Select /> v stavbau-ui (a11y-first, mobile-friendly).
+- API: value/defaultValue/onChange, options|children, size, variant, icons, error/helper.
+- Integrace: DataTableV2 Toolbar – „Počet na stránku“ používá <Select />.
+
+## ▶️ FUTURE
+- Volitelná „listbox“ varianta (custom popover) pro speciální případy.
+- Virt. dlouhých seznamů (do 1k+ položek) – až bude potřeba.
+- label/description props přímo v Select (interní <label>)
+
