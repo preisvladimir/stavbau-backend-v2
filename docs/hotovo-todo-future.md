@@ -803,3 +803,48 @@ RBAC FE: centralizovat mapování scopů → UI capabilities.
 - [ ] **Filtrace per-column** (dropdowny, datumové range, multiselect)
 - [ ] **Virtualizace řádků** (pro velké datasety)
 - [ ] **Dark mode ladění** (ověřit kontrasty pro všechny varianty)
+
+## 🟨 TODO — DataTableV2 – Responsive (Hybrid)
+
+**Cíl:** Přidat responzivní vzhled DataTableV2 bez změny funkčnosti:
+- `<md` (mobil): stacked cards (Title, Subtitle, 3–5 detailů, akce).
+- `md–lg`: scrollable tabulka se sticky klíčovými sloupci.
+- `≥lg`: beze změny (plná tabulka).
+
+**Step Plan:**
+1) API pro “card fields” (bez UI změn)
+    - Sloupce: `priority`, `isTitle`, `isSubtitle`, `mobileHidden`, `formatter`.
+
+2) `<md` Stacked cards (MVP)
+    - `<DataRowCard />`: `rounded-2xl shadow-sm border p-3 space-y-2`.
+    - “Zobrazit více” pro zbytek sloupců; akce v kebabu/patičce.
+
+3) `md–lg` Scrollable table + sticky
+    - `overflow-x-auto`, `min-w-*`; sticky 1–2 klíčové sloupce (left), volitelně akce (right).
+
+4) Polishing & A11y
+    - Focus ringy, `aria-label` u ikon, `aria-expanded` u “Zobrazit více”, `line-clamp`.
+
+5) Dokumentace & usage guidelines
+    - README: značení `isTitle`, `priority`, `mobileHidden`, příklady.
+
+6) Kontrola konzistence (stavbau-ui)
+    - Radius, spacing, stíny, barvy; srovnat s dalšími list komponentami.
+
+**Akceptační kritéria:**
+- Mobil bez horizontálního scrollu; čitelné karty (nezalamují layout).
+- `md–lg` přirozený H-scroll + viditelné klíčové informace (sticky).
+- `≥lg` beze změny.
+- Přístupnost (tab stop pořadí, kontrast) a výkon (100+ řádků OK).
+
+**Test Plan:**
+- Zařízení: iPhone SE/13 Pro Max, Pixel 5/7, iPad mini, 1280/1440 px.
+- Interakce: akční menu, multi-select, empty/loading/error.
+- A11y: ARIA popisky, focus ringy.
+- Výkon: dlouhé seznamy (chunking/virtualizace pokud zapnuta).
+
+**Rollback:** `responsiveMode="off"` vrátí původní chování.
+
+**Poznámky:**
+- PR dělit do malých kroků (~200 LOC).
+- Po každém merge přidat checkpoint do této časové osy.
