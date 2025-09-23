@@ -722,3 +722,11 @@ RBAC FE: centralizovat mapování scopů → UI capabilities.
 
 ## ▶️ TODO
 - PR 5 – Row actions slot + integrace v TeamPage (guardy, a11y).
+
+## ✅ HOTOVO – 23. 9. 2025
+- FE: TeamPageV2 – plná integrace DataTableV2 (toolbar, client paging, row actions).
+
+## ▶️ TODO (další PR)
+- PR 6: per-row async stav (spinner/disable) sjednotit přes helper (useAsyncAction) + toast pattern.
+- PR 7: server-side režim (page, sort, filters) napojit na TeamService.list s query parametry.
+- PR 8: přepnout column visibility trigger z <details>/<summary> na <button> + popover (lepší a11y).
