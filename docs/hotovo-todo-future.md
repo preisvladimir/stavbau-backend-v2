@@ -854,3 +854,10 @@ RBAC FE: centralizovat mapování scopů → UI capabilities.
 - Přidána dokumentace `src/components/ui/stavbau-ui/datatable/README.md`.
 - Popsány breakpoints (<md, md–lg, ≥lg), metadata `stbMobile`, props, styly, a11y.
 - Příklady použití pro uživatele, faktury, projekty.
+
+### ✅ 2025-09-24 — DataTableV2 Responsive (Step 6/6)
+
+- Sjednoceny styly s `stavbau-ui` pomocí `tokens.ts` (radius 2xl, border, surface, stíny).
+- Toolbar a tabulka používají `sbDivider` + konzistentní hover/focus stavy.
+- `DataRowCard` přepnuta na sdílené utility (`sbCardBase`, `sbCardPadding`, `sbFocusRing`).
+- README doplněn o „Design tokens a konzistence“.
