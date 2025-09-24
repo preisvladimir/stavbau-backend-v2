@@ -849,15 +849,46 @@ RBAC FE: centralizovat mapování scopů → UI capabilities.
 - PR dělit do malých kroků (~200 LOC).
 - Po každém merge přidat checkpoint do této časové osy.
 
-### ✅ 2025-09-24 — DataTableV2 Responsive (Step 5/6)
+## ✅ 2025-09-24 — DataTableV2 Responsive (komplet Step 1–6/6.1)
 
-- Přidána dokumentace `src/components/ui/stavbau-ui/datatable/README.md`.
-- Popsány breakpoints (<md, md–lg, ≥lg), metadata `stbMobile`, props, styly, a11y.
-- Příklady použití pro uživatele, faktury, projekty.
+Kompletně dokončena responzivní varianta DataTableV2 (Hybrid) + zapojení do TeamPageV2.
 
-### ✅ 2025-09-24 — DataTableV2 Responsive (Step 6/6)
+### 🔹 Step 1/6 — API pro card fields
+- Přidána module augmentation `columnDef.meta.stbMobile` pro TanStack Table.
+- Typy: `isTitle`, `isSubtitle`, `priority`, `mobileHidden`, `formatter`.
+- Žádná změna UI (jen příprava).
 
-- Sjednoceny styly s `stavbau-ui` pomocí `tokens.ts` (radius 2xl, border, surface, stíny).
-- Toolbar a tabulka používají `sbDivider` + konzistentní hover/focus stavy.
-- `DataRowCard` přepnuta na sdílené utility (`sbCardBase`, `sbCardPadding`, `sbFocusRing`).
-- README doplněn o „Design tokens a konzistence“.
+### 🔹 Step 2/6 — `<md` Stacked cards (MVP)
+- Nová komponenta `<DataRowCard />` pro mobilní layout.
+- Title + Subtitle + 3–5 detailů, akce vpravo.
+- “Zobrazit více” pro rozbalení dalších polí.
+
+### 🔹 Step 3/6 — `md–lg` scrollable + sticky
+- Tabulka na středních breakpointech scrollovatelná (`overflow-x-auto`).
+- Sticky vlevo = Title, sticky vpravo = Akce.
+- ≥lg: plná tabulka, beze změny.
+
+### 🔹 Step 4/6 — Polishing & A11y
+- Přidány `aria-labelledby`, `aria-controls`, focus ringy, role="list/listitem".
+- `motion-safe:animate-pulse` skeletony, `break-words` pro dlouhé texty.
+- Pager propojen s tabulkou (`aria-controls`).
+
+### 🔹 Step 5/6 — Dokumentace & usage guidelines
+- Vytvořen `README.md` pro DataTableV2.
+- Popsány breakpoints, metadata, props, příklady použití.
+- Sekce A11y + doporučení pro vývojáře.
+
+### 🔹 Step 6/6 — Kontrola konzistence (stavbau-ui)
+- Přidán `tokens.ts` pro designové utility (`sbCardBase`, `sbDivider`, `sbFocusRing`).
+- DataRowCard + DataTableV2 přepnuty na tyto utility.
+- Sjednocen radius, spacing, hover, focus a barvy s ostatními komponentami.
+
+### 🔹 Step 6/6.1 — TeamPage wired up
+- `TeamPageV2` aktualizována na využití `stbMobile`.
+- Mobilní karty: Title = jméno, Subtitle = e-mail, detaily = role + telefon.
+- Avatar na mobilu skryt (`mobileHidden: true`).
+- Desktop/střední breakpoints beze změny.
+
+---
+
+✅ DataTableV2 je nyní plně responzivní, konzistentní s `stavbau-ui` a nasazená v TeamPageV2.
