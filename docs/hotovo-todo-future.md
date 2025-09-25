@@ -892,3 +892,10 @@ Kompletně dokončena responzivní varianta DataTableV2 (Hybrid) + zapojení do 
 ---
 
 ✅ DataTableV2 je nyní plně responzivní, konzistentní s `stavbau-ui` a nasazená v TeamPageV2.
+
+### ✅ 2025-09-25 — TeamPageV2 – i18nNamespaces wired
+- Do `TeamPageV2` doplněn prop `i18nNamespaces={['team','common']}` pro `DataTableV2`.
+- Překlady mobilních karet (labely + hodnoty) nyní používají správný namespace stránky.
+- Varianta připravená i pro další moduly (`invoices`, `files`, `deník`…), kde stačí předat odpovídající namespaces.
+
+
