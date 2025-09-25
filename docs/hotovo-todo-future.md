@@ -898,4 +898,29 @@ Kompletně dokončena responzivní varianta DataTableV2 (Hybrid) + zapojení do 
 - Překlady mobilních karet (labely + hodnoty) nyní používají správný namespace stránky.
 - Varianta připravená i pro další moduly (`invoices`, `files`, `deník`…), kde stačí předat odpovídající namespaces.
 
+### ✅ 2025-09-26 — DataTableV2 – Responsive & Enterprise UX
+- Dokončen plný **responsive hybrid režim**:
+    - `<md` → karty (stacked, s přeloženými labely a actions kapslí).
+    - `md–lg` → tabulka se stránkováním + filtrováním (bez hustoty).
+    - `lg+` → plná tabulka s hustotou, sticky headerem a enterprise vzhledem.
+- Přidány `i18nNamespaces` → překlady labelů a hodnot v kartách fungují modulárně (Team, Invoices, Files, …).
+- Toolbar: mobile-first přístup (search + reset na mobilech, ostatní jen od `md`).
+- Sticky header od `lg+`, blur background → lepší čitelnost při scrollu.
+- `densityClasses` refaktorované: mobile-first, od `lg` kompaktnější (více řádků na obrazovku).
+- Max-width container (`sbContainer`) pro `md+` → obsah vycentrovaný, na 1440/2560 nepůsobí roztahaně.
+- Mobile ergonomie:
+    - menší padding (`p-3` na `<sm`).
+    - labely menší (`text-xs`).
+    - akční tlačítka sjednocena do kapsle + min. tap target `36×36`.
 
+---
+
+### 🔮 FUTURE (možné vylepšení DataTableV2)
+- **Column pinning / freeze** (sticky první sloupec při horizontálním scrollu).
+- **Row expansion** (detail řádku rozkliknutelný přímo v tabulce).
+- **Inline edit** pro vybrané sloupce.
+- **Persistent user prefs** – uložit výběr sloupců, hustotu, velikost stránky do localStorage / profilu.
+- **Virtualizace** (pro tisíce záznamů → výkon).
+- **Skeleton loaders** – propracovanější placeholdery, které kopírují strukturu sloupců.
+- **A11y enhancements** – např. voiceover-friendly labely u action buttons (už částečně hotovo).
+- **Dark mode tuning** – jemné kontrasty u borderů, muted background.
