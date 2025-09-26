@@ -924,3 +924,19 @@ Kompletně dokončena responzivní varianta DataTableV2 (Hybrid) + zapojení do 
 - **Skeleton loaders** – propracovanější placeholdery, které kopírují strukturu sloupců.
 - **A11y enhancements** – např. voiceover-friendly labely u action buttons (už částečně hotovo).
 - **Dark mode tuning** – jemné kontrasty u borderů, muted background.
+
+
+## [2025-09-26] Zavedení Customer (invoices)
+- ROZHODNUTO: Customer = samostatná doména v `invoices` (ne Member), dědí z BaseEntity, company-scoped.
+- RBAC: invoices:read|create|update|delete na CustomersController.
+- Faktury: FK `customer_id` + snapshot údajů odběratele v Invoice.
+- API: /api/v1/customers (list/search, create, get, patch, delete).
+
+TODO (MVP):
+- Vxx__invoices_customers.sql (+ FK v invoices).
+- Model/DTO/Mapper/Repo/Service/Web + testy.
+- Napojení snapshotu v InvoiceService, OpenAPI tag.
+
+FUTURE:
+- CRM-lite „partners“ (kontakt. osoby, tagy), onboarding klienta (linkedUserId + ProjectMember role=CLIENT).
+- ARES prefill zákazníků.
