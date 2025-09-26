@@ -945,3 +945,70 @@ FUTURE:
 HOTOVO: Entity, Repo, DTO, Mapper, Service(+Impl), Controller s RBAC a PageResponse, bez UI.
 TODO: Specifikace pro fulltext (Specifications), validační i18n messages, integrační test create→invoice snapshot.
 FUTURE: Soft delete; CRM-lite (contacts, tags); ARES prefill; client portal (linkedUserId).
+
+## [2025-09-26] Customers & RBAC – stav po integraci
+
+### HOTOVO
+- **DB migrace (Invoices/Customers)**
+    - Tabulka `customers` (company-scoped), indexy (`company_id`, `ico`) a bezpečný **fulltext index** na `name`:
+        - primárně `GIN (gin_trgm_ops)` při dostupném **pg_trgm**,
+        - fallback `btree(lower(name))` bez rozšíření.
+    - `invoices` rozšířeno o `customer_id` (FK → `customers`, **ON DELETE SET NULL**) a **snapshot** pole `buyer_*` (name/ico/dic/email/address).
+    - Opraveno přidání FK (PostgreSQL neumí `ADD CONSTRAINT IF NOT EXISTS` → **DO $$** guard).
+- **Common**
+    - `BaseEntity` již používaná; doplněn **`CompanyScoped` (interface)** s `getCompanyId()/setCompanyId()`.
+    - Přidán univerzální **`PageResponse<T>`** (Page wrapper pro REST).
+- **Invoices / Customers – BE skeleton**
+    - `Customer` **extends `BaseEntity` implements `CompanyScoped`**.
+    - Repository (`CustomerRepository`), DTO (`CustomerDto`, `CustomerSummaryDto`, `Create*/Update*`), MapStruct `CustomerMapper`.
+    - Service + Impl (`CustomerService*`) s **tenancy guardem** a základním fulltextem.
+    - Controller `CustomersController`:
+        - endpointy **/api/v1/customers**: list, get, create(201), patch, delete(204),
+        - **RBAC**: zatím `INVOICES_*` (+ meta `INVOICES_WRITE`),
+        - **OpenAPI**: `@Operation`, `@ApiResponses`, **tag `Customers`** (odděleně od Invoices).
+- **RBAC – Scopes & Roles**
+    - Rozšířený **katalog scopes** pro fakturaci (invoices, customers, lines, series, payments, dunning, settings, integration, VAT, reports, templates, webhooks, e-invoicing).
+    - **Payments**: doplněn meta-scope `payments:write` + agregace.
+    - **BuiltInRoles**: smysluplné agregace pro všechny `CompanyRoleName` (OWNER, COMPANY_ADMIN, ACCOUNTANT, …).
+    - Fix: `HR_MANAGER_BASE` – `ADMIN_USERS_READ` zabalen do `of(...)` (typová korekce).
+- **Aplikace startuje** (migrace OK: pg_trgm fallback + DO $$ guardy).
+
+---
+
+### TODO (MVP – další PRy)
+- **Testy**
+    - `@DataJpaTest` pro `CustomerRepository` (tenancy + fulltext).
+    - `@WebMvcTest` pro `CustomersController` (200/201/204, 401/403/404/409).
+    - `@SpringBootTest` integrační: `createInvoice(customerId)` → zapisuje snapshot `buyer_*` a drží `customer_id`.
+- **InvoiceService**
+    - Implementovat vytvoření faktury z `customerId` (prefill + snapshot), validace existence v rámci `companyId`.
+- **Vyhledávání**
+    - Přidat `Specification` (name/ico/dic) s `lower(...)` kompatibilní s oběma indexy (trgm/btree).
+- **Validace & i18n**
+    - IČO/DIČ validátory; i18n klíče (`customer.*`, konflikty typu `ico.exists`).
+- **RBAC anotace & FE toggly**
+    - Nechat Customers zatím na `INVOICES_*`; připravit přepnutí na `CUSTOMERS_*` (bez změny FE).
+    - FE: přidat toggly pro nové scopy (payments, series, dunning…).
+- **OpenAPI**
+    - Zkontrolovat název security schématu (default `bearerAuth`); přidat příklady odpovědí u list/detail.
+
+---
+
+### FUTURE (beze zlomů veřejného API)
+- **Split Customers → `customers:*`** v kontrolerech (granulárnější řízení), BE už připraveno.
+- **CRM-lite „partners“**: rozšíření Customers (kontaktní osoby, více adres, tagy); zachovat `Invoice.customerId`.
+- **Klientský portál**
+    - Endpoint `POST /customers/{id}/link-user/{userId}` (role `CLIENT` jako `ProjectMember`).
+- **Import/Export & Suggest**
+    - `POST /customers/import` (CSV/XLSX/JSON), `GET /customers/export`, `GET /customers/suggest?q=`.
+- **Soft delete** pro Customers (auditori, historie), politiky kolizí s FK.
+- **ARES/VIES**: prefill/ověření IČO/DIČ.
+- **Finance PRO**
+    - Proformy, dobropisy, **recurring**, nákupní faktury, ceníky/katalog, bankovní výpisy & párování,
+    - e-invoicing (ISDOC/Peppol), platební brány, VAT reporty, reporting.
+
+---
+
+### PR/Repo poznámky
+- Dodržet **small PRs (~200 LOC)**, Conventional Commits.
+- Po každém PR: aktualizovat tento soubor (sekce HOTOVO/TODO), `CHANGELOG.md`, štítky a sprint odkaz.
