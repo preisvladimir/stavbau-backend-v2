@@ -940,3 +940,8 @@ TODO (MVP):
 FUTURE:
 - CRM-lite „partners“ (kontakt. osoby, tagy), onboarding klienta (linkedUserId + ProjectMember role=CLIENT).
 - ARES prefill zákazníků.
+
+## [2025-09-26] Customer skeleton (invoices)
+HOTOVO: Entity, Repo, DTO, Mapper, Service(+Impl), Controller s RBAC a PageResponse, bez UI.
+TODO: Specifikace pro fulltext (Specifications), validační i18n messages, integrační test create→invoice snapshot.
+FUTURE: Soft delete; CRM-lite (contacts, tags); ARES prefill; client portal (linkedUserId).
