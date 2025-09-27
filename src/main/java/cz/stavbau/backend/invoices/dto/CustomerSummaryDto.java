@@ -1,6 +1,8 @@
 // src/main/java/cz/stavbau/backend/invoices/dto/CustomerSummaryDto.java
 package cz.stavbau.backend.invoices.dto;
 
+import cz.stavbau.backend.common.domain.Address;
+
 import java.util.UUID;
 
 public record CustomerSummaryDto(
@@ -8,5 +10,6 @@ public record CustomerSummaryDto(
         String name,
         String ico,
         String dic,
-        String email
+        String email,
+        Address billingAddress
 ) {}
