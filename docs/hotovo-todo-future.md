@@ -1063,3 +1063,18 @@ FUTURE: Soft delete; CRM-lite (contacts, tags); ARES prefill; client portal (lin
 - Validace DIČ pro další státy (EU VAT).
 - ARES suggest/autofill, Import/Export.
 
+## ✅ HOTOVO — 2025-09-27 — PR#1 FE+BE Address/Contact unifikace (MVP)
+- Přidán kanonický `Address` (common/domain), `AddressDto` (common/api/dto),
+  `AddressMapper` (common/mapping) a `AddressJsonConverter` (common/persistence).
+- Unit test: round-trip JSON → objekt → JSON (AddressJsonConverterTest).
+- Žádné změny existujících entit, žádná DB migrace.
+
+### 🔜 TODO (PR#2)
+- Refactor Customers: nahradit `billingAddressJson:String` → `Address` (JSONB) v entitě,
+  DTO a mapper + migrační skript (pokud bude třeba převod legacy dat).
+- Doplňkové testy: @DataJpaTest se skutečným JSONB sloupcem (Testcontainers).
+
+### 💡 FUTURE
+- Normalizační helper (např. formátování `formatted`, PSČ, house/orientation merge).
+- Integrace s Geo (Mapy.cz) a ARES mappery do `Address`.
+- Lokalizační labely typů adres (fakturace/dodání) pro moduly Invoices/Customers.
