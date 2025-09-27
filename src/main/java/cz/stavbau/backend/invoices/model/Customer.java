@@ -8,6 +8,9 @@ import cz.stavbau.backend.common.persistence.AddressJsonConverter;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import java.util.UUID;
 
 @Getter
@@ -38,6 +41,7 @@ public class Customer extends BaseEntity implements CompanyScoped {
     private String phone;
 
     @Convert(converter = AddressJsonConverter.class)
+    @JdbcTypeCode(SqlTypes.JSON)                    // ⬅️ klíčové pro správné bindování
     @Column(name = "billing_address", columnDefinition = "jsonb")
     private Address billingAddress;
 
