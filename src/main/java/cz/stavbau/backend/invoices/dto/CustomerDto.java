@@ -2,11 +2,9 @@
 package cz.stavbau.backend.invoices.dto;
 
 import cz.stavbau.backend.common.api.dto.AddressDto;
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 import java.util.UUID;
-
 
 @Getter
 @Setter
@@ -22,11 +20,7 @@ public class CustomerDto{
         private String dic;
         private  String email;
         private String phone;
-        // nový typed objekt
         private AddressDto billingAddress;
-        // dočasný legacy string
-        @Schema(deprecated = true, description = "DEPRECATED – bude odstraněno po přechodu FE")
-        private String billingAddressJson;
         private Integer defaultPaymentTermsDays;
         private String notes;
         private  UUID linkedUserId;
