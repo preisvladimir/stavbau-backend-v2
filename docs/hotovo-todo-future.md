@@ -1084,6 +1084,7 @@ FUTURE: Soft delete; CRM-lite (contacts, tags); ARES prefill; client portal (lin
 - DTO: `billingAddress` (AddressDto) + ponechán deprecated `billingAddressJson` pro přechod FE.
 - Migrace: přidán sloupec a best-effort naplnění z legacy textu (bez dropu).
 - Test: @DataJpaTest – round-trip JSONB.
+- Removed entity legacy field; legacy JSON emulated in DTO mapping
 
 ### 🔜 TODO (PR#3)
 - Odstranění `billingAddressJson` (sloupec + DTO) po úpravě FE.
