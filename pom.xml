@@ -166,11 +166,6 @@
             <version>${testcontainers.version}</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>cz.stavbau</groupId>
-            <artifactId>stavbau-backend</artifactId>
-            <version>0.1.0-SNAPSHOT</version>
-        </dependency>
     </dependencies>
 
     <build>

@@ -1,8 +1,10 @@
 // src/main/java/cz/stavbau/backend/invoices/model/Customer.java
 package cz.stavbau.backend.invoices.model;
 
+import cz.stavbau.backend.common.domain.Address;
 import cz.stavbau.backend.common.domain.BaseEntity;
 import cz.stavbau.backend.common.domain.CompanyScoped; // <— správný import
+import cz.stavbau.backend.common.persistence.AddressJsonConverter;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -35,8 +37,9 @@ public class Customer extends BaseEntity implements CompanyScoped {
     @Column(name = "phone", length = 64)
     private String phone;
 
+    @Convert(converter = AddressJsonConverter.class)
     @Column(name = "billing_address", columnDefinition = "jsonb")
-    private String billingAddressJson; // MVP: raw JSON string (JsonbConfig na pozadí)
+    private Address billingAddress;
 
     @Column(name = "default_payment_terms_days")
     private Integer defaultPaymentTermsDays;

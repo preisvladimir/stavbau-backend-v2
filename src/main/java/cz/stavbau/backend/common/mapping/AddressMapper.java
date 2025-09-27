@@ -9,8 +9,9 @@ import org.mapstruct.ReportingPolicy;
 
 @Mapper(
         config = MapStructCentralConfig.class,
-        unmappedTargetPolicy = ReportingPolicy.IGNORE
-)
+        unmappedTargetPolicy = ReportingPolicy.IGNORE,
+        imports = { cz.stavbau.backend.common.domain.AddressSource.class }
+        )
 public interface AddressMapper {
 
     @Mapping(target = "source", expression = "java( src.getSource() == null ? null : src.getSource().name() )")

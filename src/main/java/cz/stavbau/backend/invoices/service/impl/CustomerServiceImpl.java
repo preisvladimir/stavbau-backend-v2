@@ -42,7 +42,7 @@ public class CustomerServiceImpl implements CustomerService {
         c.setDic(req.dic());
         c.setEmail(req.email());
         c.setPhone(req.phone());
-        c.setBillingAddressJson(req.billingAddressJson());
+        //c.setBillingAddressJson(req.billingAddressJson());
         c.setDefaultPaymentTermsDays(req.defaultPaymentTermsDays());
         c.setNotes(req.notes());
         c = repo.save(c);
@@ -60,7 +60,7 @@ public class CustomerServiceImpl implements CustomerService {
         if (req.dic() != null) c.setDic(req.dic());
         if (req.email() != null) c.setEmail(req.email());
         if (req.phone() != null) c.setPhone(req.phone());
-        if (req.billingAddressJson() != null) c.setBillingAddressJson(req.billingAddressJson());
+        //if (req.billingAddressJson() != null) c.setBillingAddressJson(req.billingAddressJson());
         if (req.defaultPaymentTermsDays() != null) c.setDefaultPaymentTermsDays(req.defaultPaymentTermsDays());
         if (req.notes() != null) c.setNotes(req.notes());
         return mapper.toDto(c);

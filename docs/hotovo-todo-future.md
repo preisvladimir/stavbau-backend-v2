@@ -1078,3 +1078,19 @@ FUTURE: Soft delete; CRM-lite (contacts, tags); ARES prefill; client portal (lin
 - Normalizační helper (např. formátování `formatted`, PSČ, house/orientation merge).
 - Integrace s Geo (Mapy.cz) a ARES mappery do `Address`.
 - Lokalizační labely typů adres (fakturace/dodání) pro moduly Invoices/Customers.
+
+## ✅ HOTOVO — 2025-09-27 — PR#2 Customers → Address JSONB (typed)
+- Customer: přidán `billing_address` (JSONB) + mapování na `Address`.
+- DTO: `billingAddress` (AddressDto) + ponechán deprecated `billingAddressJson` pro přechod FE.
+- Migrace: přidán sloupec a best-effort naplnění z legacy textu (bez dropu).
+- Test: @DataJpaTest – round-trip JSONB.
+
+### 🔜 TODO (PR#3)
+- Odstranění `billingAddressJson` (sloupec + DTO) po úpravě FE.
+- Doplňkové validační/normalizační helpery pro Address (PSČ, formatted).
+- Integrační testy s REST (WebMvcTest) + contract test FE/BE.
+
+### 💡 FUTURE
+- Unified „address kind“ (billing/shipping/registered) + labely (i18n).
+- Reuse Address pro další moduly (Projects sites, Company registered address).
+
