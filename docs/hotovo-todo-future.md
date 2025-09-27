@@ -1047,3 +1047,19 @@ FUTURE: Soft delete; CRM-lite (contacts, tags); ARES prefill; client portal (lin
 - Server-side sorting + další filtry (město, IČO).
 - Import/Export, ARES suggest, LinkUser.
 - Přepnutí z `invoices:*` na `customers:*` jen úpravou mapy.
+
+## [2025-09-27] [MVP] Customers – PR 3/6 (FE)
+**HOTOVO**
+- CustomerForm (RHF+Zod) s validací IČO/DIČ (CZ).
+- CustomerFormDrawer pro create/edit, napojení na API (POST/PATCH).
+- „Nový“ na listu s RBAC CREATE, route `/app/customers/new`.
+
+**TODO (další PR)**
+- Delete flow + potvrzení (PR 4/6).
+- i18n doplnění tooltipů pro RBAC toggly + disable stavy (PR 5/6).
+- Testy (unit: validátory, form; RTL: render & submit; E2E: create→edit) (PR 6/6).
+
+**FUTURE**
+- Validace DIČ pro další státy (EU VAT).
+- ARES suggest/autofill, Import/Export.
+
