@@ -1012,3 +1012,38 @@ FUTURE: Soft delete; CRM-lite (contacts, tags); ARES prefill; client portal (lin
 ### PR/Repo poznámky
 - Dodržet **small PRs (~200 LOC)**, Conventional Commits.
 - Po každém PR: aktualizovat tento soubor (sekce HOTOVO/TODO), `CHANGELOG.md`, štítky a sprint odkaz.
+
+
+## [2025-09-27] [MVP] Customers – PR 1/6 (FE)
+**HOTOVO**
+- Základ modulu Customers (list): route `/app/customers`, debounced search (`q`), stránkování (`page`,`size`), RBAC guard (`invoices:read`).
+- API klient: `listCustomers`, `getCustomer`; DTO typy včetně `PageResponse`.
+
+**TODO (další PR)**
+- Detail drawer + `getCustomer` napojení (PR 2/6).
+- Create/Edit form (RHF+Zod), validace IČO/DIČ (PR 3/6).
+- Delete flow s potvrzením (PR 4/6).
+- i18n rozšíření + RBAC toggly pro akce (PR 5/6).
+- Testy (unit/RTL/E2E) + contract check PageResponse (PR 6/6).
+
+**FUTURE**
+- Server-side sorting & advanced filtry.
+- Import/Export, napojení na ARES suggest.
+- Přepnutí scopes z `invoices:*` na `customers:*` pouhou změnou mapy.
+
+## [2025-09-27] [MVP] Customers – PR 2/6 (FE)
+**HOTOVO**
+- Detail zákazníka jako inline drawer nad listem.
+- Deep-link routa `/app/customers/:id` (sdílí stránku listu kvůli kontextu).
+- `getCustomer()` + `CustomerDto`, mapování chyb (RFC7807), RBAC READ guard.
+
+**TODO (další PR)**
+- Create/Edit `CustomerForm` + validace IČO/DIČ (PR 3/6).
+- Delete flow s potvrzením (PR 4/6).
+- i18n doplnění textů a RBAC toggly pro akce (PR 5/6).
+- Testy (unit/RTL/E2E) + contract check (PR 6/6).
+
+**FUTURE**
+- Server-side sorting + další filtry (město, IČO).
+- Import/Export, ARES suggest, LinkUser.
+- Přepnutí z `invoices:*` na `customers:*` jen úpravou mapy.
