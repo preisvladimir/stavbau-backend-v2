@@ -3,6 +3,7 @@ package cz.stavbau.backend.invoices.dto;
 
 import cz.stavbau.backend.common.domain.Address;
 
+import java.time.Instant;
 import java.util.UUID;
 
 public record CustomerSummaryDto(
@@ -11,5 +12,6 @@ public record CustomerSummaryDto(
         String ico,
         String dic,
         String email,
-        Address billingAddress
+        Address billingAddress,
+        Instant updatedAt
 ) {}
