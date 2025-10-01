@@ -14,5 +14,6 @@ public record MemberDto(
         String lastName,
         String phone,
         @Schema(description = "CREATED|INVITED", example = "INVITED")
-        String status
+        String status,
+        String state
 ) {}

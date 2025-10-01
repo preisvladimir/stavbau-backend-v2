@@ -1095,3 +1095,56 @@ FUTURE: Soft delete; CRM-lite (contacts, tags); ARES prefill; client portal (lin
 - Unified „address kind“ (billing/shipping/registered) + labely (i18n).
 - Reuse Address pro další moduly (Projects sites, Company registered address).
 
+### ✅ 2025-10-01 – 🟢 Modul Team – Skeleton + FE/BE integrace
+
+## ✅ HOTOVO
+- FE skeleton modulu **Team**:
+    - `api/client.ts` – CRUD funkce + `updateMemberProfile`, `updateMemberRole`, `getMembersStats`
+    - `api/types.ts` – sjednocené DTO (`MemberDto`, `MemberSummaryDto`, `MembersStatsDto`, requesty)
+    - `components/TeamTable.tsx` – integrace s `DataTableV2`, RBAC row actions
+    - `components/TeamForm.tsx` – validace přes Zod schémata, props `lockCompanyRole`, `lockReasonKey`
+    - `components/TeamFormDrawer.tsx` – načítání detailu (`getMember`), integrace `useMembersStats`, `safeOnSubmit` s kontrolou posledního OWNERa
+    - `components/TeamDetailDrawer.tsx` – profesionální preview člena (připraveno na rozšíření o avatar, adresy)
+    - `pages/TeamPage.tsx` – integrace všech částí (list, create, edit, detail), FAB, empty states, i18n
+    - `validation/schemas.ts` – `MemberSchema`, typ `AnyTeamFormValues`
+- Vytvořen hook `useMembersStats` – načítá data z BE endpointu (počty členů, validace posledního OWNERa).
+- Vytvořen **prompt** pro BE endpoint `GET /tenants/{companyId}/members/stats` (DTO + návrh implementace).
+- UI kit: rozšířený `Button` (varianty `xs`, `fab`, decentní destructive variant).
+- Upraveny empty/error/loading stavy v `TeamPage` → používají stavbau-ui a i18n.
+- Refaktoring `TeamForm` a `TeamFormDrawer` – podpora uzamčení změny role, hlášky přes i18n.
+
+## 🟡 TODO
+- FE:
+    - Rozšířit `TeamDetailDrawer` o profilový obrázek, trvalou a doručovací adresu.
+    - Doplnit unit/integration testy pro `TeamTable`, `TeamForm`, `useMembersStats`.
+    - Přidat contract testy pro `getMembersStats` (mock server).
+- BE:
+    - Implementovat endpoint `GET /api/v1/tenants/{companyId}/members/stats` dle připraveného promptu.
+    - Pokrýt integračními testy (počty ownerů, invited, disabled, total).
+- Governance:
+    - Vytvořit PR: `feat(team): add members stats endpoint`.
+    - Po nasazení aktualizovat i18n klíče (`errors.lastOwner`, `detail.*`).
+- UX:
+    - Vylepšit FAB a row actions pro mobilní zobrazení.
+    - Přidat toast/notifikace po úspěšném create/edit/delete člena.
+
+## 🕒 FUTURE
+- Integrovat adresy (Registered + Delivery) do profilu člena (FE + BE).
+- Podpora avatarů přes file upload (profile picture).
+- Statistiky v dashboardu firmy (počty aktivních členů, invited apod. na hlavní stránce).
+- Konsolidace validace mezi FE a BE (Zod ↔ Bean Validation).
+
+### ✅ 2025-10-01 – BE: Members stats endpoint (Team)
+- Přidán endpoint `GET /api/v1/tenants/{companyId}/members/stats`
+- RBAC: vyžaduje `team:read`
+- Vrací: `{ owners, active, invited, disabled, total }` (company-scoped)
+- Implementace: DTO + repo agregace (COUNT/CASE) + service + controller
+- Testy: WebMvcTest (403/200), DataJpaTest (agregace)
+
+**TODO (next):**
+- Validovat/zarovnat `status` pole v `CompanyMember` (ACTIVE/INVITED/DISABLED) – sjednotit enum.
+- (Volit.) cache krátkým TTL (Caffeine) pro velké firmy.
+- (Volit.) rozšířit o další metriky (např. počet podle projektové role).
+
+**FUTURE:**
+- Admin náhled: stats napříč více firmami (jen pro SUPERADMIN).

@@ -4,10 +4,13 @@ import cz.stavbau.backend.common.exception.ConflictException;
 import cz.stavbau.backend.common.exception.ForbiddenException;
 import cz.stavbau.backend.common.exception.NotFoundException;
 import cz.stavbau.backend.common.i18n.Messages;
+import cz.stavbau.backend.security.SecurityUtils;
 import cz.stavbau.backend.security.rbac.CompanyRoleName;
 import cz.stavbau.backend.team.api.dto.*;
+import cz.stavbau.backend.team.dto.MembersStatsDto;
 import cz.stavbau.backend.team.mapping.MemberMapper;
 import cz.stavbau.backend.team.model.TeamRole;
+import cz.stavbau.backend.team.repo.projection.MembersStatsTuple;
 import cz.stavbau.backend.team.service.TeamService;
 import cz.stavbau.backend.tenants.membership.model.CompanyMember;
 import cz.stavbau.backend.tenants.membership.repo.CompanyMemberRepository;
@@ -18,6 +21,9 @@ import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -114,6 +120,39 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public MemberDto getMember(UUID companyId, UUID memberId) {
+        var member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new NotFoundException(messages.msg("errors.not.found.member")));
+
+        if (!companyId.equals(member.getCompanyId())) {
+            throw new ForbiddenException(messages.msg("errors.forbidden.company.mismatch"));
+        }
+
+        var user = userRepository.findById(member.getUserId())
+                .orElseThrow(() -> new NotFoundException(messages.msg("errors.not.found.member")));
+
+        // pro detail vracíme status "CREATED" (už existující člen)
+        return memberMapper.toDto(user, member, "CREATED");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public MembersStatsDto getMembersStats(UUID companyId) {
+        MembersStatsTuple t = memberRepository.aggregateMembersStats(companyId);
+        if (t == null) { // prázdná firma → samé nuly
+            return MembersStatsDto.builder().build();
+        }
+        return MembersStatsDto.builder()
+                .owners(nz(t.getOwners()))
+                .active(nz(t.getActive()))
+                .invited(nz(t.getInvited()))
+                .disabled(nz(t.getDisabled()))
+                .total(nz(t.getTotal()))
+                .build();
+    }
+
+    @Override
     @Transactional
     public MemberDto updateProfile(UUID companyId, UUID memberId, UpdateMemberProfileRequest req) {
         CompanyMember member = memberRepository.findById(memberId)
@@ -128,10 +167,12 @@ public class TeamServiceImpl implements TeamService {
         String firstName = normalizeBlankToNull(req.firstName());
         String lastName  = normalizeBlankToNull(req.lastName());
         String phone     = normalizeBlankToNull(req.phone());
+       // CompanyRoleName newRole = companyRoleName(req.role());
 
         member.setFirstName(firstName);
         member.setLastName(lastName);
         member.setPhone(phone);
+      //  member.setRole(newRole);
         memberRepository.save(member);
 
         User user = userRepository.findById(member.getUserId())
@@ -189,6 +230,37 @@ public class TeamServiceImpl implements TeamService {
         memberRepository.delete(member);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Page<MemberDto> searchMembers(UUID companyId, String q, Pageable pageable) {
+        Specification<CompanyMember> spec = (root, cq, cb) -> {
+            var p = cb.equal(root.get("companyId"), companyId);
+
+            if (q != null && !q.isBlank()) {
+                String like = "%" + q.trim().toLowerCase(Locale.ROOT) + "%";
+                // JOIN na uživatele přes read-only vazbu
+                var userJoin = root.join("user", jakarta.persistence.criteria.JoinType.LEFT);
+
+                var or = cb.or(
+                        cb.like(cb.lower(userJoin.get("email")), like),
+                        cb.like(cb.lower(root.get("firstName")), like),
+                        cb.like(cb.lower(root.get("lastName")), like),
+                        cb.like(cb.lower(root.get("phone")), like)
+                );
+                p = cb.and(p, or);
+            }
+            return p;
+        };
+
+        var page = memberRepository.findAll(spec, pageable);
+
+        // Mapování stránkovaně — status = "CREATED" (jde o existující členy)
+        return page.map(m -> {
+            var u = m.getUser(); // lazy načteno díky joinu
+            return memberMapper.toDto(u, m, "CREATED");
+        });
+    }
+
     // --- helpery (lokální, bez globálních util) ---
 
     private CompanyRoleName mapTeamRoleToCompanyRole(TeamRole role) {
@@ -236,4 +308,6 @@ public class TeamServiceImpl implements TeamService {
         String t = s.trim();
         return t.isEmpty() ? null : t;
     }
+
+    private long nz(Long v) { return v == null ? 0L : v; }
 }

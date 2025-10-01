@@ -2,6 +2,7 @@ package cz.stavbau.backend.tenants.membership.model;
 
 import cz.stavbau.backend.common.domain.BaseEntity;
 import cz.stavbau.backend.security.rbac.CompanyRoleName;
+import cz.stavbau.backend.users.model.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -36,5 +37,10 @@ public class CompanyMember extends BaseEntity {
 
     @Column(name = "phone", length = 40)
     private String phone;
+
+    /** Read-only reference na uživatele (kvůli dotazům a mapování). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", referencedColumnName = "id", insertable = false, updatable = false)
+    private User user;  // nepoužíváme pro zápis, jen pro JOIN ve Specification
 
 }
