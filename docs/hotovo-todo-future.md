@@ -1133,6 +1133,7 @@ FUTURE: Soft delete; CRM-lite (contacts, tags); ARES prefill; client portal (lin
 - Podpora avatarů přes file upload (profile picture).
 - Statistiky v dashboardu firmy (počty aktivních členů, invited apod. na hlavní stránce).
 - Konsolidace validace mezi FE a BE (Zod ↔ Bean Validation).
+- Hotový základ pro další rozšiřování profilu (CompanyMember) člena (adresy, avatar).
 
 ### ✅ 2025-10-01 – BE: Members stats endpoint (Team)
 - Přidán endpoint `GET /api/v1/tenants/{companyId}/members/stats`
@@ -1148,3 +1149,8 @@ FUTURE: Soft delete; CRM-lite (contacts, tags); ARES prefill; client portal (lin
 
 **FUTURE:**
 - Admin náhled: stats napříč více firmami (jen pro SUPERADMIN).
+
+### 🕒 Milník – 2025-10-01
+Dokončen skeleton FE modulu **Team** (list, detail, form, drawery, RBAC, validace, i18n, hook `useMembersStats`).  
+Připraven prompt pro BE endpoint `GET /members/stats`.  
+Hotový základ pro další rozšiřování profilu člena (adresy, avatar).  
