@@ -51,9 +51,9 @@ public class TeamServiceImpl implements TeamService {
         final String email = normalizeEmail(req.email());
         validateEmail(email);
 
-        final TeamRole teamRole = requireTeamRole(req.role()); // ADMIN|MEMBER
-        final CompanyRoleName companyRole = mapTeamRoleToCompanyRole(teamRole);
-
+        //final TeamRole teamRole = requireTeamRole(req.role()); // ADMIN|MEMBER
+        //final CompanyRoleName companyRole = mapTeamRoleToCompanyRole(teamRole);
+        final CompanyRoleName companyRole = companyRoleName(req.role());
         var existingUser = userRepository.findByEmailIgnoreCase(email);
         boolean invited = false;
 
