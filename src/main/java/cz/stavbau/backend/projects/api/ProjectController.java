@@ -105,4 +105,28 @@ public class ProjectController {
     @PostMapping("/{id}/archive")
     @PreAuthorize("@rbac.hasScope('projects:delete')")
     @Operation(summary = "Archive project (soft delete)")
-    public ResponseEntity<Void> archive(@PathVariable
+    public ResponseEntity<Void> archive(@PathVariable UUID id) {
+        var loc = localeResolver.resolve();
+        service.archive(id);
+        return ResponseEntity.noContent().headers(i18nHeaders(loc)).build();
+    }
+
+    // --- NEW: members (stubs, bez logiky) ---
+    @PostMapping("/{id}/members")
+    @PreAuthorize("@rbac.hasScope('projects:assign')")
+    @Operation(summary = "Assign member to project (stub)")
+    public ResponseEntity<Void> addMember(@PathVariable UUID id, @RequestBody @Valid ProjectMemberRequest req) {
+        var loc = localeResolver.resolve();
+        // TODO: implement in next PR (service call assignMember)
+        return ResponseEntity.accepted().headers(i18nHeaders(loc)).build();
+    }
+
+    @DeleteMapping("/{id}/members/{userId}")
+    @PreAuthorize("@rbac.hasScope('projects:assign')")
+    @Operation(summary = "Remove member from project (stub)")
+    public ResponseEntity<Void> removeMember(@PathVariable UUID id, @PathVariable UUID userId) {
+        var loc = localeResolver.resolve();
+        // TODO: implement in next PR (service call removeMember)
+        return ResponseEntity.noContent().headers(i18nHeaders(loc)).build();
+    }
+}
