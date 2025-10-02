@@ -1205,3 +1205,9 @@ Hotový základ pro další rozšiřování profilu člena (adresy, avatar).
 - UI: nastavení jazyka firmy (select `cs-CZ`/`en`…), validace BCP-47.
 - (volitelné) Company defaults rozšířit o `defaultCurrency`, `vatMode` (budoucí moduly).
 
+### ✅ 2025-10-03 – BE:  PR 3/4 – Projects: REST + RBAC + i18n headers (rozpracovat)
+- Controller: /api/v1/projects (list/get/create/update/delete).
+- RBAC: @PreAuthorize s 'projects:*'.
+- I18n: Content-Language + Vary: Accept-Language.
+- Swagger: tag "Projects".
+
