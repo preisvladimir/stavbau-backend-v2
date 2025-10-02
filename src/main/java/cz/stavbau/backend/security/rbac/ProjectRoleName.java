@@ -5,10 +5,13 @@ public enum ProjectRoleName {
     PROJECT_MANAGER,
     SITE_MANAGER,     // stavbyvedoucí
     FOREMAN,          // mistr
+    QUANTITY_SURVEYOR, // rozpočtář (QS)
     QS,               // rozpočtář
     HSE,              // BOZP
     DESIGNER,
     SUBCONTRACTOR,
     CLIENT,
+    MEMBER,            // běžný člen projektu
+    VIEWER,             // jen pro čtení
     PROJECT_VIEWER
 }

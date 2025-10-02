@@ -14,10 +14,10 @@ public class MessageSourceConfig {
         ms.setFallbackToSystemLocale(false);
         return ms;
     }
-    @Bean
-    public LocaleResolver localeResolver() {
-        var lr = new AcceptHeaderLocaleResolver();
-        lr.setDefaultLocale(Locale.forLanguageTag("cs"));
-        return lr;
-    }
+  //  @Bean
+  //  public LocaleResolver localeResolver() {
+  //      var lr = new AcceptHeaderLocaleResolver();
+  //      lr.setDefaultLocale(Locale.forLanguageTag("cs"));
+ //       return lr;
+   // }
 }
