@@ -12,6 +12,7 @@ import org.springframework.security.authentication.AuthenticationCredentialsNotF
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -122,6 +123,19 @@ public class ProjectServiceImpl implements ProjectService {
                 .orElseThrow(() -> new AuthenticationCredentialsNotFoundException("auth.company.required"));
         Project entity = findByIdAndCompany(id, companyId);
         projectRepository.delete(entity); // v PR 3/4 nahradíme za archive
+    }
+
+    @Override
+    @Transactional
+    public void archive(UUID id) {
+        UUID companyId = SecurityUtils.currentCompanyId()
+                .orElseThrow(() -> new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException("auth.company.required"));
+        Project entity = findByIdAndCompany(id, companyId);
+        entity.setArchivedAt(Instant.now());
+        if (entity.getStatus() != ProjectStatus.ARCHIVED) {
+            entity.setStatus(ProjectStatus.ARCHIVED);
+        }
+        projectRepository.save(entity);
     }
 
     // ===== helpers =====
