@@ -1154,3 +1154,21 @@ FUTURE: Soft delete; CRM-lite (contacts, tags); ARES prefill; client portal (lin
 Dokončen skeleton FE modulu **Team** (list, detail, form, drawery, RBAC, validace, i18n, hook `useMembersStats`).  
 Připraven prompt pro BE endpoint `GET /members/stats`.  
 Hotový základ pro další rozšiřování profilu člena (adresy, avatar).  
+
+## 🕒 Milník 2025-10-03
+
+### Hotovo
+- Upraven `TeamForm` tak, aby podporoval `resetAfterSubmit` (výchozí true pro `create`, false pro `edit`).
+- Přidán `key` na komponentu `TeamForm` (`${mode}-${memberId}`) → správný remount při změně módu nebo člena.
+- Doplněn cleanup `prefill` při zavření `TeamFormDrawer` → žádná stará data při znovuotevření.
+- Ošetřen lokální error nad formulářem a sjednoceno chování při submitu.
+- Formulář se nyní korektně resetuje po úspěšném vytvoření člena (create), zatímco v editu zachovává hodnoty.
+
+### TODO
+- Rozšířit validace (např. phone pattern, volitelné další pole).
+- Přidat loading stavy do submit tlačítka (`isLoading`) v `TeamForm`.
+- Otestovat více edge-case scénářů (cancel během editace, zavření šuplíku při pending submit).
+
+### Future
+- Připravit jednotnou logiku pro validaci unikátnosti emailu už na FE (např. async validator).
+- Rozšířit `TeamForm` o adresy (permanentní/doručovací) až BE endpoint bude připraven.
