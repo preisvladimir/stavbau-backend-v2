@@ -8,6 +8,7 @@ import cz.stavbau.backend.common.i18n.LocaleResolver;
 import cz.stavbau.backend.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,7 +27,8 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional
     public ProjectDto create(CreateProjectRequest request) {
-        UUID companyId = SecurityUtils.currentCompanyId();
+        UUID companyId = SecurityUtils.currentCompanyId()
+            .orElseThrow(() -> new AuthenticationCredentialsNotFoundException("auth.company.required"));
 
         validateDates(request.getPlannedStartDate(), request.getPlannedEndDate());
         if (request.getCode() != null && projectRepository.existsByCompanyIdAndCode(companyId, request.getCode().trim())) {
@@ -48,7 +50,8 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional
     public ProjectDto update(UUID id, UpdateProjectRequest request) {
-        UUID companyId = SecurityUtils.currentCompanyId();
+        UUID companyId = SecurityUtils.currentCompanyId()
+                .orElseThrow(() -> new AuthenticationCredentialsNotFoundException("auth.company.required"));
 
         Project entity = findByIdAndCompany(id, companyId);
         if (request.getPlannedStartDate() != null || request.getPlannedEndDate() != null) {
@@ -76,7 +79,8 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional(readOnly = true)
     public ProjectDto get(UUID id) {
-        UUID companyId = SecurityUtils.currentCompanyId();
+        UUID companyId = SecurityUtils.currentCompanyId()
+                .orElseThrow(() -> new AuthenticationCredentialsNotFoundException("auth.company.required"));
         Project entity = findByIdAndCompany(id, companyId);
         return enrichDto(mapper.toDto(entity), id);
     }
@@ -84,7 +88,8 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional(readOnly = true)
     public Page<ProjectSummaryDto> list(String q, Pageable pageable) {
-        UUID companyId = SecurityUtils.currentCompanyId();
+        UUID companyId = SecurityUtils.currentCompanyId()
+                .orElseThrow(() -> new AuthenticationCredentialsNotFoundException("auth.company.required"));
         Page<Project> page = projectRepository.findAll((root, cq, cb) -> {
             List<jakarta.persistence.criteria.Predicate> preds = new ArrayList<>();
             preds.add(cb.equal(root.get("companyId"), companyId));
@@ -113,7 +118,8 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional
     public void delete(UUID id) {
-        UUID companyId = SecurityUtils.currentCompanyId();
+        UUID companyId = SecurityUtils.currentCompanyId()
+                .orElseThrow(() -> new AuthenticationCredentialsNotFoundException("auth.company.required"));
         Project entity = findByIdAndCompany(id, companyId);
         projectRepository.delete(entity); // v PR 3/4 nahradíme za archive
     }

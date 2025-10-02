@@ -12,6 +12,7 @@ import cz.stavbau.backend.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,7 +29,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public CustomerDto create(CreateCustomerRequest req) {
-        var companyId = SecurityUtils.currentCompanyId();
+        UUID companyId = requireCompanyId();
         // jednoduchá normalizace
         var ico = req.ico() != null ? req.ico().trim() : null;
         if (ico != null && repo.existsByCompanyIdAndIco(companyId, ico)) {
@@ -57,7 +58,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public CustomerDto update(UUID id, UpdateCustomerRequest req) {
-        var companyId = SecurityUtils.currentCompanyId();
+        UUID companyId = requireCompanyId();
         var c = repo.findByIdAndCompanyId(id, companyId)
                 .orElseThrow(() -> new NotFoundException("customer.notFound"));
         if (req.name() != null) c.setName(req.name().trim());
@@ -80,7 +81,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public void delete(UUID id) {
-        var companyId = SecurityUtils.currentCompanyId();
+        UUID companyId = requireCompanyId();
         var c = repo.findByIdAndCompanyId(id, companyId)
                 .orElseThrow(() -> new NotFoundException("customer.notFound"));
         repo.delete(c); // MVP: hard delete (případně soft v budoucnu)
@@ -89,7 +90,7 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     @Transactional(readOnly = true)
     public CustomerDto get(UUID id) {
-        var companyId = SecurityUtils.currentCompanyId();
+        UUID companyId = requireCompanyId();
         var c = repo.findByIdAndCompanyId(id, companyId)
                 .orElseThrow(() -> new NotFoundException("customer.notFound"));
         return mapper.toDto(c);
@@ -112,5 +113,10 @@ public class CustomerServiceImpl implements CustomerService {
             }
             return p;
         }, pageable).map(mapper::toSummaryDto);
+    }
+
+    private UUID requireCompanyId() {
+        return SecurityUtils.currentCompanyId()
+                .orElseThrow(() -> new AuthenticationCredentialsNotFoundException("auth.company.required"));
     }
 }
