@@ -15,10 +15,10 @@
     - FE: https://github.com/preisvladimir/stavbau-frontend-v2   
 
 ## Ukázková struktura a kódy
-- FE: https://github.com/preisvladimir/stavbau-frontend-v2/tree/main/src/features/teamV2
+   - FE: https://github.com/preisvladimir/stavbau-frontend-v2/tree/main/src/features/teamV2
 
-## Backend <MODULE_NAME> kódy a struktura 
-    - BE: https://github.com/preisvladimir/stavbau-backend-v2
+## Backend <MODULE_NAME> kódy a struktura
+   - BE: https://github.com/preisvladimir/stavbau-backend-v2/tree/main/src/main/java/cz/stavbau/backend/projects
 
 ## Cíl
 Vytvoř „by feature“ skeleton modulu **<MODULE_NAME>** s listem, detailem (drawer) a formulářem (drawer) + API klient a typy, i18n, RBAC hooky/guards, test scaffolding. Nejprve Step Plan (bez kódu), po schválení kód.
