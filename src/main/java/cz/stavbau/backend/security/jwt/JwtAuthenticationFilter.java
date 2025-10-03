@@ -43,15 +43,38 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (token != null) {
             try {
                 Jws<Claims> jws = jwtService.parseAndValidate(token);
-
+                Claims claims = jws.getBody(); // ✅ správně: body, ne payload
                 // Mapování na náš principal (userId, companyId, email, companyRole, projectRoles, scopes)
                 AppUserPrincipal principal = claimsPrincipalMapper.toPrincipal(jws);
 
                 // Authorities (volitelné): ROLE_USER + ROLE_{CompanyRole} + SCOPE_{scope}
                 var authorities = buildAuthorities(principal);
 
-                var authToken = new UsernamePasswordAuthenticationToken(principal, null, authorities);
-                org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(authToken);
+                //var authToken = new UsernamePasswordAuthenticationToken(principal, null, authorities);
+                //org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(authToken);
+                                var authToken = new UsernamePasswordAuthenticationToken(principal, null, authorities);
+
+                                        // --- detaily pro SecurityUtils: companyId (UUID) + locale (String) ---
+                                                Map<String, Object> details = new HashMap<>();
+                                if (principal.getCompanyId() != null) {
+                                        details.put("companyId", principal.getCompanyId()); // UUID – SecurityUtils to umí přečíst
+                                    } else {
+                                        // fallback z JWT claims (pokud by principal companyId neměl)
+                                                String cidStr = claims.get("companyId", String.class);
+                                        if (cidStr != null && !cidStr.isBlank()) {
+                                                try { details.put("companyId", java.util.UUID.fromString(cidStr)); }
+                                                catch (IllegalArgumentException ignored) { details.put("companyId", cidStr); }
+                                            }
+                                    }
+                                String userLocale = Optional.ofNullable(claims.get("locale", String.class))
+                                                .map(String::trim).filter(s -> !s.isEmpty()).orElse(null);
+                                if (userLocale != null) {
+                                        details.put("locale", userLocale); // např. "cs-CZ" nebo "en"
+                                    }
+                                authToken.setDetails(details);
+
+                                        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(authToken);
+
 
             } catch (JwtException e) {
                 // Neplatný token → nepřihlásíme; downstream skončí 401/403 dle Security configu.

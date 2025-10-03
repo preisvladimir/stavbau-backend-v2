@@ -7,10 +7,14 @@ import cz.stavbau.backend.tenants.model.Company;
 import cz.stavbau.backend.tenants.model.RegisteredAddress;
 import org.mapstruct.*;
 
-@Mapper(config = MapStructCentralConfig.class)
+@Mapper(
+        config = MapStructCentralConfig.class,
+        unmappedTargetPolicy = ReportingPolicy.IGNORE,
+        unmappedSourcePolicy = ReportingPolicy.IGNORE
+)
 public interface CompanyMapper {
 
-    // Entity -> DTO
+    // Entity -> DTO (defaultLocale se namapuje automaticky by-name, pokud je v CompanyDto)
     @Mapping(target = "czNace", expression = "java(new java.util.ArrayList<>(entity.getCzNace()))")
     CompanyDto toDto(Company entity);
 
@@ -18,16 +22,14 @@ public interface CompanyMapper {
 
     // DTO -> Entity
     @InheritInverseConfiguration(name = "toDto")
-    @Mapping(target = "id", ignore = true)                 // JPA generuje
-    @Mapping(target = "createdAt", ignore = true)          // auditing spravuje Spring
-    @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(target = "createdBy", ignore = true)
-    @Mapping(target = "updatedBy", ignore = true)
-
-    @Mapping(target = "aresRaw", ignore = true)            // snapshot si řeší ARES vrstva
-    @Mapping(target = "adresaDorucovaci", ignore = true)   // ARES ji nevrací
-    @Mapping(target = "registrace", ignore = true)         // zatím nepoužíváme
-    @Mapping(target = "aresLastSyncAt", ignore = true)     // nastavuje ARES mapper
+    @Mapping(target = "defaultLocale", ignore = true) // mapovat až po doplnění do Create/Update DTO + UI
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdAt", ignore = true) @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "createdBy", ignore = true) @Mapping(target = "updatedBy", ignore = true)
+    @Mapping(target = "aresRaw", ignore = true)
+    @Mapping(target = "adresaDorucovaci", ignore = true)
+    @Mapping(target = "registrace", ignore = true)
+    @Mapping(target = "aresLastSyncAt", ignore = true)
     @Mapping(target = "czNace", expression =
             "java(dto.getCzNace() == null ? new java.util.LinkedHashSet<>() : new java.util.LinkedHashSet<>(dto.getCzNace()))")
     Company toEntity(CompanyDto dto);

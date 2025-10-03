@@ -1172,3 +1172,49 @@ Hotový základ pro další rozšiřování profilu člena (adresy, avatar).
 ### Future
 - Připravit jednotnou logiku pro validaci unikátnosti emailu už na FE (např. async validator).
 - Rozšířit `TeamForm` o adresy (permanentní/doručovací) až BE endpoint bude připraven.
+
+### ✅ 2025-10-02 – BE:  PR 1/4 – Projects: DB & model (MVP)
+- Přidány tabulky: `projects`, `project_translations`, `project_members` (Flyway).
+- Vytvořeny entity: Project, ProjectTranslation, ProjectMember (+ repo vrstvy).
+- Přidán enum ProjectRoleName (PROJECT_MANAGER, SITE_MANAGER, QUANTITY_SURVEYOR, MEMBER, VIEWER).
+- Dodržena modularita by-feature, i18n translation table, připraveno na RBAC 2.1 projektové role.
+- Bez změn API (service/REST naváže v PR 2/4 a 3/4).
+
+### ▶ TODO next
+- PR 2/4: `ProjectService` + MapStruct mapper (DTO, i18n fallback, tenancy guard).
+- PR 3/4: `ProjectController` + RBAC anotace (`projects:read|create|update|delete|assign`).
+- PR 4/4: FE skeleton (list + create) s DataTableV2.
+
+### ✅ 2025-10-02 – BE: PR 2/4 – doplněn i18n stack (LocaleResolver)
+- Přidán LocaleResolver + LocaleContext (request-scoped), MessageService, EnumLabeler.
+- Konfigurace: MessageSourceConfig, WebConfig (interceptor pro nastavení locale).
+- SecurityUtils: helper currentUserLocale().
+- Projects service nyní řeší fallback řetězec: ?lang → Accept-Language → user → company → app default.
+
+### ▶ TODO next
+- PR 3/4: ProjectController + @PreAuthorize + PageResponse + hlavičky `Content-Language` a `Vary: Accept-Language`.
+- Přidat EnumLabeler pro `statusLabel` (Projects).
+- Rozšířit list o fulltext přes `project_translations` (per-locale).
+
+### ✅ 2025-10-03 – BE: PR 2b/4 – Company defaults (locale)
+- DB: přidán sloupec `companies.default_locale` + CHECK regex; seed na `cs-CZ`.
+- BE: `Company.defaultLocale` s @Pattern; repo metoda pro čtení.
+- Service: `CompanyLocaleService` + impl; LocaleResolver používá firemní fallback.
+
+### ▶ TODO next
+- UI: nastavení jazyka firmy (select `cs-CZ`/`en`…), validace BCP-47.
+- (volitelné) Company defaults rozšířit o `defaultCurrency`, `vatMode` (budoucí moduly).
+
+### ✅ 2025-10-03 – BE:  PR 3/4 – Projects: REST + RBAC + i18n headers (rozpracovat)
+- Controller: /api/v1/projects (list/get/create/update/delete).
+- Přidán `/api/v1/projects/{id}/archive` (soft delete).
+- Stubs: `POST /{id}/members`, `DELETE /{id}/members/{userId}` (zatím 202/204).
+- RBAC: @PreAuthorize s 'projects:*'.
+- I18n: Content-Language + Vary: Accept-Language.
+- Swagger: tag "Projects".
+
+### ▶ TODO next
+- Implementovat service metody: `assignMember`, `removeMember`.
+- Rozšířit list o filtry `status`, `archived`.
+- @WebMvcTest testy na RBAC a i18n hlavičky.
+

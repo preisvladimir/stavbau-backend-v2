@@ -12,6 +12,7 @@ import java.util.*;
 public interface AresCompanyMapper {
 
     // -------- LEGACY/ARRAY: AresSubjectDto.Zaznam --------
+    @Mapping(target = "defaultLocale", ignore = true)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
@@ -40,6 +41,7 @@ public interface AresCompanyMapper {
     Company fromLegacy(AresSubjectDto.Zaznam src, @Context Map<String, Object> raw);
 
     // -------- SINGLE-OBJECT: AresSubjectDto --------
+    @Mapping(target = "defaultLocale", ignore = true)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)

@@ -26,6 +26,10 @@ import java.util.Set;
         })
 
 public class Company extends BaseEntity {
+    /** Výchozí jazyk firmy (BCP-47), např. "cs-CZ" nebo "en". */
+    @Column(name = "default_locale", length = 8)
+    @Pattern(regexp = "^[A-Za-z]{2}(-[A-Za-z]{2})?$", message = "Použijte BCP-47 formát, např. cs-CZ")
+    private String defaultLocale;
 
     @Column(length = 8, nullable = false, unique = true)
     @Pattern(regexp = "\\d{8}", message = "IČO musí mít 8 číslic")
