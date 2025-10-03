@@ -10,10 +10,10 @@ import java.util.Locale;
 @RequiredArgsConstructor
 public class MessageService {
     private final MessageSource ms;
-    private final LocaleResolver resolver;
+    private final I18nLocaleService i18nLocale;
 
     public String get(String key, Object... args) {
-        Locale loc = resolver.resolve();
+        Locale loc = i18nLocale.resolve();
         return ms.getMessage(key, args, key, loc);
     }
 }

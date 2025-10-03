@@ -1,10 +1,10 @@
 package cz.stavbau.backend.projects.service;
 
+import cz.stavbau.backend.common.i18n.I18nLocaleService;
 import cz.stavbau.backend.projects.dto.*;
 import cz.stavbau.backend.projects.mapper.ProjectMapper;
 import cz.stavbau.backend.projects.model.*;
 import cz.stavbau.backend.projects.repo.*;
-import cz.stavbau.backend.common.i18n.LocaleResolver;
 import cz.stavbau.backend.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
@@ -23,7 +23,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final ProjectRepository projectRepository;
     private final ProjectTranslationRepository translationRepository;
     private final ProjectMapper mapper;
-    private final LocaleResolver localeResolver;
+    private final I18nLocaleService i18nLocale;
 
     @Override
     @Transactional
@@ -42,7 +42,7 @@ public class ProjectServiceImpl implements ProjectService {
         Project saved = projectRepository.save(entity);
 
         // ulož i18n překlad (min 1 jazyk = resolved)
-        String locale = localeResolver.resolve().toLanguageTag();
+        String locale = i18nLocale.resolve().toLanguageTag();
         upsertTranslation(saved.getId(), locale, nullToEmpty(request.getName()), nullToEmpty(request.getDescription()));
 
         return enrichDto(mapper.toDto(saved), saved.getId());
@@ -69,7 +69,7 @@ public class ProjectServiceImpl implements ProjectService {
         Project saved = projectRepository.save(entity);
 
         // i18n update pokud přišlo name/description
-        String locale = localeResolver.resolve().toLanguageTag();
+        String locale = i18nLocale.resolve().toLanguageTag();
         if (request.getName() != null || request.getDescription() != null) {
             upsertTranslation(saved.getId(), locale, request.getName(), request.getDescription());
         }
@@ -168,7 +168,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     private String resolveName(UUID projectId) {
-        String locale = localeResolver.resolve().toLanguageTag();
+        String locale = i18nLocale.resolve().toLanguageTag();
         // fallback chain: resolved -> company default -> app default
         return translationRepository.findById(new ProjectTranslationId(projectId, locale))
                 .map(ProjectTranslation::getName)
@@ -177,7 +177,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     private String resolveDescription(UUID projectId) {
-        String locale = localeResolver.resolve().toLanguageTag();
+        String locale = i18nLocale.resolve().toLanguageTag();
         return translationRepository.findById(new ProjectTranslationId(projectId, locale))
                 .map(ProjectTranslation::getDescription)
                 .orElse(null);

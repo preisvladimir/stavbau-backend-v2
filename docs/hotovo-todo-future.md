@@ -1207,7 +1207,14 @@ Hotový základ pro další rozšiřování profilu člena (adresy, avatar).
 
 ### ✅ 2025-10-03 – BE:  PR 3/4 – Projects: REST + RBAC + i18n headers (rozpracovat)
 - Controller: /api/v1/projects (list/get/create/update/delete).
+- Přidán `/api/v1/projects/{id}/archive` (soft delete).
+- Stubs: `POST /{id}/members`, `DELETE /{id}/members/{userId}` (zatím 202/204).
 - RBAC: @PreAuthorize s 'projects:*'.
 - I18n: Content-Language + Vary: Accept-Language.
 - Swagger: tag "Projects".
+
+### ▶ TODO next
+- Implementovat service metody: `assignMember`, `removeMember`.
+- Rozšířit list o filtry `status`, `archived`.
+- @WebMvcTest testy na RBAC a i18n hlavičky.
 

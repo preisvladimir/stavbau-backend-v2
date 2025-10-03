@@ -1,18 +1,24 @@
-<MODULE_NAME> = Team
-<Module> = Team
-<module> = team
-<ModuleDto> = Member
-<resource> = tenants/{companyId}/members
+<MODULE_NAME> = Projects
+<Module> = Projects
+<module> = projects
+<ModuleDto> = Project
+<resource> = projects
 
 # 🔰 FE Skeleton – Modul <MODULE_NAME> (by feature)
-
-## Kontekst / zdroje pravdy
-- Backend docs: /docs v backend repu (větev `main`)
-- Repozitáře:
-    - BE: https://github.com/preisvladimir/stavbau-backend-v2
-    - FE: https://github.com/preisvladimir/stavbau-frontend-v2
 - Dodržuj: STAVBAU_GUIDELINES.md, REPO_GUIDELINES.md, PROJECT_SETUP.md, RBAC_2.1_STAVBAU_V2.md, hotovo-todo-future.md
 - UI: používej `stavbau-ui` (Drawer, ConfirmModal, Button)
+
+## Kontekst / zdroje pravdy
+- Backend docs: /docs v backend repu (větev `main`) - https://github.com/preisvladimir/stavbau-backend-v2/tree/main/docs
+- Repozitáře:
+    - BE: https://github.com/preisvladimir/stavbau-backend-v2
+    - FE: https://github.com/preisvladimir/stavbau-frontend-v2   
+
+## Ukázková struktura a kódy
+- FE: https://github.com/preisvladimir/stavbau-frontend-v2/tree/main/src/features/teamV2
+
+## Backend <MODULE_NAME> kódy a struktura 
+    - BE: https://github.com/preisvladimir/stavbau-backend-v2
 
 ## Cíl
 Vytvoř „by feature“ skeleton modulu **<MODULE_NAME>** s listem, detailem (drawer) a formulářem (drawer) + API klient a typy, i18n, RBAC hooky/guards, test scaffolding. Nejprve Step Plan (bez kódu), po schválení kód.
@@ -20,15 +26,23 @@ Vytvoř „by feature“ skeleton modulu **<MODULE_NAME>** s listem, detailem (d
 ## Výsledná struktura (v FE repu)
 src/features/<module>/
 ├─ api/
-│  ├─ client.ts              // axios wrapper + metody
-│  └─ types.ts               // DTO + PageResponse<T>
-├─ components/
-│  ├─ <Module>Table.tsx
+│  ├─ client.ts               // axios wrapper + metody
+│  └─ types.ts                // DTO
+├─ components/                // všechny komponenty
+│  ├─ <Module>Table.tsx       // list
 │  ├─ <Module>Form.tsx
 │  ├─ <Module>DetailDrawer.tsx
 │  └─ <Module>FormDrawer.tsx
-└─ pages/
-└─ <Module>Page.tsx       // list + search + paging + otevření drawerů
+├─ hooks/                       
+│  └─ use<Module>Stats.ts        // např. "Stats"
+├─ mappers/                       
+│  └─ <Module>Mappers.ts         // mapper pro modul
+├─ pages/
+│  └─ <Module>Page.tsx       // list + search + paging + otevření drawerů
+└─ validation/
+   └─ <Module>Schema.ts       // schema
+ 
+
 
 + i18n: src/i18n/cs/<module>.json
 + test scaffolding: src/features/<module>/__tests__/*

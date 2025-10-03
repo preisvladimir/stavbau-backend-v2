@@ -1,12 +1,12 @@
 package cz.stavbau.backend.projects.api;
 
+import cz.stavbau.backend.common.i18n.I18nLocaleService;
 import cz.stavbau.backend.projects.dto.CreateProjectRequest;
 import cz.stavbau.backend.projects.dto.ProjectDto;
 import cz.stavbau.backend.projects.dto.ProjectSummaryDto;
 import cz.stavbau.backend.projects.dto.UpdateProjectRequest;
 import cz.stavbau.backend.projects.dto.ProjectMemberRequest;
 import cz.stavbau.backend.projects.service.ProjectService;
-import cz.stavbau.backend.common.i18n.LocaleResolver;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -27,7 +27,7 @@ import java.util.UUID;
 public class ProjectController {
 
     private final ProjectService service;
-    private final LocaleResolver localeResolver;
+    private final I18nLocaleService i18nLocale;
 
     private HttpHeaders i18nHeaders(Locale locale) {
         HttpHeaders h = new HttpHeaders();
@@ -58,7 +58,7 @@ public class ProjectController {
             @RequestParam(value = "size", defaultValue = "20") int size,
             @RequestParam(value = "sort", defaultValue = "code,asc") String sort
     ) {
-        var loc = localeResolver.resolve();
+        var loc = i18nLocale.resolve();
         var result = service.list(q, pageable(sort, page, size));
         return new ResponseEntity<>(result, i18nHeaders(loc), HttpStatus.OK);
     }
@@ -67,7 +67,7 @@ public class ProjectController {
     @PreAuthorize("@rbac.hasScope('projects:read')")
     @Operation(summary = "Get project by id")
     public ResponseEntity<ProjectDto> get(@PathVariable UUID id) {
-        var loc = localeResolver.resolve();
+        var loc = i18nLocale.resolve();
         var dto = service.get(id);
         return new ResponseEntity<>(dto, i18nHeaders(loc), HttpStatus.OK);
     }
@@ -76,7 +76,7 @@ public class ProjectController {
     @PreAuthorize("@rbac.hasScope('projects:create')")
     @Operation(summary = "Create project")
     public ResponseEntity<ProjectDto> create(@RequestBody @Valid CreateProjectRequest req) {
-        var loc = localeResolver.resolve();
+        var loc = i18nLocale.resolve();
         var dto = service.create(req);
         return ResponseEntity
                 .created(URI.create("/api/v1/projects/" + dto.getId()))
@@ -88,7 +88,7 @@ public class ProjectController {
     @PreAuthorize("@rbac.hasScope('projects:update')")
     @Operation(summary = "Update project")
     public ResponseEntity<ProjectDto> update(@PathVariable UUID id, @RequestBody @Valid UpdateProjectRequest req) {
-        var loc = localeResolver.resolve();
+        var loc = i18nLocale.resolve();
         var dto = service.update(id, req);
         return new ResponseEntity<>(dto, i18nHeaders(loc), HttpStatus.OK);
     }
@@ -106,7 +106,7 @@ public class ProjectController {
     @PreAuthorize("@rbac.hasScope('projects:delete')")
     @Operation(summary = "Archive project (soft delete)")
     public ResponseEntity<Void> archive(@PathVariable UUID id) {
-        var loc = localeResolver.resolve();
+        var loc = i18nLocale.resolve();
         service.archive(id);
         return ResponseEntity.noContent().headers(i18nHeaders(loc)).build();
     }
@@ -116,7 +116,7 @@ public class ProjectController {
     @PreAuthorize("@rbac.hasScope('projects:assign')")
     @Operation(summary = "Assign member to project (stub)")
     public ResponseEntity<Void> addMember(@PathVariable UUID id, @RequestBody @Valid ProjectMemberRequest req) {
-        var loc = localeResolver.resolve();
+        var loc = i18nLocale.resolve();
         // TODO: implement in next PR (service call assignMember)
         return ResponseEntity.accepted().headers(i18nHeaders(loc)).build();
     }
@@ -125,7 +125,7 @@ public class ProjectController {
     @PreAuthorize("@rbac.hasScope('projects:assign')")
     @Operation(summary = "Remove member from project (stub)")
     public ResponseEntity<Void> removeMember(@PathVariable UUID id, @PathVariable UUID userId) {
-        var loc = localeResolver.resolve();
+        var loc = i18nLocale.resolve();
         // TODO: implement in next PR (service call removeMember)
         return ResponseEntity.noContent().headers(i18nHeaders(loc)).build();
     }
