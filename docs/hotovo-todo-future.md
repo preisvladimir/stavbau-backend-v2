@@ -1218,3 +1218,69 @@ Hotový základ pro další rozšiřování profilu člena (adresy, avatar).
 - Rozšířit list o filtry `status`, `archived`.
 - @WebMvcTest testy na RBAC a i18n hlavičky.
 
+### [2025-10-03] FE Projects skeleton
+- [x] Krok 1: Založena větev `feat/projects-fe-skeleton`, přidána routa `/app/projects` s RBAC guardem (`projects:read`).
+- [ ] Krok 2: API kontrakt a typy + klient s i18n hlavičkami
+- [ ] Krok 3: Mappery a adaptér stránkování
+- [ ] Krok 4: Skeleton komponent (Table, Form, Drawery)
+- [ ] Krok 5: Hooks + RBAC toggly
+- [ ] Krok 6: Stránka + vyhledávání/paging
+- [ ] Krok 7: i18n + test scaffolding + PR
+
+### [2025-10-03] FE Projects skeleton
+- [x] Krok 1: Založena větev `feat/projects-fe-skeleton`, přidána routa `/app/projects` s RBAC guardem (`projects:read`).
+- [x] Krok 2: Přidány `src/features/projects/api/types.ts` (DTO/enumy bez duplicit) a `src/features/projects/api/client.ts` (Axios wrapper + `Accept-Language`).
+- [ ] Krok 3: Mappery a adaptér stránkování (Spring Page -> PageResponse)
+- [ ] Krok 4: Skeleton komponent (Table, Form, Drawery)
+- [ ] Krok 5: Hooks + RBAC toggly
+- [ ] Krok 6: Stránka + vyhledávání/paging
+- [ ] Krok 7: i18n + test scaffolding + PR
+
+### [2025-10-03] FE Projects skeleton
+- [x] Krok 1: Založena větev `feat/projects-fe-skeleton`, přidána routa `/app/projects` s RBAC guardem (`projects:read`).
+- [x] Krok 2: Přidány `src/features/projects/api/types.ts` (DTO/enumy bez duplicit) a `src/features/projects/api/client.ts` (Axios wrapper + `Accept-Language`).
+- [x] Krok 3: Vytvořen adaptér `SpringPage -> PageResponse` + normalizace `statusLabel` (ProjectsMappers.ts).
+- [ ] Krok 4: Skeleton komponent (Table, Form, Drawery)
+- [ ] Krok 5: Hooks + RBAC toggly
+- [ ] Krok 6: Stránka + vyhledávání/paging
+- [ ] Krok 7: i18n + test scaffolding + PR
+
+### [2025-10-03] FE Projects skeleton
+- [x] Krok 1: Větev + routa `/app/projects` s RBAC guardem.
+- [x] Krok 2: API typy a klient (Accept-Language).
+- [x] Krok 3: Adaptér Spring Page -> PageResponse + normalizace statusLabel.
+- [x] Krok 4: Skeleton komponent (ProjectsTable, ProjectForm, ProjectDetailDrawer, ProjectFormDrawer) – reuse DataTableV2 & stavbau-ui.
+- [ ] Krok 5: Hooks + RBAC toggly
+- [ ] Krok 6: Stránka + vyhledávání/paging
+- [ ] Krok 7: i18n + test scaffolding + PR
+
+### [2025-10-03] FE Projects skeleton
+- [x] Krok 5: Přidán hook `useProjectsStats` (stub – total z Page.totalElements) a `useProjectPermissions` (RBAC toggly).
+- [x] Update: `ProjectsTable` – podmíněné tlačítko „Nový projekt“ přes `canCreate`.
+- [ ] Krok 6: `ProjectsPage` – napojení hooků, search/paging, otevření create/detail drawerů, akce podle RBAC.
+- [ ] Krok 7: i18n + test scaffolding + PR.
+
+[2025-10-03] FE Projects skeleton
+- [x] Přidán PROJECT_SCOPES (+ typ ProjectScope) – centrální konstanta pro projekty.
+- [x] RBAC: zpětně kompatibilní upgrade useHasScope (umí i variantu bez userScopes – čte z auth kontextu).
+- [x] useProjectPermissions aktualizován na PROJECT_SCOPES.
+
+[2025-10-03] FE Projects skeleton
+- [x] Krok 6: ProjectsPage sjednocen s TeamPage patternem (router-driven overlay, FAB, EmptyState, ScopeGuard, tokens).
+- [+] Vylepšení: server-side sort (sort=name,asc), sdílené adaptace Page, připraveno na budoucí sekce (fakturace/deník).
+
+[2025-10-03] FE Projects skeleton
+- [x] Core: Přidán centrální PageResponse + toPageResponse adapter (zachovává raw Spring Page pole).
+- [x] Refactor: Projects – nahrazen lokální adaptér za centrální; mappers ponechány jen pro normalizace.
+- [x] ProjectsPage – přepnuto na toPageResponse (sjednocení napříč appkou).
+
+[2025-10-04] Projects – sorting hardening
+- [x] FE: odstraněn sort=name,asc (BE neumí řadit podle name).
+- [x] BE: pageable() doplněn whitelist sort klíčů + fallback na code,asc; normalizace direction.
+- [ ] Next: implementovat locale-aware řazení podle name (join na translations) v separátním PR.
+
+[2025-10-04] Projects – sorting stabilized
+- [x] BE: pageable() + whitelist klíčů, fallback na code,asc; opraven @PreAuthorize na archive.
+- [x] FE: odstraněn problematický sort=name,asc; přidán normalizeSort whitelist (sync s BE).
+- [ ] FE: přidat user-facing řazení v ProjectsTable s mapou sloupec→sort klíč (bezpečné).
+- [ ] Tests: unit pro normalizeSort; E2E list → sort=status,desc.

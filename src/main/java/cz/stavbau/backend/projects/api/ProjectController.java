@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 
 @RestController
@@ -36,7 +37,42 @@ public class ProjectController {
         return h;
     }
 
+    private static final Set<String> ALLOWED_SORT = Set.of(
+            "code", "status",
+            "plannedStartDate", "plannedEndDate",
+            "actualStartDate", "actualEndDate",
+            "createdAt", "updatedAt", "id"
+    );
+
+    // "name" je v translations → MVP: fallback na "code"
+    private String normalizeSortProperty(String raw) {
+        if (raw == null || raw.isBlank()) return "code";
+        String key = raw.trim();
+        if ("name".equals(key)) return "code"; // TODO: až bude join na translations, řešit locale-aware sort
+        return ALLOWED_SORT.contains(key) ? key : "code";
+    }
+
+    private Sort.Direction normalizeDirection(String raw) {
+        try {
+            return Sort.Direction.fromString(raw);
+        } catch (Exception e) {
+            return Sort.Direction.ASC;
+        }
+    }
+
     private Pageable pageable(String sort, int page, int size) {
+        String prop = "code";
+        Sort.Direction dir = Sort.Direction.ASC;
+
+        if (sort != null && !sort.isBlank()) {
+            String[] p = sort.split(",", 2);
+            prop = normalizeSortProperty(p[0]);
+            if (p.length > 1) dir = normalizeDirection(p[1]);
+        }
+        return PageRequest.of(page, size, Sort.by(new Sort.Order(dir, prop)));
+    }
+
+    private Pageable pageableold(String sort, int page, int size) {
         Sort s;
         if (sort != null && sort.contains(",")) {
             String[] p = sort.split(",", 2);
@@ -103,7 +139,7 @@ public class ProjectController {
 
     // --- NEW: archive (soft delete) ---
     @PostMapping("/{id}/archive")
-    @PreAuthorize("@rbac.hasScope('projects:delete')")
+    @PreAuthorize("@rbac.hasScope('projects:archive')")
     @Operation(summary = "Archive project (soft delete)")
     public ResponseEntity<Void> archive(@PathVariable UUID id) {
         var loc = i18nLocale.resolve();
