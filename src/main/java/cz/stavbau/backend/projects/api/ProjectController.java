@@ -1,5 +1,6 @@
 package cz.stavbau.backend.projects.api;
 
+import cz.stavbau.backend.common.api.PageableUtils;
 import cz.stavbau.backend.common.i18n.I18nLocaleService;
 import cz.stavbau.backend.projects.dto.CreateProjectRequest;
 import cz.stavbau.backend.projects.dto.ProjectDto;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -60,34 +62,8 @@ public class ProjectController {
         }
     }
 
-    private Pageable pageable(String sort, int page, int size) {
-        String prop = "code";
-        Sort.Direction dir = Sort.Direction.ASC;
-
-        if (sort != null && !sort.isBlank()) {
-            String[] p = sort.split(",", 2);
-            prop = normalizeSortProperty(p[0]);
-            if (p.length > 1) dir = normalizeDirection(p[1]);
-        }
-        return PageRequest.of(page, size, Sort.by(new Sort.Order(dir, prop)));
-    }
-
-    private Pageable pageableold(String sort, int page, int size) {
-        Sort s;
-        if (sort != null && sort.contains(",")) {
-            String[] p = sort.split(",", 2);
-            s = Sort.by(new Sort.Order(Sort.Direction.fromString(p[1]), p[0]));
-        } else if (sort != null && !sort.isBlank()) {
-            s = Sort.by(sort).ascending();
-        } else {
-            s = Sort.by("code").ascending();
-        }
-        return PageRequest.of(page, size, s);
-    }
-
     @GetMapping
     @PreAuthorize("@rbac.hasScope('projects:read')")
-    @Operation(summary = "List projects (paged)")
     public ResponseEntity<Page<ProjectSummaryDto>> list(
             @RequestParam(value = "q", required = false) String q,
             @RequestParam(value = "page", defaultValue = "0") int page,
@@ -95,9 +71,15 @@ public class ProjectController {
             @RequestParam(value = "sort", defaultValue = "code,asc") String sort
     ) {
         var loc = i18nLocale.resolve();
-        var result = service.list(q, pageable(sort, page, size));
+        var pageable = PageableUtils.from(
+                sort, page, size, "code",
+                Set.of("code", "createdAt", "updatedAt"),
+                Map.of("name", "code") // ← FE může poslat name, my přemapujeme na code
+        );
+        var result = service.list(q, pageable);
         return new ResponseEntity<>(result, i18nHeaders(loc), HttpStatus.OK);
     }
+
 
     @GetMapping("/{id}")
     @PreAuthorize("@rbac.hasScope('projects:read')")

@@ -13,5 +13,6 @@ public record CustomerSummaryDto(
         String dic,
         String email,
         Address billingAddress,
-        Instant updatedAt
+        Instant updatedAt,
+        Instant createdAt
 ) {}

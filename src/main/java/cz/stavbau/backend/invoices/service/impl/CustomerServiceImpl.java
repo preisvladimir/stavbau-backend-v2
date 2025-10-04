@@ -4,9 +4,11 @@ package cz.stavbau.backend.invoices.service.impl;
 import cz.stavbau.backend.common.exception.ConflictException;
 import cz.stavbau.backend.common.exception.NotFoundException;
 import cz.stavbau.backend.invoices.dto.*;
+import cz.stavbau.backend.invoices.filter.CustomerFilter;
 import cz.stavbau.backend.invoices.mapper.CustomerMapper;
 import cz.stavbau.backend.invoices.model.Customer;
 import cz.stavbau.backend.invoices.repo.CustomerRepository;
+import cz.stavbau.backend.invoices.repo.spec.CustomerSpecification;
 import cz.stavbau.backend.invoices.service.CustomerService;
 import cz.stavbau.backend.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import jakarta.transaction.Transactional;
 
 import java.util.Locale;
 import java.util.UUID;
@@ -88,7 +90,7 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public CustomerDto get(UUID id) {
         UUID companyId = requireCompanyId();
         var c = repo.findByIdAndCompanyId(id, companyId)
@@ -97,22 +99,20 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public Page<CustomerSummaryDto> search(String q, Pageable pageable) {
-        var companyId = SecurityUtils.currentCompanyId();
-        // MVP: jednoduché jméno/ICO contains – specifikace dodáme později
-        return repo.findAll((root, cq, cb) -> {
-            var p = cb.equal(root.get("companyId"), companyId);
-            if (q != null && !q.isBlank()) {
-                var like = "%" + q.trim().toLowerCase(Locale.ROOT) + "%";
-                p = cb.and(p, cb.or(
-                        cb.like(cb.lower(root.get("name")), like),
-                        cb.like(cb.lower(root.get("ico")), like),
-                        cb.like(cb.lower(root.get("dic")), like)
-                ));
-            }
-            return p;
-        }, pageable).map(mapper::toSummaryDto);
+    @Transactional(Transactional.TxType.SUPPORTS)
+    public Page<CustomerSummaryDto> list(String q, Pageable pageable) {
+        CustomerFilter f = new CustomerFilter();
+        f.setQ(q);
+        return list(f, pageable);
+    }
+
+    @Override
+    @Transactional(Transactional.TxType.SUPPORTS)
+    public Page<CustomerSummaryDto> list(CustomerFilter filter, Pageable pageable) {
+        UUID companyId = requireCompanyId();
+
+        var spec = new CustomerSpecification(companyId, filter);
+        return repo.findAll(spec, pageable).map(mapper::toSummaryDto);
     }
 
     private UUID requireCompanyId() {

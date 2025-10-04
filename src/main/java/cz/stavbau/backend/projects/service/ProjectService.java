@@ -11,4 +11,5 @@ public interface ProjectService {
     void archive(UUID id);
     ProjectDto get(UUID id);
     Page<ProjectSummaryDto> list(String q, Pageable pageable);
+
 }

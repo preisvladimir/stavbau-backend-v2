@@ -1,25 +1,30 @@
 package cz.stavbau.backend.invoices.api;
 
-import cz.stavbau.backend.common.api.PageResponse;
-import cz.stavbau.backend.invoices.dto.*;
+import cz.stavbau.backend.invoices.dto.CustomerDto;
+import cz.stavbau.backend.invoices.dto.CustomerSummaryDto;
+import cz.stavbau.backend.invoices.dto.CreateCustomerRequest;
+import cz.stavbau.backend.invoices.dto.UpdateCustomerRequest;
+import cz.stavbau.backend.invoices.filter.CustomerFilter;
 import cz.stavbau.backend.invoices.service.CustomerService;
+import cz.stavbau.backend.common.i18n.I18nLocaleService;
+import cz.stavbau.backend.common.api.PageableUtils;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.media.*;
+import io.swagger.v3.oas.annotations.responses.*;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springdoc.core.annotations.ParameterObject;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @RestController
@@ -29,51 +34,64 @@ import java.util.UUID;
 public class CustomersController {
 
     private final CustomerService service;
+    private final I18nLocaleService i18nLocale;
+
+    private HttpHeaders i18nHeaders(Locale locale) {
+        HttpHeaders h = new HttpHeaders();
+        h.set(HttpHeaders.CONTENT_LANGUAGE, locale.toLanguageTag());
+        h.add(HttpHeaders.VARY, HttpHeaders.ACCEPT_LANGUAGE);
+        return h;
+    }
 
     @GetMapping
     @PreAuthorize("@rbac.hasAnyScope("
             + "T(cz.stavbau.backend.security.rbac.Scopes).INVOICES_READ,"
             + "T(cz.stavbau.backend.security.rbac.Scopes).INVOICES_WRITE"
             + ")")
-    @Operation(
-            summary = "List zákazníků",
-            description = "Vrací stránkovaný seznam zákazníků (company-scoped). Fulltext přes name/ICO/DIČ pomocí parametru `q`.",
-            security = @SecurityRequirement(name = "bearerAuth")
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK",
-                    content = @Content(schema = @Schema(implementation = PageResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Neautorizováno"),
-            @ApiResponse(responseCode = "403", description = "Chybí oprávnění (scope)")
-    })
-    public PageResponse<CustomerSummaryDto> list(
-            @Parameter(description = "Fulltext (name, ICO, DIČ)") @RequestParam(required = false) String q,
-            @ParameterObject Pageable pageable
+    @Operation(summary = "List customers (paged)")
+    public ResponseEntity<Page<CustomerSummaryDto>> list(
+            @RequestParam(value = "q",     required = false) String q,
+            @RequestParam(value = "name",  required = false) String name,
+            @RequestParam(value = "ico",   required = false) String ico,
+            @RequestParam(value = "dic",   required = false) String dic,
+            @RequestParam(value = "email", required = false) String email,
+            @RequestParam(value = "active", required = false) Boolean active,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size,
+            @RequestParam(value = "sort", defaultValue = "name,asc") String sort
     ) {
-        var page = pageable == null ? PageRequest.of(0, 20) : pageable;
-        var data = service.search(q, page);
-        return PageResponse.of(data);
+        var loc = i18nLocale.resolve();
+
+        // bezpečný pageable se sort aliasy a warn logy (viz PageableUtils níže)
+        Pageable pageable = PageableUtils.from(
+                sort, page, size,
+                /* default */ "id",
+                /* allowed */ Set.of("id","name","ico","dic","email","createdAt","updatedAt"),
+                /* aliases */ Map.of("title","name")
+        );
+
+        var f = new CustomerFilter();
+        f.setQ(q);
+        f.setName(name);
+        f.setIco(ico);
+        f.setDic(dic);
+        f.setEmail(email);
+        f.setActive(active);
+
+        var result = service.list(f, pageable);
+        return new ResponseEntity<>(result, i18nHeaders(loc), HttpStatus.OK);
     }
 
-    @GetMapping("{id}")
+    @GetMapping("/{id}")
     @PreAuthorize("@rbac.hasAnyScope("
             + "T(cz.stavbau.backend.security.rbac.Scopes).INVOICES_READ,"
             + "T(cz.stavbau.backend.security.rbac.Scopes).INVOICES_WRITE"
             + ")")
-    @Operation(
-            summary = "Detail zákazníka",
-            description = "Načte zákazníka podle ID v rámci aktuální company.",
-            security = @SecurityRequirement(name = "bearerAuth")
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK",
-                    content = @Content(schema = @Schema(implementation = CustomerDto.class))),
-            @ApiResponse(responseCode = "401", description = "Neautorizováno"),
-            @ApiResponse(responseCode = "403", description = "Chybí oprávnění (scope)"),
-            @ApiResponse(responseCode = "404", description = "Zákazník nenalezen")
-    })
-    public CustomerDto get(@PathVariable UUID id) {
-        return service.get(id);
+    @Operation(summary = "Detail zákazníka", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<CustomerDto> get(@PathVariable UUID id) {
+        var loc = i18nLocale.resolve();
+        var dto = service.get(id);
+        return new ResponseEntity<>(dto, i18nHeaders(loc), HttpStatus.OK);
     }
 
     @PostMapping
@@ -81,158 +99,36 @@ public class CustomersController {
             + "T(cz.stavbau.backend.security.rbac.Scopes).INVOICES_CREATE,"
             + "T(cz.stavbau.backend.security.rbac.Scopes).INVOICES_WRITE"
             + ")")
-    @ResponseStatus(HttpStatus.CREATED)
-    @Operation(
-            summary = "Vytvořit zákazníka",
-            description = "Založí nového zákazníka v rámci aktuální company.",
-            security = @SecurityRequirement(name = "bearerAuth")
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Vytvořeno",
-                    content = @Content(schema = @Schema(implementation = CustomerDto.class))),
-            @ApiResponse(responseCode = "400", description = "Nevalidní požadavek"),
-            @ApiResponse(responseCode = "401", description = "Neautorizováno"),
-            @ApiResponse(responseCode = "403", description = "Chybí oprávnění (scope)"),
-            @ApiResponse(responseCode = "409", description = "Konflikt (např. duplicitní IČO ve firmě)")
-    })
-    public CustomerDto create(@Valid @RequestBody CreateCustomerRequest req) {
-        return service.create(req);
+    @Operation(summary = "Vytvořit zákazníka", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<CustomerDto> create(@Valid @RequestBody CreateCustomerRequest req) {
+        var loc = i18nLocale.resolve();
+        var dto = service.create(req);
+        return ResponseEntity.created(URI.create("/api/v1/customers/" + dto.getId()))
+                .headers(i18nHeaders(loc))
+                .body(dto);
     }
 
-    @PatchMapping("{id}")
+    @PatchMapping("/{id}")
     @PreAuthorize("@rbac.hasAnyScope("
             + "T(cz.stavbau.backend.security.rbac.Scopes).INVOICES_UPDATE,"
             + "T(cz.stavbau.backend.security.rbac.Scopes).INVOICES_WRITE"
             + ")")
-    @Operation(
-            summary = "Upravit zákazníka",
-            description = "Aktualizuje vybraná pole zákazníka (partial update).",
-            security = @SecurityRequirement(name = "bearerAuth")
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK",
-                    content = @Content(schema = @Schema(implementation = CustomerDto.class))),
-            @ApiResponse(responseCode = "400", description = "Nevalidní požadavek"),
-            @ApiResponse(responseCode = "401", description = "Neautorizováno"),
-            @ApiResponse(responseCode = "403", description = "Chybí oprávnění (scope)"),
-            @ApiResponse(responseCode = "404", description = "Zákazník nenalezen"),
-            @ApiResponse(responseCode = "409", description = "Konflikt (např. duplicitní IČO ve firmě)")
-    })
-    public CustomerDto update(@PathVariable UUID id, @Valid @RequestBody UpdateCustomerRequest req) {
-        return service.update(id, req);
+    @Operation(summary = "Upravit zákazníka", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<CustomerDto> update(@PathVariable UUID id, @Valid @RequestBody UpdateCustomerRequest req) {
+        var loc = i18nLocale.resolve();
+        var dto = service.update(id, req);
+        return new ResponseEntity<>(dto, i18nHeaders(loc), HttpStatus.OK);
     }
 
-    @DeleteMapping("{id}")
+    @DeleteMapping("/{id}")
     @PreAuthorize("@rbac.hasAnyScope("
             + "T(cz.stavbau.backend.security.rbac.Scopes).INVOICES_DELETE,"
             + "T(cz.stavbau.backend.security.rbac.Scopes).INVOICES_WRITE"
             + ")")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(
-            summary = "Smazat zákazníka",
-            description = "Odstraní zákazníka (MVP hard delete). Pokud existují navázané faktury, FK se nastaví na NULL (snapshot zůstává).",
-            security = @SecurityRequirement(name = "bearerAuth")
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Smazáno"),
-            @ApiResponse(responseCode = "401", description = "Neautorizováno"),
-            @ApiResponse(responseCode = "403", description = "Chybí oprávnění (scope)"),
-            @ApiResponse(responseCode = "404", description = "Zákazník nenalezen")
-    })
-    public void delete(@PathVariable UUID id) {
+    @Operation(summary = "Smazat zákazníka", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+        var loc = i18nLocale.resolve();
         service.delete(id);
+        return ResponseEntity.noContent().headers(i18nHeaders(loc)).build();
     }
-
-    /* =========================
-     * Budoucí endpointy (připraveno)
-     * =========================
-     * Pozn.: tyto bloky jsou zakomentované, aby nenarušily kompilaci.
-     * Až budou implementované v service, odkomentuj je.
-     */
-
-    // --- Link user (klientský portál) ---
-    /*
-    @PostMapping("{id}/link-user/{userId}")
-    @PreAuthorize("@rbac.hasAnyScope("
-        + "T(cz.stavbau.backend.security.rbac.Scopes).CUSTOMERS_LINK_USER,"
-        + "T(cz.stavbau.backend.security.rbac.Scopes).INVOICES_WRITE"
-        + ")")
-    @Operation(
-        summary = "Propojit zákazníka s uživatelem (client portal)",
-        description = "Přiřadí existujícího uživatele k zákazníkovi (linkedUserId).",
-        security = @SecurityRequirement(name = "bearerAuth")
-    )
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Propojeno",
-            content = @Content(schema = @Schema(implementation = CustomerDto.class))),
-        @ApiResponse(responseCode = "400", description = "Nevalidní požadavek / už propojeno"),
-        @ApiResponse(responseCode = "401", description = "Neautorizováno"),
-        @ApiResponse(responseCode = "403", description = "Chybí oprávnění (scope)"),
-        @ApiResponse(responseCode = "404", description = "Zákazník nebo uživatel nenalezen"),
-        @ApiResponse(responseCode = "409", description = "Konflikt (např. uživatel patří jiné firmě)")
-    })
-    public CustomerDto linkUser(@PathVariable UUID id, @PathVariable UUID userId) {
-        return service.linkUser(id, userId);
-    }
-    */
-
-    // --- Import (CSV/XLSX/JSON) ---
-    /*
-    @PostMapping(value = "import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("@rbac.hasScope(T(cz.stavbau.backend.security.rbac.Scopes).CUSTOMERS_IMPORT))")
-    @Operation(
-        summary = "Import zákazníků",
-        description = "Načte zákazníky z nahraného souboru (CSV/XLSX/JSON) a založí/aktualizuje záznamy.",
-        security = @SecurityRequirement(name = "bearerAuth")
-    )
-    @ApiResponses({
-        @ApiResponse(responseCode = "202", description = "Přijato ke zpracování"),
-        @ApiResponse(responseCode = "400", description = "Nevalidní formát souboru"),
-        @ApiResponse(responseCode = "401", description = "Neautorizováno"),
-        @ApiResponse(responseCode = "403", description = "Chybí oprávnění (scope)")
-    })
-    @ResponseStatus(HttpStatus.ACCEPTED)
-    public void importCustomers(@RequestPart("file") MultipartFile file) { /* service.import(file); * / }
-    */
-
-    // --- Export (CSV/XLSX/JSON) ---
-    /*
-    @GetMapping("export")
-    @PreAuthorize("@rbac.hasAnyScope("
-        + "T(cz.stavbau.backend.security.rbac.Scopes).CUSTOMERS_EXPORT,"
-        + "T(cz.stavbau.backend.security.rbac.Scopes).INVOICES_EXPORT"
-        + ")")
-    @Operation(
-        summary = "Export zákazníků",
-        description = "Exportuje seznam zákazníků ve zvoleném formátu (CSV/XLSX/JSON).",
-        security = @SecurityRequirement(name = "bearerAuth")
-    )
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "OK (soubor ke stažení)"),
-        @ApiResponse(responseCode = "401", description = "Neautorizováno"),
-        @ApiResponse(responseCode = "403", description = "Chybí oprávnění (scope)")
-    })
-    public ResponseEntity<Resource> exportCustomers(
-            @Parameter(description = "Formát: csv|xlsx|json") @RequestParam(defaultValue = "csv") String format
-    ) { /* return service.export(format); * / return null; }
-    */
-
-    // --- Suggest (typeahead) ---
-    /*
-    @GetMapping("suggest")
-    @PreAuthorize("@rbac.hasScope(T(cz.stavbau.backend.security.rbac.Scopes).INVOICES_READ))")
-    @Operation(
-        summary = "Nápověda pro vyhledávání (typeahead)",
-        description = "Vrací zkrácený seznam (např. top 10) zákazníků pro autocomplete podle `q`.",
-        security = @SecurityRequirement(name = "bearerAuth")
-    )
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "OK"),
-        @ApiResponse(responseCode = "401", description = "Neautorizováno"),
-        @ApiResponse(responseCode = "403", description = "Chybí oprávnění (scope)")
-    })
-    public List<CustomerSuggestDto> suggest(@RequestParam String q) {
-        return service.suggest(q);
-    }
-    */
 }

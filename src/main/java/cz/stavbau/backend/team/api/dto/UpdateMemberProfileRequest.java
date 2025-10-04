@@ -18,11 +18,6 @@ public record UpdateMemberProfileRequest(
         String lastName,
 
         @Size(max = 32) @Schema(example = "+420123456789")
-        String phone,
+        String phone
 
-        @NotBlank @Schema(
-                description = "Cílová role (CompanyRoleName).",
-                example = "MEMBER"
-        )
-        String role
 ) {}

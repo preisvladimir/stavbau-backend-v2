@@ -1284,3 +1284,8 @@ Hotový základ pro další rozšiřování profilu člena (adresy, avatar).
 - [x] FE: odstraněn problematický sort=name,asc; přidán normalizeSort whitelist (sync s BE).
 - [ ] FE: přidat user-facing řazení v ProjectsTable s mapou sloupec→sort klíč (bezpečné).
 - [ ] Tests: unit pro normalizeSort; E2E list → sort=status,desc.
+
+[2025-10-04] BE – sjednocení stránkování
+- [x] CustomersController.list: sjednoceno s Projects → ResponseEntity<Page<...>> + i18n headers + sort param.
+- [x] Přidán pageable helper (nebo shared PageableUtils) pro konzistentní sort/page/size.
+- [ ] (Nice-to-have) Sort whitelist pro Customers (name, ico, dic, ...).
