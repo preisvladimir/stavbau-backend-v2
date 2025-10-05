@@ -7,10 +7,13 @@ import cz.stavbau.backend.common.i18n.Messages;
 import cz.stavbau.backend.security.SecurityUtils;
 import cz.stavbau.backend.security.rbac.CompanyRoleName;
 import cz.stavbau.backend.team.api.dto.*;
+import cz.stavbau.backend.team.dto.MemberSummaryDto;
 import cz.stavbau.backend.team.dto.MembersStatsDto;
+import cz.stavbau.backend.team.filter.TeamMemberFilter;
 import cz.stavbau.backend.team.mapping.MemberMapper;
 import cz.stavbau.backend.team.model.TeamRole;
 import cz.stavbau.backend.team.repo.projection.MembersStatsTuple;
+import cz.stavbau.backend.team.repo.spec.TeamMemberSpecification;
 import cz.stavbau.backend.team.service.TeamService;
 import cz.stavbau.backend.tenants.membership.model.CompanyMember;
 import cz.stavbau.backend.tenants.membership.repo.CompanyMemberRepository;
@@ -24,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -117,6 +121,28 @@ public class TeamServiceImpl implements TeamService {
             }
         }
         return new MemberListResponse(items, items.size());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<MemberSummaryDto> list(String q, String role, Pageable pageable) {
+        UUID companyId = requireCompanyId();
+        log.warn("companyId: '{}'.", companyId);
+        String qNorm = (q == null || q.isBlank()) ? null : q.trim();
+        log.warn("qNorm: '{}'.", qNorm);
+        String roleNorm = (role == null || role.isBlank()) ? null : role.trim().toUpperCase();
+        log.warn("roleNorm: '{}'.", roleNorm);
+        TeamMemberFilter f = new TeamMemberFilter();
+        f.setQ(qNorm);
+        f.setRole(roleNorm);
+
+        Page<CompanyMember> page = memberRepository.findAll(
+                new TeamMemberSpecification(companyId, f),
+                pageable
+        );
+
+        // MemberMapper má toSummaryDto(CompanyMember) → z CompanyMember vytáhne i usera přes @ManyToOne
+        return page.map(memberMapper::toSummaryDto);
     }
 
     @Override
@@ -279,6 +305,10 @@ public class TeamServiceImpl implements TeamService {
         if (email == null || email.isBlank() || !email.contains("@")) {
             throw new ValidationException(messages.msg("errors.validation.email"));
         }
+    }
+    private UUID requireCompanyId() {
+        return SecurityUtils.currentCompanyId()
+                .orElseThrow(() -> new AuthenticationCredentialsNotFoundException("auth.company.required"));
     }
 
     private TeamRole requireTeamRole(String raw) {

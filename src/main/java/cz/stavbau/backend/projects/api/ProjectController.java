@@ -1,12 +1,11 @@
 package cz.stavbau.backend.projects.api;
 
-import cz.stavbau.backend.common.api.PageableUtils;
 import cz.stavbau.backend.common.i18n.I18nLocaleService;
-import cz.stavbau.backend.projects.dto.CreateProjectRequest;
+import cz.stavbau.backend.common.api.PageableUtils;
 import cz.stavbau.backend.projects.dto.ProjectDto;
 import cz.stavbau.backend.projects.dto.ProjectSummaryDto;
-import cz.stavbau.backend.projects.dto.UpdateProjectRequest;
-import cz.stavbau.backend.projects.dto.ProjectMemberRequest;
+import cz.stavbau.backend.projects.filter.ProjectFilter;
+import cz.stavbau.backend.projects.model.ProjectStatus;
 import cz.stavbau.backend.projects.service.ProjectService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -18,10 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/v1/projects")
@@ -32,54 +28,59 @@ public class ProjectController {
     private final ProjectService service;
     private final I18nLocaleService i18nLocale;
 
-    private HttpHeaders i18nHeaders(Locale locale) {
+    private HttpHeaders i18nHeaders(java.util.Locale locale) {
         HttpHeaders h = new HttpHeaders();
         h.set(HttpHeaders.CONTENT_LANGUAGE, locale.toLanguageTag());
         h.add(HttpHeaders.VARY, HttpHeaders.ACCEPT_LANGUAGE);
         return h;
     }
 
-    private static final Set<String> ALLOWED_SORT = Set.of(
-            "code", "status",
-            "plannedStartDate", "plannedEndDate",
-            "actualStartDate", "actualEndDate",
-            "createdAt", "updatedAt", "id"
-    );
-
-    // "name" je v translations → MVP: fallback na "code"
-    private String normalizeSortProperty(String raw) {
-        if (raw == null || raw.isBlank()) return "code";
-        String key = raw.trim();
-        if ("name".equals(key)) return "code"; // TODO: až bude join na translations, řešit locale-aware sort
-        return ALLOWED_SORT.contains(key) ? key : "code";
-    }
-
-    private Sort.Direction normalizeDirection(String raw) {
-        try {
-            return Sort.Direction.fromString(raw);
-        } catch (Exception e) {
-            return Sort.Direction.ASC;
-        }
-    }
-
     @GetMapping
     @PreAuthorize("@rbac.hasScope('projects:read')")
+    @Operation(summary = "List projects (paged)")
     public ResponseEntity<Page<ProjectSummaryDto>> list(
             @RequestParam(value = "q", required = false) String q,
+            @RequestParam(value = "code", required = false) String code,
+            @RequestParam(value = "status", required = false) ProjectStatus status,
+            @RequestParam(value = "customerId", required = false) UUID customerId,
+            @RequestParam(value = "projectManagerId", required = false) UUID projectManagerId,
+            @RequestParam(value = "active", required = false) Boolean active,
+            // date ranges (volitelné)
+            @RequestParam(value = "plannedStartFrom", required = false) java.time.LocalDate plannedStartFrom,
+            @RequestParam(value = "plannedStartTo",   required = false) java.time.LocalDate plannedStartTo,
+            @RequestParam(value = "plannedEndFrom",   required = false) java.time.LocalDate plannedEndFrom,
+            @RequestParam(value = "plannedEndTo",     required = false) java.time.LocalDate plannedEndTo,
+            // paging/sort
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "20") int size,
             @RequestParam(value = "sort", defaultValue = "code,asc") String sort
     ) {
         var loc = i18nLocale.resolve();
-        var pageable = PageableUtils.from(
-                sort, page, size, "code",
-                Set.of("code", "createdAt", "updatedAt"),
-                Map.of("name", "code") // ← FE může poslat name, my přemapujeme na code
+
+        // Povolené properties podle entity Project; alias "name" → "code" (pro UX kompatibilitu FE)
+        Pageable pageable = PageableUtils.from(
+                sort, page, size,
+                /* default */ "code",
+                /* allowed */ Set.of("code","status","createdAt","updatedAt",
+                        "plannedStartDate","plannedEndDate","actualStartDate","actualEndDate","archivedAt"),
+                /* aliases */ Map.of("name","code")
         );
-        var result = service.list(q, pageable);
+
+        var f = new ProjectFilter();
+        f.setQ(q);
+        f.setCode(code);
+        f.setStatus(status);
+        f.setCustomerId(customerId);
+        f.setProjectManagerId(projectManagerId);
+        f.setActive(active);
+        f.setPlannedStartFrom(plannedStartFrom);
+        f.setPlannedStartTo(plannedStartTo);
+        f.setPlannedEndFrom(plannedEndFrom);
+        f.setPlannedEndTo(plannedEndTo);
+
+        var result = service.list(f, pageable);
         return new ResponseEntity<>(result, i18nHeaders(loc), HttpStatus.OK);
     }
-
 
     @GetMapping("/{id}")
     @PreAuthorize("@rbac.hasScope('projects:read')")
@@ -93,11 +94,10 @@ public class ProjectController {
     @PostMapping
     @PreAuthorize("@rbac.hasScope('projects:create')")
     @Operation(summary = "Create project")
-    public ResponseEntity<ProjectDto> create(@RequestBody @Valid CreateProjectRequest req) {
+    public ResponseEntity<ProjectDto> create(@RequestBody @Valid cz.stavbau.backend.projects.dto.CreateProjectRequest req) {
         var loc = i18nLocale.resolve();
         var dto = service.create(req);
-        return ResponseEntity
-                .created(URI.create("/api/v1/projects/" + dto.getId()))
+        return ResponseEntity.created(URI.create("/api/v1/projects/" + dto.getId()))
                 .headers(i18nHeaders(loc))
                 .body(dto);
     }
@@ -105,7 +105,7 @@ public class ProjectController {
     @PatchMapping("/{id}")
     @PreAuthorize("@rbac.hasScope('projects:update')")
     @Operation(summary = "Update project")
-    public ResponseEntity<ProjectDto> update(@PathVariable UUID id, @RequestBody @Valid UpdateProjectRequest req) {
+    public ResponseEntity<ProjectDto> update(@PathVariable UUID id, @RequestBody @Valid cz.stavbau.backend.projects.dto.UpdateProjectRequest req) {
         var loc = i18nLocale.resolve();
         var dto = service.update(id, req);
         return new ResponseEntity<>(dto, i18nHeaders(loc), HttpStatus.OK);
@@ -119,32 +119,13 @@ public class ProjectController {
         return ResponseEntity.noContent().build();
     }
 
-    // --- NEW: archive (soft delete) ---
+    // Archive (soft delete)
     @PostMapping("/{id}/archive")
     @PreAuthorize("@rbac.hasScope('projects:archive')")
     @Operation(summary = "Archive project (soft delete)")
     public ResponseEntity<Void> archive(@PathVariable UUID id) {
         var loc = i18nLocale.resolve();
         service.archive(id);
-        return ResponseEntity.noContent().headers(i18nHeaders(loc)).build();
-    }
-
-    // --- NEW: members (stubs, bez logiky) ---
-    @PostMapping("/{id}/members")
-    @PreAuthorize("@rbac.hasScope('projects:assign')")
-    @Operation(summary = "Assign member to project (stub)")
-    public ResponseEntity<Void> addMember(@PathVariable UUID id, @RequestBody @Valid ProjectMemberRequest req) {
-        var loc = i18nLocale.resolve();
-        // TODO: implement in next PR (service call assignMember)
-        return ResponseEntity.accepted().headers(i18nHeaders(loc)).build();
-    }
-
-    @DeleteMapping("/{id}/members/{userId}")
-    @PreAuthorize("@rbac.hasScope('projects:assign')")
-    @Operation(summary = "Remove member from project (stub)")
-    public ResponseEntity<Void> removeMember(@PathVariable UUID id, @PathVariable UUID userId) {
-        var loc = i18nLocale.resolve();
-        // TODO: implement in next PR (service call removeMember)
         return ResponseEntity.noContent().headers(i18nHeaders(loc)).build();
     }
 }

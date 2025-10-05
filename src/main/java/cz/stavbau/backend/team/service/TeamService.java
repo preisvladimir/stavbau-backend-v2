@@ -2,6 +2,7 @@ package cz.stavbau.backend.team.service;
 
 import cz.stavbau.backend.invoices.dto.CustomerSummaryDto;
 import cz.stavbau.backend.team.api.dto.*;
+import cz.stavbau.backend.team.dto.MemberSummaryDto;
 import cz.stavbau.backend.team.dto.MembersStatsDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,6 +12,7 @@ import java.util.UUID;
 public interface TeamService {
     MemberDto addMember(UUID companyId, CreateMemberRequest req);
     MemberListResponse listMembers(UUID companyId);
+    Page<MemberSummaryDto> list(String q, String role, Pageable pageable);
     MemberDto updateProfile(UUID companyId, UUID memberId, UpdateMemberProfileRequest req);
     MemberDto updateRole(UUID companyId, UUID memberId, UpdateMemberRoleRequest req);
     void removeMember(UUID companyId, UUID memberId);

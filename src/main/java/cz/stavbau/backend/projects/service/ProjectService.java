@@ -1,6 +1,7 @@
 package cz.stavbau.backend.projects.service;
 
 import cz.stavbau.backend.projects.dto.*;
+import cz.stavbau.backend.projects.filter.ProjectFilter;
 import org.springframework.data.domain.*;
 import java.util.UUID;
 
@@ -11,5 +12,8 @@ public interface ProjectService {
     void archive(UUID id);
     ProjectDto get(UUID id);
     Page<ProjectSummaryDto> list(String q, Pageable pageable);
+
+    /** Nové: typovaný filtr (doporučeno používat interně) */
+    Page<ProjectSummaryDto> list(ProjectFilter filter, Pageable pageable);
 
 }

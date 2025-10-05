@@ -2,15 +2,17 @@ package cz.stavbau.backend.projects.service;
 
 import cz.stavbau.backend.common.i18n.I18nLocaleService;
 import cz.stavbau.backend.projects.dto.*;
+import cz.stavbau.backend.projects.filter.ProjectFilter;
 import cz.stavbau.backend.projects.mapper.ProjectMapper;
 import cz.stavbau.backend.projects.model.*;
 import cz.stavbau.backend.projects.repo.*;
+import cz.stavbau.backend.projects.repo.spec.ProjectSpecification;
 import cz.stavbau.backend.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import jakarta.transaction.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -78,7 +80,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public ProjectDto get(UUID id) {
         UUID companyId = SecurityUtils.currentCompanyId()
                 .orElseThrow(() -> new AuthenticationCredentialsNotFoundException("auth.company.required"));
@@ -87,35 +89,32 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional(Transactional.TxType.SUPPORTS)
     public Page<ProjectSummaryDto> list(String q, Pageable pageable) {
+        ProjectFilter f = new ProjectFilter();
+        f.setQ(q);
+        return list(f, pageable);
+    }
+
+    @Override
+    @Transactional(Transactional.TxType.SUPPORTS)
+    public Page<ProjectSummaryDto> list(ProjectFilter filter, Pageable pageable) {
         UUID companyId = SecurityUtils.currentCompanyId()
                 .orElseThrow(() -> new AuthenticationCredentialsNotFoundException("auth.company.required"));
-        Page<Project> page = projectRepository.findAll((root, cq, cb) -> {
-            List<jakarta.persistence.criteria.Predicate> preds = new ArrayList<>();
-            preds.add(cb.equal(root.get("companyId"), companyId));
-            if (q != null && !q.isBlank()) {
-                String like = "%" + q.trim().toLowerCase() + "%";
-                preds.add(cb.or(
-                        cb.like(cb.lower(root.get("code")), like)
-                        // Pozn.: name je v translations; pro MVP filtrujeme code,
-                        // detailní fulltext přes join na translations můžeme doplnit později.
-                ));
-            }
-            return cb.and(preds.toArray(new jakarta.persistence.criteria.Predicate[0]));
-        }, pageable);
+
+        var spec = new ProjectSpecification(companyId, filter);
+        Page<Project> page = projectRepository.findAll(spec, pageable);
 
         List<ProjectSummaryDto> items = mapper.toSummaryList(page.getContent());
-        // doplníme resolved name a statusLabel
+        // doplníme resolved name + statusLabel (zachováme stávající chování)
         for (int i = 0; i < items.size(); i++) {
             Project p = page.getContent().get(i);
             ProjectSummaryDto dto = items.get(i);
-            dto.setName(resolveName(p.getId()));
+            dto.setName(resolveName(p.getId()));     // existující resolver
             dto.setStatusLabel(p.getStatus().name()); // TODO: EnumLabeler → lokalizace
         }
         return new PageImpl<>(items, pageable, page.getTotalElements());
     }
-
     @Override
     @Transactional
     public void delete(UUID id) {
