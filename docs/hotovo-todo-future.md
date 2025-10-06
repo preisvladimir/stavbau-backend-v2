@@ -1,4 +1,4 @@
-# 🗂 hotovo-todo-future.md
+# 🗂 [hotovo-todo-future.md]()
 
 ## ✅ HOTOVO
 
@@ -1351,3 +1351,9 @@ Hotový základ pro další rozšiřování profilu člena (adresy, avatar).
 - `customers:*` scopy (přepnutí z `invoices:*` bez změny FE).
 - **Team:** rozšířené filtry, statistiky (`owners/active/invited/disabled`) a profilová data (adresy, avatar).
 - **Projects:** locale-aware řazení podle názvu (join na `translations`), advanced search.
+
+### 2025-10-06 – Sprint 7: Zahájení sjednocení listů
+- HOTOVO: PR-2 (common PageableUtils – allow-list aliasy, fallback WARN, stabilizační sort).
+- TODO: PR-1 (BE Projects list s i18n hlavičkami), PR-4/5/6 (FE Projects), PR-7/8 (Team/Customers).
+- FUTURE: TSV fulltext per locale, společný spec builder pro filtry.
+
