@@ -1,7 +1,7 @@
 package cz.stavbau.backend.team.api;
 
 import cz.stavbau.backend.common.i18n.I18nLocaleService;
-import cz.stavbau.backend.common.api.PageableUtils;
+import cz.stavbau.backend.common.persistence.PageableUtils;
 import cz.stavbau.backend.common.exception.ForbiddenException;
 import cz.stavbau.backend.common.i18n.Messages;
 import cz.stavbau.backend.security.AppUserPrincipal;

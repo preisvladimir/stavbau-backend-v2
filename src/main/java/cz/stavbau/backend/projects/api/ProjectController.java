@@ -1,7 +1,7 @@
 package cz.stavbau.backend.projects.api;
 
 import cz.stavbau.backend.common.i18n.I18nLocaleService;
-import cz.stavbau.backend.common.api.PageableUtils;
+import cz.stavbau.backend.common.persistence.PageableUtils;
 import cz.stavbau.backend.projects.dto.ProjectDto;
 import cz.stavbau.backend.projects.dto.ProjectSummaryDto;
 import cz.stavbau.backend.projects.filter.ProjectFilter;
