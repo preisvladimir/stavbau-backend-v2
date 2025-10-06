@@ -1,10 +1,11 @@
-package cz.stavbau.backend.common.api;
+package cz.stavbau.backend.common.persistence;
 
 import lombok.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.*;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -71,5 +72,33 @@ public final class PageableUtils {
                 Math.max(1, size),
                 sortObj
         );
+    }
+
+    /** Allow-list pro mapování veřejných názvů sloupců na skutečná pole (často alias do i18n tabulek). */
+    public record SortWhitelist(Map<String, String> allowed, Sort defaultSort) {
+        public static Builder builder(Sort defaultSort) { return new Builder(defaultSort); }
+        public static final class Builder {
+            private final Map<String,String> map = new HashMap<>();
+            private final Sort defaultSort;
+            public Builder(Sort defaultSort) { this.defaultSort = defaultSort; }
+            /** e.g. allow("name", "translations.name") */
+            public Builder allow(String from, String to) { map.put(from, to); return this; }
+            public SortWhitelist build() { return new SortWhitelist(Map.copyOf(map), defaultSort); }
+        }
+    }
+
+    /** Mapuje `sort=name,asc` přes allow-list, neznámé pole → WARN + default; vždy přidá stabilizační `id DESC`. */
+    public static Sort mapAndValidate(String sortParam, SortWhitelist wl, Logger log) {
+        if (sortParam == null || sortParam.isBlank()) return wl.defaultSort().and(Sort.by("id").descending());
+        var parts = sortParam.split(",", 2);
+        var field = parts[0].trim();
+        var dir = (parts.length > 1 ? parts[1].trim() : "asc");
+        var alias = wl.allowed().get(field);
+        if (alias == null) {
+            if (log != null) log.warn("Unknown sort '{}', falling back to default", field);
+            return wl.defaultSort().and(Sort.by("id").descending());
+        }
+        var sort = "desc".equalsIgnoreCase(dir) ? Sort.by(alias).descending() : Sort.by(alias).ascending();
+        return sort.and(Sort.by("id").descending());
     }
 }
