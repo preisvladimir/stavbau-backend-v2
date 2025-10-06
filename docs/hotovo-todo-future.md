@@ -1353,7 +1353,12 @@ Hotový základ pro další rozšiřování profilu člena (adresy, avatar).
 - **Projects:** locale-aware řazení podle názvu (join na `translations`), advanced search.
 
 ### 2025-10-06 – Sprint 7: Zahájení sjednocení listů
-- HOTOVO: PR-2 (common PageableUtils – allow-list aliasy, fallback WARN, stabilizační sort).
-- TODO: PR-1 (BE Projects list s i18n hlavičkami), PR-4/5/6 (FE Projects), PR-7/8 (Team/Customers).
-- FUTURE: TSV fulltext per locale, společný spec builder pro filtry.
+- HOTOVO:
+    - PR-2 (common): PageableUtils – allow-list aliasy, fallback WARN, stabilizační sort.
+- TODO:
+    - PR-1 (BE Projects list): q + whitelist sort + i18n hlavičky + RBAC.
+    - PR-4/5/6 (FE Projects): DataTableV2 server-side + Accept-Language + RTL/MSW.
+    - PR-7/8 (BE Team/Customers): sjednocení na PageableUtils + i18n hlavičky.
+- FUTURE:
+    - TSV fulltext per locale; společný spec builder pro filtry (status, range).
 
