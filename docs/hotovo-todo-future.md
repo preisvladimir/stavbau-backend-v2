@@ -1310,3 +1310,44 @@ Hotový základ pro další rozšiřování profilu člena (adresy, avatar).
 - Ukládat poslední `pageSize` do localStorage (uživatelská preference).
 - Sdílený pagination context pro všechny moduly.
 - Quick-jump input („Přejít na stránku…“) v pageru.  
+
+### 🕒 7. 10. 2025 — Team & Customers: sjednocení BE/FE (MVP)
+
+#### ✅ HOTOVO
+
+**Backend**
+- `CustomersController` sjednocen se vzorem (i18n hlavičky `Content-Language`, `Vary: Accept-Language`; paging přes `PageableUtils` s whitelistem/aliasy).
+- Přidán `CustomerFilter` + `CustomerSpecification` (PR skeleton); `CustomerService.list(filter, pageable)` připraveno.
+- `TeamMembersController` doplněn o i18n hlavičky, sjednocen kontrakt listu (`q/role/email/name/phone/status`, `PageResponse`).
+- `MemberSummaryDto` + rozšířen `MemberMapper` (`first/last/phone` z `CompanyMember`, `role` z `member.role`).
+- `PageableUtils` rozšířen o WARN logy (aliasování/fallback řazení).
+- `Projects`: připraven `ProjectFilter` + `ProjectSpecification` (PR skeleton); controller/service budou řadit bezpečně podle whitelistu.
+
+**Frontend**
+- `features/team/api/types.ts` – sjednocené DTO (`MemberDto`, `MemberSummaryDto`, …).
+- `features/team/api/client.ts` – používá `toPageResponse`, posílá `Accept-Language`, neposílá prázdné parametry (fix 500 na `/members`).
+- `TeamTable.tsx` – integrace `DataTableV2` (email, role, jméno, telefon).
+- `TeamPage.tsx` – list + search + pager, drawery (detail/form), RBAC akce (edit/role/delete).
+- `features/customers/api/client.ts` – sjednoceno na `toPageResponse` + i18n hlavičky.
+- `ROLE_OPTIONS` na FE napojeny na `ROLE_WHITELIST` (bez duplicit, i18n labely).
+
+---
+
+#### 🛠 TODO (další PR)
+
+**Backend**
+- Doplnit logiku `TeamMemberSpecification` (`q` přes `email/first/last/phone`; `role/status` filtry).
+- Implementovat `CustomerSpecification` (`q` + `name/ico/dic/email`) + unit/slice testy.
+- Konsolidovat sort whitelist (`Team/Customers/Projects`) + integrační testy i18n hlaviček.
+
+**Frontend**
+- `TeamPage`: server-side paging/sorting (napojit sort + řízené `page/size`).
+- Centralizovat mapu `CompanyRole → i18n` (badge/labels) a doplnit testy.
+- Doplnit `MSW` handlery pro `POST/PATCH/DELETE` a `RTL` testy.
+
+---
+
+#### 🔭 FUTURE
+- `customers:*` scopy (přepnutí z `invoices:*` bez změny FE).
+- **Team:** rozšířené filtry, statistiky (`owners/active/invited/disabled`) a profilová data (adresy, avatar).
+- **Projects:** locale-aware řazení podle názvu (join na `translations`), advanced search.
