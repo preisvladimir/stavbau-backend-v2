@@ -1289,3 +1289,24 @@ Hotový základ pro další rozšiřování profilu člena (adresy, avatar).
 - [x] CustomersController.list: sjednoceno s Projects → ResponseEntity<Page<...>> + i18n headers + sort param.
 - [x] Přidán pageable helper (nebo shared PageableUtils) pro konzistentní sort/page/size.
 - [ ] (Nice-to-have) Sort whitelist pro Customers (name, ico, dic, ...).
+
+## 🕒 2025-10-07 – DataTableV2 Paging Integration
+
+### ✅ Hotovo
+- Přidán `gotoPage` do `useDataTableV2Core` → plná podpora číselného stránkování.
+- `setPageSize` nyní resetuje na první stránku a spouští `onPageSizeChange` + `onPageChange`.
+- `TeamTable` rozšířena o řízené props:  
+  `page`, `pageSize`, `total`, `onPageChange`, `onPageSizeChange`, `enableClientPaging`.
+- `TeamPage` napojena na řízené stránkování (1-based logika, kompatibilní se server-side fetch).
+- Opraven reset při změně `search` a `filters` (`setPage(1)` místo `setPage(0)`).
+- Nový pager s naším `Button` komponentem (ikony, číselné stránky, ellipsy).
+
+### 🎯 Výsledek
+- Stabilní a konzistentní stránkování bez problikávání.
+- Full sync mezi komponentami `DataTableV2`, `TeamTable`, `TeamPage`.
+- Připraveno pro server-side režim (MVP ready).
+
+### 🔮 Future
+- Ukládat poslední `pageSize` do localStorage (uživatelská preference).
+- Sdílený pagination context pro všechny moduly.
+- Quick-jump input („Přejít na stránku…“) v pageru.  
