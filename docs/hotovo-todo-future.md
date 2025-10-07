@@ -1551,3 +1551,14 @@ Hotový základ pro další rozšiřování profilu člena (adresy, avatar).
 ### ▶ TODO next
 - Konfigurovatelný formát/prefix per Company.
 - Zobrazit code v UI detailu + tlačítko „kopírovat“.
+
+### 2025-10-08 – FE: useServerTableState + fix request loop
+ #### HOTOVO
+- Přidán generický hook useServerTableState<T> (q/page/size/sort, load, refreshy).
+- Opraven nekonečný fetch loop (stabilizovaný fetcher, deps-key, guards).
+- Projects napojeny na hook; default sort code,asc.
+ #### TODO
+- Převést Customers/Team na useServerTableState.
+- MSW+RTL smoke testy pro paging/sort + edge-case delete.
+  FUTURE
+- Přidat persist/restore stavu tabulek do URL (query params) a sessionStorage.
