@@ -30,8 +30,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional
     public ProjectDto create(CreateProjectRequest request) {
-        UUID companyId = SecurityUtils.currentCompanyId()
-            .orElseThrow(() -> new AuthenticationCredentialsNotFoundException("auth.company.required"));
+        UUID companyId = SecurityUtils.requireCompanyId();
 
         validateDates(request.getPlannedStartDate(), request.getPlannedEndDate());
         if (request.getCode() != null && projectRepository.existsByCompanyIdAndCode(companyId, request.getCode().trim())) {
@@ -60,8 +59,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional
     public ProjectDto update(UUID id, UpdateProjectRequest request) {
-        UUID companyId = SecurityUtils.currentCompanyId()
-                .orElseThrow(() -> new AuthenticationCredentialsNotFoundException("auth.company.required"));
+        UUID companyId = SecurityUtils.requireCompanyId();
 
         Project entity = findByIdAndCompany(id, companyId);
         if (request.getPlannedStartDate() != null || request.getPlannedEndDate() != null) {
@@ -96,8 +94,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional
     public ProjectDto get(UUID id) {
-        UUID companyId = SecurityUtils.currentCompanyId()
-                .orElseThrow(() -> new AuthenticationCredentialsNotFoundException("auth.company.required"));
+        UUID companyId = SecurityUtils.requireCompanyId();
         Project entity = findByIdAndCompany(id, companyId);
         return enrichDto(mapper.toDto(entity), id);
     }
@@ -129,7 +126,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional(Transactional.TxType.SUPPORTS)
     public Page<ProjectSummaryDto> list(ProjectFilter filter, Pageable pageable, Locale locale) {
-        UUID companyId = requireCompanyId();
+        UUID companyId = SecurityUtils.requireCompanyId();
         var spec = new ProjectSpecification(companyId, filter, locale);
         Page<Project> page = projectRepository.findAll(spec, pageable);
 
@@ -144,12 +141,10 @@ public class ProjectServiceImpl implements ProjectService {
         return new PageImpl<>(items, pageable, page.getTotalElements());
     }
 
-
     @Override
     @Transactional
     public void delete(UUID id) {
-        UUID companyId = SecurityUtils.currentCompanyId()
-                .orElseThrow(() -> new AuthenticationCredentialsNotFoundException("auth.company.required"));
+        UUID companyId = SecurityUtils.requireCompanyId();
         Project entity = findByIdAndCompany(id, companyId);
         projectRepository.delete(entity); // v PR 3/4 nahradíme za archive
     }
@@ -157,8 +152,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional
     public void archive(UUID id) {
-        UUID companyId = SecurityUtils.currentCompanyId()
-                .orElseThrow(() -> new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException("auth.company.required"));
+        UUID companyId = SecurityUtils.requireCompanyId();
         Project entity = findByIdAndCompany(id, companyId);
         entity.setArchivedAt(Instant.now());
         if (entity.getStatus() != ProjectStatus.ARCHIVED) {
@@ -168,10 +162,6 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     // ===== helpers =====
-    private UUID requireCompanyId() {
-        return SecurityUtils.currentCompanyId()
-                .orElseThrow(() -> new AuthenticationCredentialsNotFoundException("auth.company.required"));
-    }
 
     private Project findByIdAndCompany(UUID id, UUID companyId) {
         return projectRepository.findById(id)
