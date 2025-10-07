@@ -26,6 +26,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final ProjectTranslationRepository translationRepository;
     private final ProjectMapper mapper;
     private final I18nLocaleService i18nLocale;
+    private final ProjectCodeGenerator codeGenerator;
 
     @Override
     @Transactional
@@ -33,13 +34,20 @@ public class ProjectServiceImpl implements ProjectService {
         UUID companyId = SecurityUtils.requireCompanyId();
 
         validateDates(request.getPlannedStartDate(), request.getPlannedEndDate());
-        if (request.getCode() != null && projectRepository.existsByCompanyIdAndCode(companyId, request.getCode().trim())) {
-            throw conflict("project.code.duplicate");
-        }
 
         Project entity = mapper.fromCreate(request);
         entity.setCompanyId(companyId);
-        entity.setCode(normalizeCode(request.getCode()));
+        String code = normalizeCode(request.getCode());
+        if (code == null || code.isBlank()) {
+            // auto-generation (bezpečné vůči souběhu)
+            code = codeGenerator.nextCode(companyId, request.getPlannedStartDate());
+        } else {
+            // user-supplied code → hlídej unikátnost
+            if (projectRepository.existsByCompanyIdAndCode(companyId, code)) {
+                throw conflict("project.code.duplicate");
+            }
+        }
+        entity.setCode(code);
         // Adresa stavby (typed JSONB), stejně jako u Customers.billingAddress
         if (request.getSiteAddress() != null) {
             var addr = org.mapstruct.factory.Mappers
