@@ -38,76 +38,21 @@ public class ProjectController {
         return h;
     }
 
-    @GetMapping("/list")
-    @PreAuthorize("@rbac.hasScope('projects:read')")
-    @Operation(summary = "List projects (paged)")
-    public ResponseEntity<Page<ProjectSummaryDto>> listDeprecated(
-            @RequestParam(value = "q", required = false) String q,
-            @RequestParam(value = "code", required = false) String code,
-            @RequestParam(value = "status", required = false) ProjectStatus status,
-            @RequestParam(value = "customerId", required = false) UUID customerId,
-            @RequestParam(value = "projectManagerId", required = false) UUID projectManagerId,
-            @RequestParam(value = "active", required = false) Boolean active,
-            // date ranges (volitelné)
-            @RequestParam(value = "plannedStartFrom", required = false) java.time.LocalDate plannedStartFrom,
-            @RequestParam(value = "plannedStartTo",   required = false) java.time.LocalDate plannedStartTo,
-            @RequestParam(value = "plannedEndFrom",   required = false) java.time.LocalDate plannedEndFrom,
-            @RequestParam(value = "plannedEndTo",     required = false) java.time.LocalDate plannedEndTo,
-            // paging/sort
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "20") int size,
-            @RequestParam(value = "sort", defaultValue = "code,asc") String sort
-    ) {
-        var loc = i18nLocale.resolve();
-
-        // Povolené properties podle entity Project; alias "name" → "code" (pro UX kompatibilitu FE)
-        Pageable pageable = PageableUtils.from(
-                sort, page, size,
-                /* default */ "code",
-                /* allowed */ Set.of("code","status","createdAt","updatedAt",
-                        "plannedStartDate","plannedEndDate","actualStartDate","actualEndDate","archivedAt"),
-                /* aliases */ Map.of("name","code")
-        );
-
-        var f = new ProjectFilter();
-        f.setQ(q);
-        f.setCode(code);
-        f.setStatus(status);
-        f.setCustomerId(customerId);
-        f.setProjectManagerId(projectManagerId);
-        f.setActive(active);
-        f.setPlannedStartFrom(plannedStartFrom);
-        f.setPlannedStartTo(plannedStartTo);
-        f.setPlannedEndFrom(plannedEndFrom);
-        f.setPlannedEndTo(plannedEndTo);
-
-        var result = service.list(f, pageable);
-        return new ResponseEntity<>(result, i18nHeaders(loc), HttpStatus.OK);
-    }
-
     @GetMapping
     @PreAuthorize("@rbac.hasScope(T(cz.stavbau.backend.security.rbac.Scopes).PROJECTS_READ)")
     public ResponseEntity<PageResponse<ProjectSummaryDto>> list(
             @RequestParam(value = "q", required = false) String q,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "20") int size,
-            @RequestParam(required = false, name = "sort") String sortParam,
+            Pageable pageable,
             Locale locale
     ) {
-        // Allow-list + aliasy (name→translations.name), default sort: createdAt,desc
-        var wl = PageableUtils.SortWhitelist.builder(Sort.by("createdAt").descending())
-                .allow("name", "translations.name")
-                .allow("code", "code")
-                .allow("createdAt", "createdAt")
-                .build();
+        // Bezpečný sort + fallback + allow-list
+        var allowed = Set.of("createdAt", "code", "translations.name");
+        Sort sort = PageableUtils.safeSortOrDefault(pageable, Sort.by("createdAt").descending(), allowed);
+        var paging = PageRequest.of(Math.max(page, 0), Math.min(size, 100), sort);
 
-        // Pokud tvůj PageableUtils vyžaduje Logger, můžeš předat null (bez WARN logu) nebo injektovaný logger.
-        var sort = PageableUtils.mapAndValidate(sortParam, wl, log);
-        var pageable = PageRequest.of(Math.max(page, 0), Math.min(size, 100), sort);
-
-        //var pageData = service.list(q, pageable);
-        var pageData = service.list(q, pageable, locale);
-
+        var pageData = service.list(q, paging, locale);
         var body = PageResponse.of(pageData);
 
         return ResponseEntity.ok()
@@ -115,6 +60,7 @@ public class ProjectController {
                 .header(HttpHeaders.CONTENT_LANGUAGE, locale != null ? locale.toLanguageTag() : "cs")
                 .body(body);
     }
+
 
     @GetMapping("/{id}")
     @PreAuthorize("@rbac.hasScope('projects:read')")

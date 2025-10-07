@@ -1533,3 +1533,21 @@ Hotový základ pro další rozšiřování profilu člena (adresy, avatar).
 - **DRY:** normalizace řetězců / adres a API utilit převedena do sdílených helperů.
 - **Konzistence listů:** `PageResponse` na FE, allow-list sortů, i18n hlavičky na BE.
 - Pokud někdo navrhne refaktor v těchto oblastech, **zastavit a odkázat na tento zápis** – už hotovo, držet konzistenci napříč moduly.
+
+### ✅ PR 3a/4 – Projects: auto code generation
+- DB: project_code_counters (company_id, year, value) + unique index (company_id, code).
+- BE: ProjectCodeGenerator (UPSERT RETURNING), ProjectServiceImpl auto-generuje code, když není zadán.
+- FE: code v create nepovinné; 409 duplicate jen při manuálním zadání.
+
+### ▶ TODO next
+- Konfigurovatelný prefix per Company (např. `company.projectCodePrefix`).
+- UI: zobrazovat v detailu generovaný kód a kopírovací tlačítko.
+
+### ✅ Projects – code immutable & autogen
+- FE: code není v create/update requestech.
+- BE: code se vždy generuje (R{YYYY}-{NNN}); mapper ignoruje code na update.
+- DB: NOT NULL + unique (company_id, code).
+
+### ▶ TODO next
+- Konfigurovatelný formát/prefix per Company.
+- Zobrazit code v UI detailu + tlačítko „kopírovat“.

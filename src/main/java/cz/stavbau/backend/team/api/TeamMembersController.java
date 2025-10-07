@@ -1,5 +1,6 @@
 package cz.stavbau.backend.team.api;
 
+import cz.stavbau.backend.common.api.PageResponse;
 import cz.stavbau.backend.common.i18n.I18nLocaleService;
 import cz.stavbau.backend.common.persistence.PageableUtils;
 import cz.stavbau.backend.common.exception.ForbiddenException;
@@ -19,7 +20,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -82,6 +85,18 @@ public class TeamMembersController {
     }
 
     // --- List (paged) ---
+    /**
+     * Seznam členů firmy (paged) – bezpečné řazení přes allow-list a fallback,
+     * sjednocený PageResponse, i18n hlavičky, RBAC guard.
+     *
+     * Řazení:
+     * - preferujeme nested property "user.email" (výchozí)
+     * - allow-list: id, firstName, lastName, phone, user.role, createdAt, updatedAt, user.email, user.state
+     *
+     * i18n:
+     * - Vary: Accept-Language
+     * - Content-Language: resolved locale
+     */
     @GetMapping
     @PreAuthorize("@rbac.hasScope(T(cz.stavbau.backend.security.rbac.Scopes).TEAM_READ)")
     @Operation(
@@ -95,43 +110,50 @@ public class TeamMembersController {
             @ApiResponse(responseCode = "401", description = "Neautorizováno"),
             @ApiResponse(responseCode = "403", description = "Chybí oprávnění (scope)")
     })
-    public ResponseEntity<Page<MemberSummaryDto>> list(
+    public ResponseEntity<PageResponse<MemberSummaryDto>> list(
             @PathVariable UUID companyId,
-            @Parameter(description = "Fulltext (email, jméno, telefon)") @RequestParam(required = false) String q,
+            @Parameter(description = "Fulltext (email, jméno, telefon)")
+            @RequestParam(required = false) String q,
             @Parameter(description = "Filtr role (OWNER/COMPANY_ADMIN/…)")
             @RequestParam(required = false) String role,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "20") int size,
-            @RequestParam(value = "sort", defaultValue = "user.email,asc") String sort,
+            Pageable pageable,
+            Locale locale,
             @AuthenticationPrincipal AppUserPrincipal principal
     ) {
+        // company context guard
         assertCompanyContext(companyId, principal);
-        var loc = i18nLocale.resolve();
-        log.warn("Sort '{}'.", sort);
-        Pageable pageable = PageableUtils.from(
-                sort, page, size,
-                /* default */ "user.email",
-                /* allowed */ Set.of(
-                        "id", "firstName", "lastName", "phone", "user.role",
-                        "createdAt", "updatedAt",
-                        "user.email", "user.state"
-                ),
-                /* aliases */ Map.of(
-                        "email", "user.email",
-                        "state", "user.state",
-                        "name", "lastName",
-                        "role", "user.role"
 
-                )
+        // 1) Bezpečné řazení + fallback (default: user.email ASC)
+        var allowed = Set.of(
+                "id", "firstName", "lastName", "phone",
+                "user.role", "createdAt", "updatedAt",
+                "user.email", "user.state"
         );
-        log.warn( pageable.toString() );
+        Sort sort = PageableUtils.safeSortOrDefault(
+                pageable,
+                Sort.by("user.email").ascending(),
+                allowed
+        );
+
+        var paging = PageRequest.of(Math.max(page, 0), Math.min(size, 100), sort);
+
+        // 2) Normalizace filtrů
         String qNorm = (q == null || q.isBlank()) ? null : q.trim();
         String roleNorm = (role == null || role.isBlank()) ? null : role.trim().toUpperCase(Locale.ROOT);
 
-        var data = teamService.list(qNorm, roleNorm, pageable);
-        log.warn( data.toString() );
-        return new ResponseEntity<>(data, i18nHeaders(loc), HttpStatus.OK);
+        // 3) Service volání
+        var pageData = teamService.list(qNorm, roleNorm, paging);
+
+        // 4) Sjednocená PageResponse + i18n hlavičky
+        var body = PageResponse.of(pageData);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.VARY, "Accept-Language")
+                .header(HttpHeaders.CONTENT_LANGUAGE, (locale != null ? locale.toLanguageTag() : "cs"))
+                .body(body);
     }
+
 
     // --- Detail (profile) ---
     @GetMapping("/{memberId}/profile")
