@@ -15,7 +15,7 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.Map;
 
-@ControllerAdvice
+//@ControllerAdvice
 public class ApiExceptionHandler {
     @ExceptionHandler(BindException.class)
     public ProblemDetail handleValidation(BindException ex){

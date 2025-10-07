@@ -1,5 +1,6 @@
 package cz.stavbau.backend.projects.api;
 
+import cz.stavbau.backend.common.api.PageResponse;
 import cz.stavbau.backend.common.i18n.I18nLocaleService;
 import cz.stavbau.backend.common.persistence.PageableUtils;
 import cz.stavbau.backend.projects.dto.ProjectDto;
@@ -11,6 +12,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.*;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,7 +27,7 @@ import java.util.*;
 @RequiredArgsConstructor
 @Tag(name = "Projects")
 public class ProjectController {
-
+    private static final Logger log = LoggerFactory.getLogger(ProjectController.class);
     private final ProjectService service;
     private final I18nLocaleService i18nLocale;
 
@@ -35,10 +38,10 @@ public class ProjectController {
         return h;
     }
 
-    @GetMapping
+    @GetMapping("/list")
     @PreAuthorize("@rbac.hasScope('projects:read')")
     @Operation(summary = "List projects (paged)")
-    public ResponseEntity<Page<ProjectSummaryDto>> list(
+    public ResponseEntity<Page<ProjectSummaryDto>> listDeprecated(
             @RequestParam(value = "q", required = false) String q,
             @RequestParam(value = "code", required = false) String code,
             @RequestParam(value = "status", required = false) ProjectStatus status,
@@ -80,6 +83,37 @@ public class ProjectController {
 
         var result = service.list(f, pageable);
         return new ResponseEntity<>(result, i18nHeaders(loc), HttpStatus.OK);
+    }
+
+    @GetMapping
+    @PreAuthorize("@rbac.hasScope(T(cz.stavbau.backend.security.rbac.Scopes).PROJECTS_READ)")
+    public ResponseEntity<PageResponse<ProjectSummaryDto>> list(
+            @RequestParam(value = "q", required = false) String q,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size,
+            @RequestParam(required = false, name = "sort") String sortParam,
+            Locale locale
+    ) {
+        // Allow-list + aliasy (name→translations.name), default sort: createdAt,desc
+        var wl = PageableUtils.SortWhitelist.builder(Sort.by("createdAt").descending())
+                .allow("name", "translations.name")
+                .allow("code", "code")
+                .allow("createdAt", "createdAt")
+                .build();
+
+        // Pokud tvůj PageableUtils vyžaduje Logger, můžeš předat null (bez WARN logu) nebo injektovaný logger.
+        var sort = PageableUtils.mapAndValidate(sortParam, wl, log);
+        var pageable = PageRequest.of(Math.max(page, 0), Math.min(size, 100), sort);
+
+        //var pageData = service.list(q, pageable);
+        var pageData = service.list(q, pageable, locale);
+
+        var body = PageResponse.of(pageData);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.VARY, "Accept-Language")
+                .header(HttpHeaders.CONTENT_LANGUAGE, locale != null ? locale.toLanguageTag() : "cs")
+                .body(body);
     }
 
     @GetMapping("/{id}")

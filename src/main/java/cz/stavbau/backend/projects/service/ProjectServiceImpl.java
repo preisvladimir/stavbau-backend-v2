@@ -6,7 +6,7 @@ import cz.stavbau.backend.projects.filter.ProjectFilter;
 import cz.stavbau.backend.projects.mapper.ProjectMapper;
 import cz.stavbau.backend.projects.model.*;
 import cz.stavbau.backend.projects.repo.*;
-import cz.stavbau.backend.projects.repo.spec.ProjectSpecification;
+import cz.stavbau.backend.projects.persistence.ProjectSpecification;
 import cz.stavbau.backend.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
@@ -41,6 +41,13 @@ public class ProjectServiceImpl implements ProjectService {
         Project entity = mapper.fromCreate(request);
         entity.setCompanyId(companyId);
         entity.setCode(normalizeCode(request.getCode()));
+        // Adresa stavby (typed JSONB), stejně jako u Customers.billingAddress
+        if (request.getSiteAddress() != null) {
+            var addr = org.mapstruct.factory.Mappers
+                    .getMapper(cz.stavbau.backend.common.mapping.AddressMapper.class)
+                    .toEntity(request.getSiteAddress());
+            entity.setSiteAddress(addr);
+        }
         Project saved = projectRepository.save(entity);
 
         // ulož i18n překlad (min 1 jazyk = resolved)
@@ -68,6 +75,13 @@ public class ProjectServiceImpl implements ProjectService {
             entity.setCode(code);
         }
         mapper.update(entity, request);
+        // PATCH sémantika: pokud přišla adresa, přepiš; pokud nepřišla, ponech stávající
+        if (request.getSiteAddress() != null) {
+            var addr = org.mapstruct.factory.Mappers
+                    .getMapper(cz.stavbau.backend.common.mapping.AddressMapper.class)
+                    .toEntity(request.getSiteAddress());
+            entity.setSiteAddress(addr);
+        }
         Project saved = projectRepository.save(entity);
 
         // i18n update pokud přišlo name/description
@@ -93,16 +107,30 @@ public class ProjectServiceImpl implements ProjectService {
     public Page<ProjectSummaryDto> list(String q, Pageable pageable) {
         ProjectFilter f = new ProjectFilter();
         f.setQ(q);
-        return list(f, pageable);
+        var locale = i18nLocale.resolve(); // java.util.Locale
+        return list(f, pageable,locale);
+    }
+
+    @Override
+    @Transactional(Transactional.TxType.SUPPORTS)
+    public Page<ProjectSummaryDto> list(String q, Pageable pageable,Locale locale) {
+        ProjectFilter f = new ProjectFilter();
+        f.setQ(q);
+        return list(f, pageable,locale);
     }
 
     @Override
     @Transactional(Transactional.TxType.SUPPORTS)
     public Page<ProjectSummaryDto> list(ProjectFilter filter, Pageable pageable) {
-        UUID companyId = SecurityUtils.currentCompanyId()
-                .orElseThrow(() -> new AuthenticationCredentialsNotFoundException("auth.company.required"));
+        var locale = i18nLocale.resolve(); // java.util.Locale
+        return list(filter, pageable,locale);
+    }
 
-        var spec = new ProjectSpecification(companyId, filter);
+    @Override
+    @Transactional(Transactional.TxType.SUPPORTS)
+    public Page<ProjectSummaryDto> list(ProjectFilter filter, Pageable pageable, Locale locale) {
+        UUID companyId = requireCompanyId();
+        var spec = new ProjectSpecification(companyId, filter, locale);
         Page<Project> page = projectRepository.findAll(spec, pageable);
 
         List<ProjectSummaryDto> items = mapper.toSummaryList(page.getContent());
@@ -115,6 +143,8 @@ public class ProjectServiceImpl implements ProjectService {
         }
         return new PageImpl<>(items, pageable, page.getTotalElements());
     }
+
+
     @Override
     @Transactional
     public void delete(UUID id) {
@@ -138,6 +168,10 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     // ===== helpers =====
+    private UUID requireCompanyId() {
+        return SecurityUtils.currentCompanyId()
+                .orElseThrow(() -> new AuthenticationCredentialsNotFoundException("auth.company.required"));
+    }
 
     private Project findByIdAndCompany(UUID id, UUID companyId) {
         return projectRepository.findById(id)

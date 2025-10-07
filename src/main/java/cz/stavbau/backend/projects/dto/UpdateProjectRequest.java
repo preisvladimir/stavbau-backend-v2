@@ -1,5 +1,6 @@
 package cz.stavbau.backend.projects.dto;
 
+import cz.stavbau.backend.common.api.dto.AddressDto;
 import jakarta.validation.constraints.*;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -13,6 +14,8 @@ public class UpdateProjectRequest {
 
     private UUID customerId;
     private UUID projectManagerId;
+
+    private AddressDto siteAddress;
 
     private LocalDate plannedStartDate;
     private LocalDate plannedEndDate;

@@ -1,8 +1,12 @@
 package cz.stavbau.backend.projects.model;
 
+import cz.stavbau.backend.common.domain.Address;
 import cz.stavbau.backend.common.domain.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -34,8 +38,22 @@ public class Project extends BaseEntity {
     @Column(name = "actual_end_date")    private LocalDate actualEndDate;
     @Column(name = "archived_at")        private Instant archivedAt;
 
-    // JSONB – konfigurováno v JsonbConfig (Hibernate type)
-    @Column(name = "site_address_json", columnDefinition = "jsonb")
+    /**
+      * Adresa stavby (JSONB) – typované pole, stejné chování jako u Customer.billingAddress.
+      * Persistuje se jako JSONB pomocí konvertoru.
+      */
+    @Convert(converter = cz.stavbau.backend.common.persistence.AddressJsonConverter.class)
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "site_address", columnDefinition = "jsonb")
+    private Address siteAddress;
+
+    /**
+     * Dočasné zpětně kompatibilní pole pro stávající části kódu.
+     * Namapováno na stejný sloupec, pouze read-only, aby se předešlo duplicitnímu bindování.
+     * TODO: odstranit po úpravě mapperů/DTO (PR naváže).
+     */
+    @Deprecated
+    @Column(name = "site_address", columnDefinition = "jsonb", insertable = false, updatable = false)
     private String siteAddressJson;
 
     @Column(name = "currency", length = 3)
