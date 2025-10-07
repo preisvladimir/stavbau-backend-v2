@@ -1362,3 +1362,174 @@ Hotový základ pro další rozšiřování profilu člena (adresy, avatar).
 - FUTURE:
     - TSV fulltext per locale; společný spec builder pro filtry (status, range).
 
+# ✅ Sprint 7 – stav k 2025-10-07
+
+### ✔️ HOTOVO
+
+#### Backend – Projects
+- `cq.distinct(true)` kvůli `LEFT JOIN translations`.
+- JOIN translations (+ preferovaný jazyk z Locale), rozšířený fulltext přes code i translations.name.
+- Rozsahy dat (`plannedStartDate` / `EndDate`) + filtr `active` (archiv).
+- Řazení a i18n hlavičky.
+- V `ProjectController` nasazena allow-list / alias přes `PageableUtils.SortWhitelist` (`name → translations.name`), default `createdAt, desc`.
+- Odpovědi posílají `Content-Language` a `Vary: Accept-Language`.
+
+##### Typed adresa stavby
+- Entita `Project`: přidáno `siteAddress (JSONB)` přes `AddressJsonConverter (@JdbcTypeCode(SqlTypes.JSON))`.
+- BC mirror: `@Deprecated String siteAddressJson (read-only)` na stejný sloupec – dočasně pro kompatibilitu.
+- Flyway migrace `V20251007_01__projects_site_address_json_to_jsonb.sql` – `rename projects.site_address_json → site_address`, enforce typ `jsonb`.
+
+##### DTO / Service / Mapper
+- `CreateProjectRequest` / `UpdateProjectRequest`: nové pole `siteAddress`.
+- `ProjectDto`: nové pole `siteAddress`.
+- `ProjectMapper` používá `AddressMapper (MapStruct)` – auto-mapování `Address ⇄ AddressDto`.
+- `ProjectServiceImpl`: ukládá / patchuje `siteAddress` (typed), ostatní pole beze změny.
+
+#### Backend – Customers
+- Validace IČO (duplicit bez prázdných hodnot).
+- `BusinessIdUtils.normalizeIco` (trim, odstranění mezer, prázdné → null).
+- `CustomerServiceImpl.create / update`: kontrola duplicity jen pokud IČO po normalizaci existuje; jinak ukládá `NULL`.
+
+#### Tenancy helper
+- Použití `SecurityUtils.requireCompanyId()` (sjednocení opakovaného patternu).
+
+#### Cleanup
+- Doplněny Javadoc komentáře ve službě (cz verze), úklid chybových kódů (i18n keys).
+
+---
+
+### Frontend – UI / Forms
+
+#### AsyncSearchSelect
+- Debounce, zavírání po výběru, zavření na klik mimo i Escape, loading stav.
+
+#### Projects – ProjectForm
+- Výběr Zákazník (customers) a PM (team) přes `AsyncSearchSelect` (+ `useRequiredCompanyId()` pro team).
+- Sekce **Adresa stavby (siteAddress)** přes `AddressAutocomplete` + manuální pole (formatted / street / ...).
+
+#### Customers – CustomerForm
+- Využití `AddressAutocomplete`; typed `billingAddress` (shodná struktura jako `siteAddress`).
+
+#### Mappers (DRY)
+- `features/projects/mappers.ts` a úprava `features/customers/mappers.ts`.
+- Centralizace:
+    - `src/lib/utils/strings.ts` → `trimToUndef`.
+    - `src/lib/utils/address.ts` → `normalizeAddressDto (+ hasAnyValue)`.
+- Form ⇄ API: prázdné řetězce padají na `undefined` (PATCH sémantika), adresy se jednotně normalizují.
+
+#### API klienti (DRY)
+- Nové sdílené utilitky `src/lib/api/utils.ts`:
+    - `clamp`, `toInt`, `sanitizeQ`, `isCanceled`, `langHeader`, `compact`, `compactNonEmpty`, `toNonEmpty`, `normalizeSort(…, allowlist)`.
+- Refaktor klientů:
+    - `features/projects/api/client.ts` (vč. `createProjectFromForm / updateProjectFromForm`)
+    - `features/team/api/client.ts` (allowlist sort klíčů)
+    - `features/customers/api/client.ts`
+- Search customers opravena na `toPageResponse` (řeší dřívější „nic nenalezeno“ při `content/items` rozdílu).
+
+---
+
+### Dev / ops
+- Spuštění s profilem dev – opraven příkaz:
+  ```bash
+  mvn -Dspring-boot.run.profiles=dev spring-boot:run
+
+### 🧩 Opravy incidentů
+- **500 na `GET /api/v1/projects` (neznámý sort)** → vyřešeno *allow-list / alias* v controlleru.
+- **500 na `POST /customers` při prázdném IČO** → vyřešeno `normalizeIco` + podmíněná duplicita.
+- **`AsyncSearchSelect` se nezavíral** → přidán *outside-click* a *Escape handler*.
+
+---
+
+### 🧪 TESTY (stav)
+**Připraveno / čeká na dokončení kódu:**
+- `@WebMvcTest Projects`: fallback na default sort při neznámém klíči.
+- `@DataJpaTest Projects`: `ProjectSpecification` (JOIN translations, q tokenizace, active / range filtry).
+- **FE:** RTL + MSW pro `ProjectForm` (server-side paging / sorting + odeslání `siteAddress`).
+
+**Dependency (navržená):**  
+`org.springframework.security:spring-security-test` *(scope test)* – nutné pro `@WithMockUser`.
+
+---
+
+### 📌 TODO (krátkodobé)
+
+#### PR-1 (BE Projects) – dokončit a sloučit
+- Spec + controller (sort allowlist / alias + i18n hlavičky) – ✅
+- Typed `siteAddress` (+ migrace) – ✅
+- DTO / Mapper / Service (persist + read) – ✅
+- Doplnit testy (viz výše) a limit `size ≤ 100` už v controlleru (FE už clampuje).
+
+#### PR-4 / 5 / 6 (FE Projects) – sjednocení tabulek
+- `ProjectsTable` na `DataTableV2` (server-side paging / sorting) + RTL smoke test.
+- `features/projects/api/client.ts` – přepojit tabulku čistě na `listProjectSummaries`.
+
+#### RBAC / i18n
+- `EnumLabeler` pro `ProjectStatus` (+ i18n), dosadit `statusLabel` v service.
+- Validovat `Content-Language` + `Vary: Accept-Language` i u Customers a Team listů (konzistence).
+
+#### Dev data
+- Seed dat pro dev (zákazníci, členové týmu, pár projektů) pro snadné QA (`skript / CommandLineRunner`).
+
+#### Úklid BC
+- Po migraci FE odstranit `Project.siteAddressJson` (read-only mirror).
+
+---
+
+### 🔭 FUTURE (střednědobé)
+- `PageableUtils` – centralizovat allow-list a aliasy napříč moduly (Team, Customers, Projects).
+- Výkon – indexy pro `projects(site_address)`, `projects(code)`, případně `translations(language,name)`; prověřit plán s JOIN translations.
+- Cursor paging – příprava na `cursor` param (FE už má pole; BE zatím ignoruje).
+- Soft-delete / Archiv – sjednotit delete → archive ve všech modulech.
+- Audit trail – `creator / updater` na Projects (v mapperu jsou ignore, service může doplnit).
+
+---
+
+### 🗂️ Změněné / nové soubory (výběr)
+
+#### Backend
+- `projects/persistence/ProjectSpecification.java`
+- `projects/controller/ProjectController.java`
+- `projects/model/Project.java`
+- `db/migration/V20251007_01__projects_site_address_json_to_jsonb.sql`
+- `projects/dto/{CreateProjectRequest, UpdateProjectRequest, ProjectDto}.java`
+- `projects/mapper/ProjectMapper.java`
+- `projects/service/ProjectServiceImpl.java`
+- `invoices/service/impl/CustomerServiceImpl.java`
+- `common/util/BusinessIdUtils.java`
+- `security/SecurityUtils.java`
+
+#### Frontend
+- `components/ui/stavbau-ui/AsyncSearchSelect.tsx`
+- `features/projects/components/ProjectForm.tsx`
+- `features/projects/mappers.ts`
+- `features/customers/mappers.ts`
+- `lib/utils/{strings.ts, address.ts}`
+- `lib/api/utils.ts`
+- `features/{projects, team, customers}/api/client.ts`
+- `features/projects/api/client.ts`
+
+---
+
+### 🔒 Bezpečnost & zásady
+- RBAC 2.1 beze změn (žádné nové scopes).
+- `Accept-Language` → FE posílá; BE vrací `Vary: Accept-Language` + `Content-Language`.
+
+---
+
+### 📝 PR struktura (doporučení, ≤ 200 LOC / PR)
+1. **PR-1 (BE / Projects):** typed `siteAddress` + DTO / Mapper / Service + migrace (malé diffy; Javadoc)
+2. **PR-2 (FE / Projects):** `ProjectForm` – `AsyncSearchSelect` (customer / PM) + `siteAddress`
+3. **PR-3 (FE shared):** `lib/api/utils.ts`, `lib/utils/{strings, address}.ts` + refaktor klientů
+4. **PR-4 (BE / Projects):** `ProjectSpecification JOIN` + allow-list / alias + i18n hlavičky + `WebMvcTest`
+5. **PR-5 (FE / Projects):** `mappers (form ⇄ API)` + `createProjectFromForm / updateProjectFromForm`
+6. **PR-6 (FE / Projects):** `DataTableV2` integrace + RTL / MSW paging / sorting
+7. **PR-7 (BE / Customers):** `BusinessIdUtils.normalizeIco` + cleanup + testy
+8. **PR-8 (Dev):** seed pro dev profil (`CommandLineRunner`)
+
+---
+
+### ✅ Poznámky k rozhodnutím
+- Typed `JSONB address` sjednocen mezi Customers (`billingAddress`) a Projects (`siteAddress`) – jeden konvertor, jeden DTO tvar.
+- **DRY:** normalizace řetězců / adres a API utilit převedena do sdílených helperů.
+- **Konzistence listů:** `PageResponse` na FE, allow-list sortů, i18n hlavičky na BE.
+- Pokud někdo navrhne refaktor v těchto oblastech, **zastavit a odkázat na tento zápis** – už hotovo, držet konzistenci napříč moduly.
