@@ -151,6 +151,13 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- Spring Security test utils: @WithMockUser, SecurityMockMvc, atd. -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
         <!-- Integrační testy WebClientu (MockWebServer) -->
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
