@@ -4,11 +4,14 @@ import cz.stavbau.backend.common.api.dto.AddressDto;
 import cz.stavbau.backend.projects.model.ProjectStatus;
 import java.time.LocalDate;
 import java.util.UUID;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class ProjectDto {
     private UUID id;
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
     private String code;
     private String name;          // resolved i18n
     private String description;   // resolved i18n

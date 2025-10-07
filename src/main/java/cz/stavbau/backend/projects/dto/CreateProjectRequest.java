@@ -8,7 +8,7 @@ import lombok.*;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class CreateProjectRequest {
-    @Size(min = 1, max = 32) private String code; // může být generován později
+    //@Size(min = 1, max = 32) private String code; // může být generován později
     @NotBlank @Size(max = 160) private String name;
     @Size(max = 2000) private String description;
 

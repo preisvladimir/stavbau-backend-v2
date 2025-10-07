@@ -37,17 +37,11 @@ public class ProjectServiceImpl implements ProjectService {
 
         Project entity = mapper.fromCreate(request);
         entity.setCompanyId(companyId);
-        String code = normalizeCode(request.getCode());
-        if (code == null || code.isBlank()) {
-            // auto-generation (bezpečné vůči souběhu)
-            code = codeGenerator.nextCode(companyId, request.getPlannedStartDate());
-        } else {
-            // user-supplied code → hlídej unikátnost
-            if (projectRepository.existsByCompanyIdAndCode(companyId, code)) {
-                throw conflict("project.code.duplicate");
-            }
-        }
+
+        // FE code neposílá – generujeme vždy (bezpečné vůči souběhu)
+        String code = codeGenerator.nextCode(companyId, request.getPlannedStartDate());
         entity.setCode(code);
+
         // Adresa stavby (typed JSONB), stejně jako u Customers.billingAddress
         if (request.getSiteAddress() != null) {
             var addr = org.mapstruct.factory.Mappers
@@ -73,12 +67,19 @@ public class ProjectServiceImpl implements ProjectService {
         if (request.getPlannedStartDate() != null || request.getPlannedEndDate() != null) {
             validateDates(request.getPlannedStartDate(), request.getPlannedEndDate());
         }
-        if (request.getCode() != null) {
-            String code = normalizeCode(request.getCode());
-            if (!code.equals(entity.getCode()) && projectRepository.existsByCompanyIdAndCode(companyId, code)) {
-                throw conflict("project.code.duplicate");
-            }
-            entity.setCode(code);
+
+        // Kód je neměnný – pokud by FE omylem poslal, odmítneme
+        if (request.getClass().getDeclaredFields() != null) {
+            // bezpečná obrana i když jsme code z requestu odstranili
+            try {
+                var f = request.getClass().getDeclaredField("code");
+                f.setAccessible(true);
+                Object attempted = f.get(request);
+                if (attempted != null) {
+                    throw badRequest("project.code.immutable");
+                }
+            } catch (NoSuchFieldException ignored) { /* pole neexistuje → OK */ }
+            catch (IllegalAccessException ignored) { /* ignore */ }
         }
         mapper.update(entity, request);
         // PATCH sémantika: pokud přišla adresa, přepiš; pokud nepřišla, ponech stávající
@@ -223,4 +224,5 @@ public class ProjectServiceImpl implements ProjectService {
     private RuntimeException notFound(String code) { return new IllegalArgumentException(code); }
     private RuntimeException conflict(String code) { return new IllegalStateException(code); }
     private RuntimeException invalid(String code)  { return new IllegalArgumentException(code); }
+    private RuntimeException badRequest(String code)  { return new IllegalArgumentException(code); }
 }

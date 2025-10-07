@@ -8,7 +8,7 @@ import lombok.*;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class UpdateProjectRequest {
-    @Size(min = 1, max = 32) private String code;
+    //@Size(min = 1, max = 32) private String code;
     @Size(max = 160) private String name;
     @Size(max = 2000) private String description;
 

@@ -33,6 +33,7 @@ public interface ProjectMapper {
     // - explicitně ignorujeme všechno, co teď neplníme (audit, tenancy, actual*, archived, siteAddressJson, tags)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "companyId", ignore = true)       // doplní service
+    @Mapping(target = "code", ignore = true)            // <<— kód nastaví service
     @Mapping(target = "status", constant = "PLANNED")   // výchozí stav
     @Mapping(target = "archivedAt", ignore = true)
     @Mapping(target = "siteAddress", ignore = true) // plní ProjectService (typed JSONB přes AddressMapper)
@@ -52,6 +53,7 @@ public interface ProjectMapper {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "companyId", ignore = true)
+    @Mapping(target = "code", ignore = true)          // <<— kód neměnný
     @Mapping(target = "status", ignore = true)          // status budeme řídit separátně (workflow)
     @Mapping(target = "archivedAt", ignore = true)
     @Mapping(target = "siteAddress", ignore = true)    // plní ProjectService při PATCH, jen pokud přišlo v requestu
