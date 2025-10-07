@@ -1,5 +1,6 @@
 package cz.stavbau.backend.security;
 
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -62,6 +63,14 @@ public final class SecurityUtils {
         }
 
         return Optional.empty();
+    }
+    /**
+      * Vrátí aktuální companyId, nebo vyhodí {@link AuthenticationCredentialsNotFoundException}
+      * s kódem "auth.company.required". Slouží k odstranění duplicitní logiky v service třídách.
+      */
+    public static UUID requireCompanyId() {
+        return currentCompanyId()
+                .orElseThrow(() -> new AuthenticationCredentialsNotFoundException("auth.company.required"));
     }
 
     /**

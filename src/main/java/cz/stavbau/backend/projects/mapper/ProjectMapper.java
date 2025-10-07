@@ -1,5 +1,6 @@
 package cz.stavbau.backend.projects.mapper;
 
+import cz.stavbau.backend.common.mapping.AddressMapper;
 import cz.stavbau.backend.projects.dto.*;
 import cz.stavbau.backend.projects.model.Project;
 import org.mapstruct.*;
@@ -8,6 +9,7 @@ import java.util.List;
 
 @Mapper(
         config = cz.stavbau.backend.common.mapping.MapStructCentralConfig.class,
+        uses = AddressMapper.class,
         unmappedTargetPolicy = ReportingPolicy.IGNORE,
         unmappedSourcePolicy = ReportingPolicy.IGNORE
 )
@@ -33,7 +35,7 @@ public interface ProjectMapper {
     @Mapping(target = "companyId", ignore = true)       // doplní service
     @Mapping(target = "status", constant = "PLANNED")   // výchozí stav
     @Mapping(target = "archivedAt", ignore = true)
-    @Mapping(target = "siteAddressJson", ignore = true)
+    @Mapping(target = "siteAddress", ignore = true) // plní ProjectService (typed JSONB přes AddressMapper)
     @Mapping(target = "tags", ignore = true)
     @Mapping(target = "actualStartDate", ignore = true)
     @Mapping(target = "actualEndDate", ignore = true)
@@ -52,7 +54,7 @@ public interface ProjectMapper {
     @Mapping(target = "companyId", ignore = true)
     @Mapping(target = "status", ignore = true)          // status budeme řídit separátně (workflow)
     @Mapping(target = "archivedAt", ignore = true)
-    @Mapping(target = "siteAddressJson", ignore = true)
+    @Mapping(target = "siteAddress", ignore = true)    // plní ProjectService při PATCH, jen pokud přišlo v requestu
     @Mapping(target = "tags", ignore = true)
     @Mapping(target = "actualStartDate", ignore = true)
     @Mapping(target = "actualEndDate", ignore = true)
