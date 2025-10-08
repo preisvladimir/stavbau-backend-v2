@@ -1562,3 +1562,13 @@ Hotový základ pro další rozšiřování profilu člena (adresy, avatar).
 - MSW+RTL smoke testy pro paging/sort + edge-case delete.
   FUTURE
 - Přidat persist/restore stavu tabulek do URL (query params) a sessionStorage.
+
+### 🕒 2025-10-08 – FE: ProjectsTable (DataTableV2Column + cleanup)
+**HOTOVO**
+- Přepsána komponenta `ProjectsTable` na typově bezpečný `DataTableV2Column<T>`.
+- Zrušeny `as any` a kolize s `ColumnDef`.
+- Sloupce plně typed + komentované (code, name, status, avatar).
+- Stabilní render, `React.memo`.
+  **TODO**
+- Přenést stejný styl sloupců do CustomersTable a TeamTable.
+- V budoucnu doplnit dynamické meta-labely pro mobilní zobrazení (stbMobile).
