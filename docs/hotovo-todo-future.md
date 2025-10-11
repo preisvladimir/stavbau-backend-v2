@@ -1792,3 +1792,75 @@ TableHeader
   actions={<PrimaryCtaButton onClick={openNew} />}
 />
 ```
+### 🕒 2025-10-11 – StbEntityTable<T> (headless wrapper nad DataTableV2)
+- Zavedena jednotná komponenta `StbEntityTable<T>` s 1-based stránkováním pro server-side volání.
+- Props: data, page(1-based), pageSize, total, sort, search, columns, keyField, i18n/vzhled, onRowClick/rowActions/emptyContent.
+- Volitelný passthrough: filters/onFiltersChange/roleOptions (kompatibilita s Team toolbar).
+- Připraveno pro migraci Projects/Customers/Team wrapperů (ponechat jen columns + specifické doplňky).
+
+# 🧭 hotovo-todo-future.md — STAVBAU-V2 (FE Overlays Unification)
+
+## 2025-10-11 — FE: Základní orchestrátor pro drawery (CRUD) + konsolidace „single source of truth“
+- Přidán **`CrudDrawer<TSummary, TFormValues>`** jako jednotný orchestrátor pro **Detail / Create / Edit** nad stávajícím drawer stackem (a11y, ESC, body-lock, focus trap řeší základní Drawer). Orchestrátor zajišťuje:
+    - řízení módů (`isDetail/isNew/isEdit`), `entityId`, `onClose`
+    - autoritativní načtení detailu (`fetchDetail`) + rychlý prefill ze seznamu
+    - mapování detail → výchozí hodnoty formuláře (`mapDetailToFormDefaults`)
+    - akce `onCreate/onEdit/onDelete` + `afterMutate`, `beforeEditSubmit`
+    - sloty `renderDetail/renderCreateForm/renderEditForm` pro čistě prezentační komponenty
+    - volitelný footer (default off; formuláře mají vlastní akční lištu)
+
+  **Dopad:** stránky nyní deklarují **jeden** overlay namísto tří, načítání a chyby jsou centralizované v orchestrátoru. Zdroj dat pro detail je jednotný (autorita = `fetchDetail`). :contentReference[oaicite:0]{index=0}
+
+---
+
+## 2025-10-11 — FE/Team: sjednocení overlayů (Detail/Form/TeamPage)
+- `components/Detail.tsx` (Team): refaktor na **čistě prezentační** komponentu (přijímá `data/loading/error` z orchestrátoru; kompat volitelný interní fetch zachován přepínačem `allowInternalFetch`). :contentReference[oaicite:1]{index=1}
+- `components/Form.tsx` (Team): rozšíření o `serverError`, `onDirtyChange`, `autoFocus`, možnost zamknout editaci e-mailu v módu edit; sjednocené výchozí hodnoty a lepší a11y. :contentReference[oaicite:2]{index=2}
+- `TeamPage.tsx`: nahrazení tří bloků (Detail/Create/Edit) jedním `CrudDrawer` + předávání `data/loading/error` do `Detail`. (Pozn.: v repu je ještě dočasně použit prefill; plán je přepnout na plné předávání `data/loading/error` z orchestrátoru.) :contentReference[oaicite:3]{index=3}
+
+**Akceptační kritéria:**
+- Otevření detailu i editu využívá jednotný orchestrátor (bez duplikace loaderů a error bannerů).
+- Zavření overlaye a refresh listu po mutaci probíhá konzistentně napříč módy. :contentReference[oaicite:4]{index=4}
+
+---
+
+## 2025-10-11 — FE/Customers: sjednocení overlayů (Detail/Form/CustomersPage)
+- `components/Detail.tsx` (Customers): nová **prezentační** komponenta bez fetch; UI zachováno (header akce, skeletony, confirm dialog). :contentReference[oaicite:5]{index=5}
+- `components/Form.tsx` (Customers): re-export existujícího `CustomerForm` jako `Form` pro jednotné API napříč moduly (create/edit). :contentReference[oaicite:6]{index=6}
+- `CustomersPage.tsx`: přechod na **jeden `CrudDrawer`** (detail/create/edit), s `fetchDetail` přes customers service a mapováním detail → form defaults. :contentReference[oaicite:7]{index=7}
+
+**Akceptační kritéria:**
+- Detail zákazníka neprovádí vlastní fetch — stav (`data/loading/error`) dodává orchestrátor.
+- Create/Edit běží přes tentýž orchestrátor a po mutaci refreshují list konzistentně.
+
+---
+
+## 2025-10-11 — FE/Projects: sjednocení overlayů (Detail/Form/ProjectsPage)
+- `components/Detail.tsx` (Projects): nová **prezentační** varianta detailu projektu (archivace/obnovení/smazání jako akce; žádný interní fetch). :contentReference[oaicite:8]{index=8}
+- `components/Form.tsx` (Projects): re-export `ProjectForm` jako `Form` (sjednocené API).
+- `ProjectsPage.tsx`: nahrazení `ProjectDetailDrawer` + `ProjectFormDrawer` jedním `CrudDrawer`; `fetchDetail` jako autorita; mapování detail → form defaults z původního `FormDrawer` (vč. čištění adresy a „label“ hodnot pro AsyncSelect). :contentReference[oaicite:9]{index=9}
+
+**Pozn.:** Tlačítka a viditelnost akcí řízeny přes RBAC toggly/Scopes, konzistentně s guidelines. :contentReference[oaicite:10]{index=10}
+
+---
+
+## 2025-10-11 — FE/Projects: fix importu typu
+- Opraven import typu `AnyProjectFormValues` v `ProjectsPage.tsx` — importovat z `../validation/schemas` (případně re-export v `components/Form.tsx` pro pohodlné importy).  
+  `import type { AnyProjectFormValues } from '../validation/schemas';`
+
+---
+
+## Governance, struktura a pravidla (připomínka)
+- Držíme **by-feature** strukturu a sjednocené konvence (DTO/Service/Controller) dle dokumentace projektu.
+- PR/commity: **Conventional Commits**, malé PR, po mergi aktualizovat CHANGELOG a zápis do `hotovo-todo-future.md`. :contentReference[oaicite:12]{index=12}
+- Tento zápis vznikl na základě pokynů projektu (viz `PROJECT_SETUP.md`). :contentReference[oaicite:13]{index=13}
+
+---
+
+## Další kroky (TODO)
+- [ ] **TeamPage**: přepnout `renderDetail` z používání `prefill` na plné předávání `{data, loading, error}` z `CrudDrawer` (odstranit `allowInternalFetch` z detailu). :contentReference[oaicite:14]{index=14}
+- [ ] **Customers/Projects**: odstranit staré `*DetailDrawer.tsx`/`*FormDrawer.tsx` z importů stránek (pokud jsou stále referencované), nebo je označit `@deprecated` a přesunout pod `legacy/`.
+- [ ] **Unit/E2E**: doplnit testy pro orchestrátor (otevření/zavření, přepínání módů, error flow, focus trap/ESC) a smoke testy pro detail/create/edit v každém modulu.
+- [ ] **Docs**: doplnit krátký README k `CrudDrawer` (API + příklady integrace) a best practices pro mapování `detail → form defaults`.
+
+---
