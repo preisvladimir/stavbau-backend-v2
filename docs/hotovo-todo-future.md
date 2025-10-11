@@ -1572,3 +1572,223 @@ Hotový základ pro další rozšiřování profilu člena (adresy, avatar).
   **TODO**
 - Přenést stejný styl sloupců do CustomersTable a TeamTable.
 - V budoucnu doplnit dynamické meta-labely pro mobilní zobrazení (stbMobile).
+
+### 🕒 2025-10-08 – FE RBAC: univerzální useRoleOptions hook
+✔️ HOTOVO
+- Přidán hook useRoleOptions({ include, exclude, withAll, namespaces }) pro generování i18n role options.
+- Odstraněny ad-hoc blacklisty v komponentách; UI může skrývat např. SUPERADMIN přes parametry.
+- Deduplikace a fallback humanizer, i18n klíče `roles.<ROLE>`.
+ použití(
+   // 1) Skryjeme SUPERADMIN v běžném UI:
+         const roleOptions = useRoleOptions({ exclude: ['SUPERADMIN'], withAll: true });
+
+   // 2) Pouze několik rolí (např. pro interní dialog):
+         const limitedOptions = useRoleOptions({ include: ['OWNER','COMPANY_ADMIN','VIEWER'] });
+
+   // 3) Bez „— Vše —“ a bez filtrů:
+         const allRoles = useRoleOptions();
+        )
+
+📌 TODO
+- Zrevidovat existující formuláře/filtry a nahradit lokální roleOptions → useRoleOptions.
+- Dopsat testy na i18n fallback a kombinace include/exclude.
+- Zkontrolovat konzistenci ROLE_WHITELIST s BE katalogem (RBAC 2.1).
+
+🔮 FUTURE
+- Exponovat matrix role→scopes do admin UI (PRO fáze) + dynamický seznam rolí z BE.
+
+# Hotovo · To-Do · Future
+
+> Souhrn změn a plánů z tohoto vlákna. Lze vložit přímo do `hotovo-todo-future.md`.
+
+---
+
+## ✅ Hotovo
+
+### 1) Unifikace service vrstvy (REST)
+- Zavedeno generické **`createRestService`** a pattern „**core + wrapper(companyId)**“.
+- **Team**
+    - `src/features/teamV2/api/team-service.ts`
+        - `core` (list/get/create/update/archive/unarchive/remove/pagedLookupFetcher)
+        - `teamService(companyId)` – curried wrapper + doménové PATCHy:
+            - `updateProfile(id, body)`
+            - `updateRole(id, { role })`
+- **Customers**
+    - `src/features/customers/api/customers-service.ts`
+        - Stejný pattern jako Team (list/get/create/update/remove/lookup/archive/unarchive).
+- **Projects**
+    - `src/features/projects/api/projects-service.ts`
+        - Stejný pattern; + `archive`/`unarchive` (a případné `remove`).
+- Typové opravy v `restService.ts`
+    - Přidány constrainty: `CreateReq extends Record<string, any>`, `UpdateReq extends Record<string, any>` (řeší TS2344).
+
+### 2) Stránky – přepojení na služby, sjednocení UI
+- **TeamPage**
+    - `src/features/team/pages/TeamPage.tsx`
+    - Přepojeno na `teamService(companyId)`.
+    - Sjednocené bloky: `TableHeader`, `LoadErrorStatus`, `ServerTableEmpty`, `RowActions`.
+    - CRUD: `create`, `updateRole`, `updateProfile`, `remove`.
+    - Filtry přes `useServerTableState` (role/status).
+- **ProjectsPage**
+    - `src/features/projects/pages/ProjectsPage.tsx`
+    - Přepojeno na `projectsService(companyId)` (fetcher/list, CRUD/`archive`).
+    - Sjednocené bloky: `TableHeader`, `LoadErrorStatus`, `ServerTableEmpty`, `RowActions`.
+    - Pozn.: `ProjectsTable` používá prop **`total`** (napojeno na `total`).
+- **CustomersPage**
+    - `src/features/customers/pages/CustomersPage.tsx`
+    - Přepojeno na `customersService(companyId)` (fetcher/list, CRUD/`archive`).
+   - Sjednocené bloky: `TableHeader`, `LoadErrorStatus`, `ServerTableEmpty`, `RowActions`.
+    - Doplněno `LoadErrorStatus`.
+
+### 3) Reusable UI komponenty
+- **LoadErrorStatus**
+    - `src/components/ui/stavbau-ui/feedback/LoadErrorStatus.tsx`
+    - ARIA `role="status"` pro loading (bez layout shiftu) + jednotný error banner s `onClear`.
+- **TableHeader**
+    - `src/components/ui/stavbau-ui/datatable/TableHeader.tsx`
+    - `title`, `subtitle`, `actions` (pro desktop i mobil).
+- **RowActions**
+    - `src/components/ui/stavbau-ui/datatable/RowActions.tsx`
+    - Škálovatelné akce pro řádky tabulek:
+        - Inline tlačítka **+** **menu varianta** (`asMenu`, `maxInline`, `compact`).
+        - Předdefinované `kind`: `detail`, `edit`, `archive`, `unarchive`, `delete` (+ custom).
+        - `confirm` podpora (fallback `window.confirm`; připraveno na globální modal).
+        - i18n (`i18nNamespaces`, `menuLabel`).
+        - RBAC nechává na parentu (lze kombinovat se `ScopeGuard`).
+    - **Použití demonstrováno** v dev stránce (viz níže).
+- **ServerTableEmpty**
+    - `src/components/ui/stavbau-ui/emptystate/ServerTableEmpty.tsx`
+    - Jednotné empty state pro listy s vyhledáváním (`q`) i pro „no data“ scénář.
+
+### 4) Dev dokumentace / ukázky
+- **RowActionsDemo**
+    - `src/pages/dev/RowActionsDemo.tsx`
+    - Ukázky inline i menu varianty, potvrzování, i18n, RBAC.
+    - Opravy typů: `RowAction<T>`, prop `item` (místo `row`), odstraněn neexistující `visible`.
+
+### 5) Tabulky a formuláře
+- **CustomersTable**
+    - `src/features/customers/components/CustomersTable.tsx`
+    - Sloupce s `id` sladěné s BE allowlistem (name/email/ico/dic/updatedAt).
+    - 1-based `page` pro DataTableV2, server-side sort/pagination/search.
+    - UX: ikonky (Mail/Building/IdCard), `updatedAt` formát.
+- **ProjectsTable**
+    - `src/features/projects/components/ProjectsTable.tsx`
+- **CustomerForm**
+    - `src/features/customers/components/CustomerForm.tsx`
+    - Validace (zod), doplněn `email` check, collapse pro manuální adresu, GEO → `AddressDto`.
+    - Fix: `orientationNumber` naplněn (kontrola mapování).
+- **CustomerFormDrawer**
+    - Fetch detailu na edit (prefill přes `dtoToFormDefaults`), cleanup `AbortController`, lokální error banner.
+- **ProjectForm / ProjectFormDrawer**
+    - Watch & set pro `customerId`, `projectManagerId` (přes `AsyncSearchSelect`).
+    - GEO → `siteAddress` mapování (z `AddressSuggestion`).
+    - Prefill při editu: doplnění `customerId`, `projectManagerId`, `siteAddress` (pokud je).
+
+---
+
+## 🧩 To-Do (další kroky)
+
+1. **Doplnit unarchive/remove u Projects (pokud existují endpointy)**
+    - `projectsService` rozšířit o `unarchive`/`remove` a přidat akce do `RowActions`.
+2. **Confirm modal**
+    - Nahradit `window.confirm` centralizovaným `ConfirmDialog` (UI komponenta + přístupnost).
+3. **Jednotné mapování adres**
+    - Ověřit `orientationNumber` vs. `houseNumber` (GEO zdroj – přesné mapování).
+
+---
+
+## 🚀 Future (vylepšení)
+
+- **UI/UX**
+    - Globální **ConfirmDialog** (stackovatelný, i18n, focus trap).
+    - Skutečné **Dropdown/Menu** (klávesnice, roving tabindex, ARIA).
+    - **Skeletony** v tabulkách (místo spinneru; bez layout shiftu).
+    - **Virtualizace** tabulek pro velké dataset(y).
+    - Jednotné **date/number** formátování (`Intl.*`, locale-aware).
+
+- **Service/HTTP**
+    - Volitelný **caching** (React Query / TanStack Query) + retry/backoff.
+    - Telemetrie a logging (centralizované mapování API chyb).
+    - Testy pro `createRestService` (unit) a Smoke/E2E pro hlavní toky.
+
+- **State & TS**
+    - Rozšířit `useServerTableState` o **cursor-based** stránkování.
+    - Silnější typování **filters** (enum statusů/rolí).
+    - Sdílené `RowActionKind` → mapa výchozích ikon a i18n klíčů.
+
+- **Dev Experience**
+    - Storybook stránky pro `RowActions`, `LoadErrorStatus`, `TableHeader`, `ServerTableEmpty`.
+    - Dev demo: ukázky s **RBAC** kombinacemi a asynchronními potvrzeními.
+
+---
+
+## 🧭 Poznámky k migraci / kompatibilitě
+
+- **ProjectsTable**: prop je `totalItems` (ne `total`). V `ProjectsPage` máme `totalItems={total}`.
+- **RowActions**
+    - Prop se jmenuje **`item`** (ne `row`).
+    - Typ `RowAction` je **generický**: `RowAction<T>`.
+    - Neexistuje prop `visible` – viditelnost řeš z parentu nebo ScopeGuardem.
+    - `asMenu` přepne na menu-variant (fallback jednoduché menu; doporučené doplnit skutečný Dropdown).
+- **restService.ts**
+    - Typy `CreateReq` / `UpdateReq` musí splnit `Record<string, any>`.
+- **Address mapping**
+    - Zkontrolovat `orientationNumber` vs. `houseNumber` pro GEO provider (v Customer/Project formu).
+
+---
+
+## 🧪 Příklady použití (výběr)
+
+### RowActions (menu varianta)
+```tsx
+<RowActions
+  item={row}
+  asMenu
+  maxInline={2}
+  i18nNamespaces={['projects','common']}
+  menuLabel={t('list.actions.title', { defaultValue: 'Akce' })}
+  actions={[
+    { kind: 'detail', onClick: () => openDetail(row.id as UUID), scopesAnyOf: [PROJECT_SCOPES.READ] },
+    { kind: 'edit', onClick: () => openEdit(row.id as UUID), scopesAnyOf: [PROJECT_SCOPES.UPDATE] },
+    { kind: 'archive', onClick: () => handleArchive(row.id as UUID), scopesAnyOf: [PROJECT_SCOPES.ARCHIVE], confirm: {} },
+  ]}
+/>
+
+```
+Service wrapper (projects)
+```ts
+const projects = projectsService(companyId);
+
+// list
+await projects.list({ q, page, size, sort, filters: { status } });
+
+// detail
+const d = await projects.get(projectId);
+
+// create / update
+await projects.create(body);
+await projects.update(projectId, body);
+
+// archive / unarchive / remove
+await projects.archive(projectId);
+await projects.unarchive(projectId);
+// await projects.remove(projectId);
+```
+LoadErrorStatus
+```tsx
+<LoadErrorStatus
+  loading={loading}
+  error={error}
+  onClear={clearError}
+  i18nNamespaces={['projects','common']}
+/>
+```
+TableHeader
+```tsx
+<TableHeader
+  title={t('title', { defaultValue: 'Projekty' })}
+  subtitle={t('subtitle', { defaultValue: 'Správa projektů' })}
+  actions={<PrimaryCtaButton onClick={openNew} />}
+/>
+```

@@ -1,2 +1,14 @@
 package cz.stavbau.backend.projects.model;
-public enum ProjectStatus { PLANNED, IN_PROGRESS, ON_HOLD, DONE, ARCHIVED }
+
+public enum ProjectStatus {
+    PLANNED,
+    TENDERING,
+    CONTRACTED,
+    IN_PROGRESS,
+    ON_HOLD,
+    COMPLETED,
+    DEFECTS,
+    CLOSED,
+    CANCELED,
+    ARCHIVED
+}

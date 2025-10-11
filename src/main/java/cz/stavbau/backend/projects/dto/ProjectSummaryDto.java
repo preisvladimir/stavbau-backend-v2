@@ -2,24 +2,29 @@ package cz.stavbau.backend.projects.dto;
 
 import cz.stavbau.backend.projects.model.ProjectStatus;
 
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
+
+import cz.stavbau.backend.projects.model.ProjectType;
 import lombok.*;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class ProjectSummaryDto {
     private UUID id;
-    private String code;
-    private String name; // resolved i18n
-    private ProjectStatus status;
-    private String statusLabel;
     private UUID customerId;
+    private String customerName;
     private UUID projectManagerId;
+    private String projectManagerName;
+    private String code;
+    private String name;              // kanonické
+    private String nameLocalized;     // resolved overlay
+    private ProjectStatus status;
+    private ProjectType type;         // ← nově
     private Instant createdAt;
-
-    public ProjectSummaryDto(UUID id, String name, Instant createdAt) {
-        this.id = id;
-        this.name = name;
-        this.createdAt = createdAt;
-    }
+    private LocalDate plannedStartDate;
+    private LocalDate plannedEndDate;
+    private String currency;
+    private BigDecimal contractValueNet;   // ← volitelné
 }

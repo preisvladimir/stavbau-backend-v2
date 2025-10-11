@@ -2,28 +2,46 @@ package cz.stavbau.backend.projects.dto;
 
 import cz.stavbau.backend.common.api.dto.AddressDto;
 import cz.stavbau.backend.projects.model.ProjectStatus;
+
+import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import cz.stavbau.backend.projects.model.ProjectType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class ProjectDto {
     private UUID id;
-    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
-    private String code;
-    private String name;          // resolved i18n
-    private String description;   // resolved i18n
-    private AddressDto siteAddress;
-    private ProjectStatus status;
-    private String statusLabel;   // připraveno na i18n label
     private UUID customerId;
+    private String customerName;
     private UUID projectManagerId;
+    private String projectManagerName;
+    private String code;
+    // kanonické (vždy)
+    private String name;
+    private String description;
+
+    // lokalizované (resolved overlay — volitelné)
+    private String nameLocalized;
+    private String descriptionLocalized;
+
+    private ProjectStatus status;
+    private ProjectType type;
+    private Instant createdAt;
     private LocalDate plannedStartDate;
     private LocalDate plannedEndDate;
     private LocalDate actualStartDate;
     private LocalDate actualEndDate;
     private String currency;
     private String vatMode;
+    private BigDecimal contractValueNet;
+    private BigDecimal contractValueGross;
+    private BigDecimal retentionPercent;
+    private Integer paymentTermsDays;
+    private String externalRef;
+    private AddressDto siteAddress;
+    private String[] tags;
 }

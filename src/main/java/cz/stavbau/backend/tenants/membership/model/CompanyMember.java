@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Getter
@@ -42,5 +43,13 @@ public class CompanyMember extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "id", insertable = false, updatable = false)
     private User user;  // nepoužíváme pro zápis, jen pro JOIN ve Specification
+
+    @Column(name = "archived_at")
+    private Instant archivedAt;
+
+    public boolean isArchived() { return archivedAt != null; }
+    public void setArchived(boolean archived) {
+        this.archivedAt = archived ? Instant.now() : null;
+    }
 
 }

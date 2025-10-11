@@ -1,5 +1,6 @@
 package cz.stavbau.backend.common.api;
 
+import cz.stavbau.backend.common.exception.ValidationException;
 import cz.stavbau.backend.integrations.ares.exceptions.AresNotFoundException;
 import cz.stavbau.backend.integrations.ares.exceptions.AresUnavailableException;
 import org.springframework.dao.DataAccessException;
@@ -13,6 +14,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.http.ProblemDetail;
 import jakarta.servlet.http.HttpServletRequest;
 
+import java.util.Locale;
 import java.util.Map;
 
 //@ControllerAdvice
@@ -59,4 +61,12 @@ public class ApiExceptionHandler {
                 ex.getBindingResult().getAllErrors().get(0).getDefaultMessage()));
     }
 
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<ProblemDetail> handle(ValidationException ex, Locale locale) {
+        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+        pd.setTitle("Validation failed");
+        pd.setDetail(ex.getMessage()); // i18n key → lze přeložit zde
+        pd.setProperty("violations", ex.getViolations()); // pole chyb pro FE
+        return ResponseEntity.badRequest().body(pd);
+    }
 }

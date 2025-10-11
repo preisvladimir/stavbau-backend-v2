@@ -1,18 +1,25 @@
 package cz.stavbau.backend.team.service.impl;
 
+import cz.stavbau.backend.common.api.dto.SelectOptionDto;
 import cz.stavbau.backend.common.exception.ConflictException;
 import cz.stavbau.backend.common.exception.ForbiddenException;
 import cz.stavbau.backend.common.exception.NotFoundException;
 import cz.stavbau.backend.common.i18n.Messages;
+import cz.stavbau.backend.common.paging.DomainSortPolicies;
+import cz.stavbau.backend.common.paging.PagingPolicy;
+import cz.stavbau.backend.common.util.CryptoUtils;
+import cz.stavbau.backend.common.util.TextUtils;
+import cz.stavbau.backend.common.validation.GlobalValidator;
+import cz.stavbau.backend.projects.repo.ProjectRepository;
 import cz.stavbau.backend.security.SecurityUtils;
 import cz.stavbau.backend.security.rbac.CompanyRoleName;
 import cz.stavbau.backend.team.api.dto.*;
-import cz.stavbau.backend.team.dto.MemberSummaryDto;
-import cz.stavbau.backend.team.dto.MembersStatsDto;
+import cz.stavbau.backend.team.dto.TeamSummaryDto;
+import cz.stavbau.backend.team.dto.TeamStatsDto;
 import cz.stavbau.backend.team.filter.TeamMemberFilter;
+import cz.stavbau.backend.team.filter.TeamMemberFilters;
 import cz.stavbau.backend.team.mapping.MemberMapper;
-import cz.stavbau.backend.team.model.TeamRole;
-import cz.stavbau.backend.team.repo.projection.MembersStatsTuple;
+import cz.stavbau.backend.team.repo.projection.TeamStatsTuple;
 import cz.stavbau.backend.team.repo.spec.TeamMemberSpecification;
 import cz.stavbau.backend.team.service.TeamService;
 import cz.stavbau.backend.tenants.membership.model.CompanyMember;
@@ -20,62 +27,113 @@ import cz.stavbau.backend.tenants.membership.repo.CompanyMemberRepository;
 import cz.stavbau.backend.users.model.User;
 import cz.stavbau.backend.users.model.UserState;
 import cz.stavbau.backend.users.repo.UserRepository;
-import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.security.SecureRandom;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
-import java.util.Base64;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class TeamServiceImpl implements TeamService {
-    private static final Logger log = LoggerFactory.getLogger(TeamServiceImpl.class);
 
     private final Messages messages;
     private final MemberMapper memberMapper;
     private final UserRepository userRepository;
     private final CompanyMemberRepository memberRepository;
+    private final ProjectRepository projectRepository;
     private final PasswordEncoder passwordEncoder;
+    private final GlobalValidator validator;
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<TeamSummaryDto> list(TeamMemberFilter filter, Pageable pageable) {
+        // 1) Tenancy guard
+        UUID companyId = SecurityUtils.requireCompanyId();
+
+        // 2) Normalize filtrů (trim, empty->null, UPPER…)
+        TeamMemberFilter norm = TeamMemberFilters.normalize(filter);
+
+        // 3) Bezpečné stránkování + allow-list řazení
+        PageRequest paging = PagingPolicy.ensure(
+                pageable,
+                DomainSortPolicies.TEAM_MAX_PAGE_SIZE,
+                DomainSortPolicies.TEAM_DEFAULT_SORT,
+                DomainSortPolicies.TEAM_ALLOWED_SORT
+        );
+
+        // 4) Specifikace s JOIN na user (bez ručního dotahování uživatelů)
+        Specification<CompanyMember> spec = new TeamMemberSpecification(companyId, norm);
+
+        Page<TeamSummaryDto> page = memberRepository
+                .findAll(spec, paging)
+                .map(memberMapper::toSummaryDto);
+
+        // 5) UX fallback – prázdná stránka (ale existují předchozí záznamy) → o 1 zpět
+        if (page.isEmpty() && page.getTotalElements() > 0 && paging.getPageNumber() > 0) {
+            PageRequest prev = PageRequest.of(paging.getPageNumber() - 1, paging.getPageSize(), paging.getSort());
+            page = memberRepository.findAll(spec, prev).map(memberMapper::toSummaryDto);
+        }
+
+        return page;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public MemberDto get(UUID id) {
+        UUID companyId = SecurityUtils.requireCompanyId();
+        CompanyMember m = memberRepository.findById(id)
+                .filter(cm -> companyId.equals(cm.getCompanyId()))
+                .orElseThrow(() -> new NotFoundException("team.member.notFound"));
+        User u = m.getUser(); // lazy
+        return memberMapper.toDto(u, m, "CREATED");
+    }
+
 
     @Override
     @Transactional
-    public MemberDto addMember(UUID companyId, CreateMemberRequest req) {
-        final String email = normalizeEmail(req.email());
-        validateEmail(email);
+    public MemberDto create(CreateMemberRequest req) {
+        // Tenant guard
+        UUID companyId = SecurityUtils.requireCompanyId();
 
-        //final TeamRole teamRole = requireTeamRole(req.role()); // ADMIN|MEMBER
-        //final CompanyRoleName companyRole = mapTeamRoleToCompanyRole(teamRole);
-        final CompanyRoleName companyRole = companyRoleName(req.role());
+        // Validace vstupů (normalizovaný email + enum role)
+        final String email = validator.requireValidEmail(req.email());
+        final CompanyRoleName companyRole =
+                validator.requireEnum(CompanyRoleName.class, req.role(), "errors.validation.role.invalid");
+
+        // Pokus najít uživatele podle emailu
         var existingUser = userRepository.findByEmailIgnoreCase(email);
         boolean invited = false;
 
         User user;
         if (existingUser.isPresent()) {
             user = existingUser.get();
+
+            // Uživatel existuje, ale je přiřazen k jiné firmě -> konflikt
             if (!companyId.equals(user.getCompanyId())) {
                 throw new ConflictException(messages.msg("user.assigned_to_other_company"));
             }
+            // Už je členem této firmy -> konflikt
             if (memberRepository.existsByCompanyIdAndUserId(companyId, user.getId())) {
                 throw new ConflictException(messages.msg("member.exists"));
             }
         } else {
-            // Vytvoříme pozvaného uživatele (INVITED) s dočasným hashovaným heslem
+            // Založ „pozvaného“ uživatele
             user = new User();
             user.setEmail(email);
             user.setCompanyId(companyId);
-            user.setPasswordHash(passwordEncoder.encode(generateRandomSecret()));
+            user.setPasswordHash(passwordEncoder.encode(CryptoUtils.randomUrlSafeSecret()));
             user.setState(UserState.INVITED);
             user.setPasswordNeedsReset(true);
             user.setInvitedAt(OffsetDateTime.now(ZoneOffset.UTC));
@@ -83,6 +141,7 @@ public class TeamServiceImpl implements TeamService {
             invited = true;
         }
 
+        // Vytvoř CompanyMember z požadavku
         var member = new CompanyMember();
         member.setCompanyId(companyId);
         member.setUserId(user.getId());
@@ -92,158 +151,189 @@ public class TeamServiceImpl implements TeamService {
         member.setPhone(req.phone());
         memberRepository.save(member);
 
+        // Stav pro FE (např. badge v detailu)
         String status = invited ? "INVITED" : "CREATED";
         return memberMapper.toDto(user, member, status);
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public MemberListResponse listMembers(UUID companyId) {
-        var members = memberRepository.findByCompanyId(companyId);
-        if (members.isEmpty()) {
-            return new MemberListResponse(List.of(), 0);
-        }
+    @Transactional
+    public MemberDto updateProfile(UUID memberId, UpdateMemberProfileRequest req) {
 
-        // in-memory join na uživatele
-        Set<UUID> userIds = new HashSet<>();
-        for (CompanyMember m : members) userIds.add(m.getUserId());
-
-        Map<UUID, User> users = new HashMap<>();
-        for (User u : userRepository.findAllById(userIds)) {
-            users.put(u.getId(), u);
-        }
-
-        List<MemberDto> items = new ArrayList<>(members.size());
-        for (CompanyMember m : members) {
-            User u = users.get(m.getUserId());
-            if (u != null) {
-                items.add(memberMapper.toDto(u, m, "CREATED"));
-            }
-        }
-        return new MemberListResponse(items, items.size());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<MemberSummaryDto> list(String q, String role, Pageable pageable) {
-        UUID companyId = requireCompanyId();
-        log.warn("companyId: '{}'.", companyId);
-        String qNorm = (q == null || q.isBlank()) ? null : q.trim();
-        log.warn("qNorm: '{}'.", qNorm);
-        String roleNorm = (role == null || role.isBlank()) ? null : role.trim().toUpperCase();
-        log.warn("roleNorm: '{}'.", roleNorm);
-        TeamMemberFilter f = new TeamMemberFilter();
-        f.setQ(qNorm);
-        f.setRole(roleNorm);
-
-        Page<CompanyMember> page = memberRepository.findAll(
-                new TeamMemberSpecification(companyId, f),
-                pageable
-        );
-
-        // MemberMapper má toSummaryDto(CompanyMember) → z CompanyMember vytáhne i usera přes @ManyToOne
-        return page.map(memberMapper::toSummaryDto);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public MemberDto getMember(UUID companyId, UUID memberId) {
-        var member = memberRepository.findById(memberId)
+        UUID tenantId = SecurityUtils.requireCompanyId();
+        // Najdi člena podle ID a ověř, že patří do firmy
+        CompanyMember member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new NotFoundException(messages.msg("errors.not.found.member")));
+        if (!tenantId.equals(member.getCompanyId())) {
+            throw new ForbiddenException(messages.msg("errors.forbidden.company.mismatch"));
+        }
 
+        boolean changed = false;
+
+        // PATCH sémantika: měníme jen pole, která v requestu přišla (req.xxx() != null)
+        if (req.firstName() != null) {
+            String v = TextUtils.normalizeBlankToNull(req.firstName());
+            if (!Objects.equals(v, member.getFirstName())) { member.setFirstName(v); changed = true; }
+        }
+        if (req.lastName() != null) {
+            String v = TextUtils.normalizeBlankToNull(req.lastName());
+            if (!Objects.equals(v, member.getLastName())) { member.setLastName(v); changed = true; }
+        }
+        if (req.phone() != null) {
+            String v = TextUtils.normalizeBlankToNull(req.phone());
+            if (!Objects.equals(v, member.getPhone())) { member.setPhone(v); changed = true; }
+        }
+
+        if (changed) {
+            memberRepository.save(member);
+        }
+
+        User user = userRepository.findById(member.getUserId())
+                .orElseThrow(() -> new NotFoundException(messages.msg("errors.not.found.user")));
+
+        return memberMapper.toDto(user, member, changed ? "UPDATED" : "UNCHANGED");
+    }
+
+    @Override
+    @Transactional
+    public MemberDto updateRole(UUID memberId, UpdateMemberRoleRequest req) {
+        // 1) Tenant guard (defense-in-depth)
+        UUID companyId = SecurityUtils.requireCompanyId();
+
+        // 2) Najdi člena a ověř, že patří do stejné firmy
+        CompanyMember member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new NotFoundException(messages.msg("errors.not.found.member")));
         if (!companyId.equals(member.getCompanyId())) {
             throw new ForbiddenException(messages.msg("errors.forbidden.company.mismatch"));
         }
 
-        var user = userRepository.findById(member.getUserId())
-                .orElseThrow(() -> new NotFoundException(messages.msg("errors.not.found.member")));
+        // 3) Validace cílové role
+        CompanyRoleName newRole = validator.requireEnum(
+                CompanyRoleName.class,
+                req.role(),
+                "errors.validation.role.invalid"
+        );
 
-        // pro detail vracíme status "CREATED" (už existující člen)
-        return memberMapper.toDto(user, member, "CREATED");
+        // 4) Pokud se role fakticky nemění → nic neukládej
+        CompanyRoleName oldRole = member.getRole();
+        if (oldRole == newRole) {
+            User u = userRepository.findById(member.getUserId())
+                    .orElseThrow(() -> new NotFoundException(messages.msg("errors.not.found.user")));
+            return memberMapper.toDto(u, member, "UNCHANGED");
+        }
+
+        // 5) Zákaz odebrat roli OWNER, pokud je to poslední OWNER ve firmě
+        if (oldRole == CompanyRoleName.OWNER && newRole != CompanyRoleName.OWNER) {
+            long owners = memberRepository.countByCompanyIdAndRole(companyId, CompanyRoleName.OWNER);
+            // když je pouze jeden OWNER (tento), nelze ho degradovat
+            if (owners <= 1) {
+                throw new ForbiddenException(messages.msg("errors.owner.last_owner_forbidden"));
+            }
+        }
+
+        // 6) Ulož změnu role
+        member.setRole(newRole);
+        memberRepository.save(member);
+
+        // 7) Sestav výstup
+        User user = userRepository.findById(member.getUserId())
+                .orElseThrow(() -> new NotFoundException(messages.msg("errors.not.found.user")));
+        return memberMapper.toDto(user, member, "UPDATED");
     }
 
     @Override
     @Transactional(readOnly = true)
-    public MembersStatsDto getMembersStats(UUID companyId) {
-        MembersStatsTuple t = memberRepository.aggregateMembersStats(companyId);
-        if (t == null) { // prázdná firma → samé nuly
-            return MembersStatsDto.builder().build();
+    public TeamStatsDto stats() {
+        UUID companyId = SecurityUtils.requireCompanyId();
+        return stats(companyId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public TeamStatsDto stats(UUID companyId) {
+        TeamStatsTuple agg = memberRepository.aggregateMembersStats(companyId);
+
+        long owners   = TextUtils.nz(agg == null ? null : agg.getOwners());
+        long active   = TextUtils.nz(agg == null ? null : agg.getActive());
+        long invited  = TextUtils.nz(agg == null ? null : agg.getInvited());
+        long disabled = TextUtils.nz(agg == null ? null : agg.getDisabled());
+        long archived = TextUtils.nz(agg == null ? null : agg.getArchived());
+        long total    = TextUtils.nz(agg == null ? null : agg.getTotal());
+
+        // rozpad podle rolí → převedeme na Map
+        var roleRows = memberRepository.countByRoleGrouped(companyId);
+        var byRole = new java.util.EnumMap<CompanyRoleName, Long>(CompanyRoleName.class);
+        for (var row : roleRows) {
+            byRole.put(row.getRole(), TextUtils.nz(row.getCnt()));
         }
-        return MembersStatsDto.builder()
-                .owners(nz(t.getOwners()))
-                .active(nz(t.getActive()))
-                .invited(nz(t.getInvited()))
-                .disabled(nz(t.getDisabled()))
-                .total(nz(t.getTotal()))
+
+        return TeamStatsDto.builder()
+                .owners(owners)
+                .active(active)
+                .invited(invited)
+                .disabled(disabled)
+                .archived(archived)
+                .total(total)
+                .byRole(byRole)
                 .build();
     }
 
     @Override
-    @Transactional
-    public MemberDto updateProfile(UUID companyId, UUID memberId, UpdateMemberProfileRequest req) {
-        CompanyMember member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new NotFoundException(messages.msg("errors.not.found.member")));
-
-        // Guard: členství musí patřit do dané firmy
-        if (!companyId.equals(member.getCompanyId())) {
-            throw new ForbiddenException(messages.msg("errors.forbidden.company.mismatch"));
-        }
-
-        // Normalizace vstupů (trim → null)
-        String firstName = normalizeBlankToNull(req.firstName());
-        String lastName  = normalizeBlankToNull(req.lastName());
-        String phone     = normalizeBlankToNull(req.phone());
-       // CompanyRoleName newRole = companyRoleName(req.role());
-
-        member.setFirstName(firstName);
-        member.setLastName(lastName);
-        member.setPhone(phone);
-      //  member.setRole(newRole);
-        memberRepository.save(member);
-
-        User user = userRepository.findById(member.getUserId())
-                .orElseThrow(() -> new NotFoundException(messages.msg("errors.not.found.member")));
-
-        // Status držíme konzistentní s ostatními odpověďmi (např. "CREATED")
-        return memberMapper.toDto(user, member, "CREATED");
+    @Transactional(readOnly = true)
+    public Page<SelectOptionDto> lookup(TeamMemberFilter filter, Pageable pageable) {
+        // reuse list() pipeline → ale s malou stránkou a fetchem jen nezbytných sloupců
+        Page<TeamSummaryDto> page = list(filter, pageable);
+        return page.map(m -> {
+            String name = ( (m.getFirstName() != null ? m.getFirstName() : "") + " " +
+                    (m.getLastName()  != null ? m.getLastName()  : "") ).trim();
+            String label = !name.isEmpty() ? name : (m.getEmail() != null ? m.getEmail() : String.valueOf(m.getId()));
+            return new SelectOptionDto(m.getId(), label);
+        });
     }
 
     @Override
     @Transactional
-    public MemberDto updateRole(UUID companyId, UUID memberId, UpdateMemberRoleRequest req) {
-        CompanyMember member = memberRepository.findById(memberId)
+    public void archiveMember(UUID memberId) {
+        UUID companyId = SecurityUtils.requireCompanyId();
+
+        CompanyMember member = memberRepository.findByIdAndCompanyId(memberId, companyId)
                 .orElseThrow(() -> new NotFoundException(messages.msg("errors.not.found.member")));
 
-        // guard: členství musí patřit do dané firmy
-        if (!companyId.equals(member.getCompanyId())) {
-            throw new ForbiddenException(messages.msg("errors.forbidden.company.mismatch"));
-        }
-
-        // nelze měnit OWNER
+        // Nesmíš archivovat posledního OWNERa (jinak by firma zůstala bez správce)
         if (member.getRole() == CompanyRoleName.OWNER) {
-            throw new ForbiddenException(messages.msg("errors.owner.last_owner_forbidden"));
+            long owners = memberRepository.countByCompanyIdAndRole(companyId, CompanyRoleName.OWNER);
+            if (owners <= 1) {
+                throw new ForbiddenException(messages.msg("errors.owner.last_owner_forbidden"));
+            }
         }
 
-        CompanyRoleName newRole = companyRoleName(req.role());
-
-        member.setRole(newRole);
-        memberRepository.save(member);
-
-        User user = userRepository.findById(member.getUserId())
-                .orElseThrow(() -> new NotFoundException(messages.msg("errors.not.found.member")));
-
-        return memberMapper.toDto(user, member, "CREATED");
+        if (!member.isArchived()) {
+            member.setArchived(true); // nastaví archivedAt = now
+            memberRepository.save(member);
+        }
     }
 
     @Override
     @Transactional
-    public void removeMember(UUID companyId, UUID memberId) {
-        CompanyMember member = memberRepository.findById(memberId)
+    public void unarchiveMember(UUID memberId) {
+        UUID companyId = SecurityUtils.requireCompanyId();
+
+        CompanyMember member = memberRepository.findByIdAndCompanyId(memberId, companyId)
                 .orElseThrow(() -> new NotFoundException(messages.msg("errors.not.found.member")));
 
-        if (!companyId.equals(member.getCompanyId())) {
-            throw new ForbiddenException(messages.msg("errors.forbidden.company.mismatch"));
+        if (member.isArchived()) {
+            member.setArchived(false); // vynuluje archivedAt
+            memberRepository.save(member);
         }
+    }
+
+    @Override
+    @Transactional
+    public void removeMember(UUID memberId) {
+        UUID companyId = SecurityUtils.requireCompanyId();
+
+        CompanyMember member = memberRepository.findByIdAndCompanyId(memberId, companyId)
+                .orElseThrow(() -> new NotFoundException(messages.msg("errors.not.found.member")));
 
         // zákaz odstranění posledního OWNERa
         if (member.getRole() == CompanyRoleName.OWNER) {
@@ -253,91 +343,26 @@ public class TeamServiceImpl implements TeamService {
             }
         }
 
+        // ---- referenční kontroly (přizpůsob svému modelu) ----
+        boolean usedAsPm = projectRepository.existsByCompanyIdAndProjectManagerId(
+                companyId,
+                /* pokud PM je userId:member.getUserId() */
+                /* pokud PM je memberId: */ member.getId()
+        );
+
+        // příklady dalších kontrol:
+      //  boolean usedInProjects = projectRepository
+               // .existsByCompanyIdAndParticipants_MemberId(companyId, member.getId());
+        // boolean usedInTimesheets = timesheetRepository.existsByCompanyIdAndUserId(companyId, member.getUserId());
+        // boolean usedInComments  = commentRepository.existsByCompanyIdAndAuthorId(companyId, member.getUserId());
+
+        if (usedAsPm /* ||  usedInProjects|| usedInTimesheets || usedInComments */) {
+            // legislativně i prakticky: nechat v systému -> archivovat místo hard delete
+            throw new ConflictException(messages.msg("member.in_use")); // 409 s i18n klíčem
+        }
+
+        // Bez vazeb → hard delete je v pořádku
         memberRepository.delete(member);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public Page<MemberDto> searchMembers(UUID companyId, String q, Pageable pageable) {
-        Specification<CompanyMember> spec = (root, cq, cb) -> {
-            var p = cb.equal(root.get("companyId"), companyId);
-
-            if (q != null && !q.isBlank()) {
-                String like = "%" + q.trim().toLowerCase(Locale.ROOT) + "%";
-                // JOIN na uživatele přes read-only vazbu
-                var userJoin = root.join("user", jakarta.persistence.criteria.JoinType.LEFT);
-
-                var or = cb.or(
-                        cb.like(cb.lower(userJoin.get("email")), like),
-                        cb.like(cb.lower(root.get("firstName")), like),
-                        cb.like(cb.lower(root.get("lastName")), like),
-                        cb.like(cb.lower(root.get("phone")), like)
-                );
-                p = cb.and(p, or);
-            }
-            return p;
-        };
-
-        var page = memberRepository.findAll(spec, pageable);
-
-        // Mapování stránkovaně — status = "CREATED" (jde o existující členy)
-        return page.map(m -> {
-            var u = m.getUser(); // lazy načteno díky joinu
-            return memberMapper.toDto(u, m, "CREATED");
-        });
-    }
-
-    // --- helpery (lokální, bez globálních util) ---
-
-    private CompanyRoleName mapTeamRoleToCompanyRole(TeamRole role) {
-        return switch (role) {
-            case ADMIN -> CompanyRoleName.COMPANY_ADMIN;
-            case MEMBER -> CompanyRoleName.VIEWER; // MEMBER → VIEWER (RBAC 2.1)
-        };
-    }
-
-    private String normalizeEmail(String raw) {
-        return raw == null ? null : raw.trim().toLowerCase(Locale.ROOT);
-    }
-
-    private void validateEmail(String email) {
-        // DTO má @Email, ale po normalizaci ještě hlídáme null/empty (obrana v hloubce)
-        if (email == null || email.isBlank() || !email.contains("@")) {
-            throw new ValidationException(messages.msg("errors.validation.email"));
-        }
-    }
-    private UUID requireCompanyId() {
-        return SecurityUtils.currentCompanyId()
-                .orElseThrow(() -> new AuthenticationCredentialsNotFoundException("auth.company.required"));
-    }
-
-    private TeamRole requireTeamRole(String raw) {
-        try {
-            return TeamRole.valueOf(raw.trim().toUpperCase(Locale.ROOT));
-        } catch (Exception ex) {
-            throw new ValidationException(messages.msg("errors.validation.role.invalid"));
-        }
-    }
-
-    private CompanyRoleName companyRoleName(String raw) {
-        try {
-            return CompanyRoleName.valueOf(raw.trim().toUpperCase(Locale.ROOT));
-        } catch (Exception ex) {
-            throw new ValidationException(messages.msg("errors.validation.role.invalid"));
-        }
-    }
-
-    private String generateRandomSecret() {
-        byte[] buf = new byte[24];
-        new SecureRandom().nextBytes(buf);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(buf);
-    }
-
-    private String normalizeBlankToNull(String s) {
-        if (s == null) return null;
-        String t = s.trim();
-        return t.isEmpty() ? null : t;
-    }
-
-    private long nz(Long v) { return v == null ? 0L : v; }
 }

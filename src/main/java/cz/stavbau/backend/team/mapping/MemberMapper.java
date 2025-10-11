@@ -2,12 +2,10 @@
 package cz.stavbau.backend.team.mapping;
 
 import cz.stavbau.backend.team.api.dto.MemberDto;
-import cz.stavbau.backend.team.dto.MemberSummaryDto;
+import cz.stavbau.backend.team.dto.TeamSummaryDto;
 import cz.stavbau.backend.tenants.membership.model.CompanyMember;
 import cz.stavbau.backend.users.model.User;
 import org.mapstruct.*;
-
-import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface MemberMapper {
@@ -31,7 +29,7 @@ public interface MemberMapper {
     MemberDto toDto(User user, CompanyMember member, String status);
 
 
-    // ========== SUMMARY (MemberSummaryDto) ==========
+    // ========== SUMMARY (TeamSummaryDto) ==========
 
     /**
      * Preferované mapování přes CompanyMember → díky read-only referenci na User
@@ -52,10 +50,10 @@ public interface MemberMapper {
     @Mapping(target = "updatedAt",   source = "updatedAt")
     // displayName: First Last | email | null
     @Mapping(target = "displayName", expression = "java(_displayName(member))")
-    MemberSummaryDto toSummaryDto(CompanyMember member);
+    TeamSummaryDto toSummaryDto(CompanyMember member);
 
   //  @IterableMapping(qualifiedByName = "toSummaryDto")
- //   List<MemberSummaryDto> toSummaryList(List<CompanyMember> members);
+ //   List<TeamSummaryDto> toSummaryList(List<CompanyMember> members);
 
 
     /**
@@ -73,7 +71,7 @@ public interface MemberMapper {
     @Mapping(target = "createdAt",   source = "member.createdAt")
     @Mapping(target = "updatedAt",   source = "member.updatedAt")
     @Mapping(target = "displayName", expression = "java(_displayName(member, user))")
-    MemberSummaryDto toSummary(User user, CompanyMember member, String status);
+    TeamSummaryDto toSummary(User user, CompanyMember member, String status);
 
 
     // ========== Helpers (MapStruct default methods) ==========
