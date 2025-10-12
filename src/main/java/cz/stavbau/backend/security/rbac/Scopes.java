@@ -15,7 +15,7 @@ public final class Scopes {
     public static final String DASHBOARD_VIEW = "dashboard:view";
 
     // Projects
-    public static final String PROJECTS_RW    = "projects:rw";
+    public static final String PROJECTS_WRITE   = "projects:write";
     public static final String PROJECTS_READ    = "projects:read";
     public static final String PROJECTS_CREATE  = "projects:create";
     public static final String PROJECTS_UPDATE  = "projects:update";

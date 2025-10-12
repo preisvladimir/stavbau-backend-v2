@@ -74,8 +74,13 @@ public class ProjectController {
 
     // Create
     @PostMapping
-    @PreAuthorize("@companyGuard.sameCompany(#companyId, principal) && " +
-            "@rbac.hasScope(T(cz.stavbau.backend.security.rbac.Scopes).PROJECTS_WRITE)")
+    @PreAuthorize(
+            "@companyGuard.sameCompany(#companyId, principal) && " +
+                    "@rbac.hasAnyScope(" +
+                    "T(cz.stavbau.backend.security.rbac.Scopes).PROJECTS_WRITE, " +
+                    "T(cz.stavbau.backend.security.rbac.Scopes).PROJECTS_WRITE" +   //PROJECTS_CREATE
+                    ")"
+    )
     @Operation(summary = "Create project")
     public ResponseEntity<ProjectDto> create(
             @PathVariable UUID companyId,
@@ -88,8 +93,13 @@ public class ProjectController {
 
     // Update (PATCH)
     @PatchMapping("/{id}")
-    @PreAuthorize("@companyGuard.sameCompany(#companyId, principal) && " +
-            "@rbac.hasScope(T(cz.stavbau.backend.security.rbac.Scopes).PROJECTS_UPDATE)")
+    @PreAuthorize(
+            "@companyGuard.sameCompany(#companyId, principal) && " +
+                    "@rbac.hasAnyScope(" +
+                    "T(cz.stavbau.backend.security.rbac.Scopes).PROJECTS_WRITE, " +
+                    "T(cz.stavbau.backend.security.rbac.Scopes).PROJECTS_UPDATE" +
+                    ")"
+    )
     @Operation(summary = "Update project")
     public ResponseEntity<ProjectDto> update(
             @PathVariable UUID companyId,
@@ -104,7 +114,7 @@ public class ProjectController {
     // Delete (hard)
     @DeleteMapping("/{id}")
     @PreAuthorize("@companyGuard.sameCompany(#companyId, principal) && " +
-            "@rbac.hasScope(T(cz.stavbau.backend.security.rbac.Scopes).PROJECTS_REMOVE)")
+            "@rbac.hasScope(T(cz.stavbau.backend.security.rbac.Scopes).PROJECTS_WRITE)")
     @Operation(summary = "Delete project")
     public ResponseEntity<Void> delete(
             @PathVariable UUID companyId,
@@ -117,8 +127,13 @@ public class ProjectController {
 
     // Archive (soft delete)
     @PostMapping("/{id}/archive")
-    @PreAuthorize("@companyGuard.sameCompany(#companyId, principal) && " +
-            "@rbac.hasScope(T(cz.stavbau.backend.security.rbac.Scopes).PROJECTS_ARCHIVE)")
+    @PreAuthorize(
+            "@companyGuard.sameCompany(#companyId, principal) && " +
+                    "@rbac.hasAnyScope(" +
+                    "T(cz.stavbau.backend.security.rbac.Scopes).PROJECTS_WRITE, " +
+                    "T(cz.stavbau.backend.security.rbac.Scopes).PROJECTS_ARCHIVE" +
+                    ")"
+    )
     @Operation(summary = "Archive project (soft delete)")
     public ResponseEntity<Void> archive(
             @PathVariable UUID companyId,
@@ -131,8 +146,13 @@ public class ProjectController {
 
     // Unarchive
     @PostMapping("/{id}/unarchive")
-    @PreAuthorize("@companyGuard.sameCompany(#companyId, principal) && " +
-            "@rbac.hasScope(T(cz.stavbau.backend.security.rbac.Scopes).PROJECTS_ARCHIVE)")
+    @PreAuthorize(
+            "@companyGuard.sameCompany(#companyId, principal) && " +
+                    "@rbac.hasAnyScope(" +
+                    "T(cz.stavbau.backend.security.rbac.Scopes).PROJECTS_WRITE, " +
+                    "T(cz.stavbau.backend.security.rbac.Scopes).PROJECTS_ARCHIVE" +
+                    ")"
+    )
     @Operation(summary = "Unarchive project")
     public ResponseEntity<Void> unarchive(
             @PathVariable UUID companyId,
@@ -145,7 +165,13 @@ public class ProjectController {
 
     // Upsert translation (create/update)
     @PutMapping("/{id}/translations/{locale}")
-    @PreAuthorize("@companyGuard.sameCompany(#companyId, principal) && @rbac.hasScope('projects:update')")
+    @PreAuthorize(
+            "@companyGuard.sameCompany(#companyId, principal) && " +
+                    "@rbac.hasAnyScope(" +
+                    "T(cz.stavbau.backend.security.rbac.Scopes).PROJECTS_WRITE, " +
+                    "T(cz.stavbau.backend.security.rbac.Scopes).PROJECTS_CREATE" +
+                    ")"
+    )
     @Operation(summary = "Upsert project translation")
     public ResponseEntity<Void> upsertTranslation(
             @PathVariable UUID companyId,
@@ -160,7 +186,13 @@ public class ProjectController {
 
     // Delete translation
     @DeleteMapping("/{id}/translations/{locale}")
-    @PreAuthorize("@companyGuard.sameCompany(#companyId, principal) && @rbac.hasScope('projects:update')")
+    @PreAuthorize(
+            "@companyGuard.sameCompany(#companyId, principal) && " +
+                    "@rbac.hasAnyScope(" +
+                    "T(cz.stavbau.backend.security.rbac.Scopes).PROJECTS_WRITE, " +
+                    "T(cz.stavbau.backend.security.rbac.Scopes).PROJECTS_REMOVE" +
+                    ")"
+    )
     @Operation(summary = "Delete project translation")
     public ResponseEntity<Void> deleteTranslation(
             @PathVariable UUID companyId,

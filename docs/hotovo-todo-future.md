@@ -1864,3 +1864,68 @@ TableHeader
 - [ ] **Docs**: doplnit krátký README k `CrudDrawer` (API + příklady integrace) a best practices pro mapování `detail → form defaults`.
 
 ---
+
+## 🧩 RBAC FE v2 – Jediný zdroj pravdy + integrace do routeru
+**Datum:** 🕒 2025-10-12  
+**Autor:** Vláďa Preis / STAVBAU-V2
+
+---
+
+### ✅ HOTOVO
+
+#### 1️⃣ RBAC Single Source of Truth (@/rbac)
+- Vytvořen nový modul `src/rbac/` (přístupný jako `@/rbac`) – obsahuje:
+    - `catalog.ts` – AREAS, ACTIONS, `sc.*` aliasy, `META_EXPANSION`, `roles`, `ROLE_KEYS`, helpery `of / union / minus`
+    - `expand.ts` – logika expanze meta-scopů a rolí
+    - `hooks.ts` – hooky `useHasAny / useHasAll`
+    - `ScopeGuard.tsx` – univerzální guard komponenta (`<ScopeGuard anyOf / allOf>`)
+    - `index.ts` – re-exporty pro snadný import  
+      → `import { sc, ScopeGuard, useHasAny } from '@/rbac'`
+
+#### 2️⃣ Meta-scopy a Role bundly
+- Přidán meta-scope `team:write` → rozpad na `read/add/remove/update`
+- Přidány role bundly pro team:
+    - `team.administrator` (= write + read + add + update)
+    - `team.owner` (= administrator + remove)
+- `ScopeGuard` a hooky umí přijímat mix `Scope | RoleRef`
+
+#### 3️⃣ Doména `customers`
+- Rozšířeno AREAS a ACTIONS o nové hodnoty:
+    - `customers`, `import`, `link_user`
+- Přidány scopy:
+    - `customers:read`, `create`, `update`, `delete`, `import`, `export`, `link_user`
+- Přidán role bundle `customers.admin` se všemi oprávněními
+
+#### 4️⃣ Router refaktor
+- `src/routes/router.tsx` přepsán na nový RBAC zdroj pravdy:
+    - importy `ScopeGuard`, `sc` z `@/rbac`
+    - nahrazeny stringy ( `"team:read"` → `sc.team.read` )
+    - projekty a zákazníci gate přes `sc.projects.read` a `sc.customers.read`
+    - odstraněny neexistující meta-scopy (`projects:write`, `invoices:write`)
+    - zachována kompatibilita Team/Stats přes `sc.team.read | sc.team.write`
+
+#### 5️⃣ Dokumentace
+- Vytvořen `RBAC_README.md` (ke stažení) s kompletním popisem a cookbookem
+- Popisuje strukturu, principy, importy, i praktické použití (`ScopeGuard`, hooky, meta, roles`)
+
+---
+
+### 🚧 TODO (krátkodobé)
+
+- ✅ Doplnit `sc.projects.write` (meta-scope) do `META_EXPANSION` → rozbalit na create/update/delete/archive/assign
+- ✅ Rozšířit `roles.projects.manager` (typový bundle pro běžné uživatele projektů)
+- ⚙️ Upravit E2E testy na router (ověřit redirecty bez oprávnění)
+- 📘 Zapsat dokument do `/docs/STAVBAU_GUIDELINES.md` – sekce „RBAC FE v2“
+
+---
+
+### 🧭 FUTURE (rozšíření RBAC)
+
+- Perzistence rolí a scopů z BE (API → AuthContext.scopes dynamicky)
+- Správa uživatelských rolí na FE (UI editor → drag-n-drop role → scopes)
+- Integrace `@/rbac` do globálního `PermissionMatrix` pro konfigurační přehled
+- Generátor překladů (i18n) pro scopy a role (`team:add` → „Přidat člena týmu“)
+- Rozšíření o projektové role (`projects.manager`, `projects.viewer`, ...)
+- Validace scopes při build-time (společný TS/Java export)
+
+---
