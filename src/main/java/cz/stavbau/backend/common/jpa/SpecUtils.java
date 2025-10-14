@@ -22,4 +22,5 @@ public final class SpecUtils {
                 .limit(Math.max(1, maxTerms))
                 .toArray(String[]::new);
     }
+
 }

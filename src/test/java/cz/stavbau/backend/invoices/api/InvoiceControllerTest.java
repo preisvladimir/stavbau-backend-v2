@@ -1,11 +1,12 @@
 package cz.stavbau.backend.invoices.api;
 
-import cz.stavbau.backend.invoices.api.dto.InvoiceCreateRequest;
-import cz.stavbau.backend.invoices.api.dto.InvoiceLinesUpsertRequest;
-import cz.stavbau.backend.invoices.api.dto.InvoiceLineDto;
-import cz.stavbau.backend.invoices.api.dto.InvoiceStatusChangeRequest;
-import cz.stavbau.backend.invoices.model.InvoiceStatus;
-import cz.stavbau.backend.invoices.service.InvoiceService;
+import cz.stavbau.backend.features.invoices.api.InvoiceController;
+import cz.stavbau.backend.features.invoices.api.dto.InvoiceCreateRequest;
+import cz.stavbau.backend.features.invoices.api.dto.InvoiceLinesUpsertRequest;
+import cz.stavbau.backend.features.invoices.api.dto.InvoiceLineDto;
+import cz.stavbau.backend.features.invoices.api.dto.InvoiceStatusChangeRequest;
+import cz.stavbau.backend.features.invoices.model.InvoiceStatus;
+import cz.stavbau.backend.features.invoices.service.InvoiceService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.mockito.BDDMockito;

@@ -9,12 +9,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Optional;
 import java.util.UUID;
-
-@Configuration
-@EnableJpaAuditing
+//deprecated
+//@Configuration
+//@EnableJpaAuditing
 public class JpaAuditingConfig {
 
-    @Bean
+   // @Bean
     public AuditorAware<UUID> auditorAware() {
         return () -> {
             var ctx = org.springframework.security.core.context.SecurityContextHolder.getContext();

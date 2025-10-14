@@ -46,13 +46,21 @@ public final class Scopes {
     public static final String FILES_DOWNLOAD = "files:download";
     public static final String FILES_SHARE    = "files:share";
 
-    // Team
-    public static final String TEAM_READ        = "team:read";
-    public static final String TEAM_WRITE       = "team:write";
-    public static final String TEAM_ADD         = "team:add";
-    public static final String TEAM_REMOVE      = "team:remove";
-    public static final String TEAM_UPDATE      = "team:update";
-    public static final String TEAM_UPDATE_ROLE = "team:update_role";
+    // Members (nové – preferované)
+    public static final String MEMBERS_READ         = "members:read";
+    public static final String MEMBERS_WRITE        = "members:write";
+    public static final String MEMBERS_ADD          = "members:add";
+    public static final String MEMBERS_REMOVE       = "members:remove";
+    public static final String MEMBERS_UPDATE       = "members:update";
+    public static final String MEMBERS_UPDATE_ROLES = "members:update_role";
+
+    // Team (legacy – dočasně ponechat)
+    @Deprecated public static final String TEAM_READ        = "team:read";
+    @Deprecated public static final String TEAM_WRITE       = "team:write";
+    @Deprecated public static final String TEAM_ADD         = "team:add";
+    @Deprecated public static final String TEAM_REMOVE      = "team:remove";
+    @Deprecated public static final String TEAM_UPDATE      = "team:update";
+    @Deprecated public static final String TEAM_UPDATE_ROLE = "team:update_role";
 
     // Admin / Integrations (globální)
     public static final String ADMIN_USERS_READ    = "admin:users_read";

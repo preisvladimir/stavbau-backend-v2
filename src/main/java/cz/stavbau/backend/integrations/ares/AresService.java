@@ -2,8 +2,8 @@ package cz.stavbau.backend.integrations.ares;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.stavbau.backend.integrations.ares.dto.AresSubjectDto;
-import cz.stavbau.backend.tenants.mapping.AresCompanyMapper;
-import cz.stavbau.backend.tenants.model.Company;
+import cz.stavbau.backend.integrations.ares.mapper.AresCompanyMapper;
+import cz.stavbau.backend.features.companies.model.Company;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;

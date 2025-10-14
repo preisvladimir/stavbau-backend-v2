@@ -1,12 +1,16 @@
 package cz.stavbau.backend.files.service;
 
-import cz.stavbau.backend.files.model.*;
-import cz.stavbau.backend.files.repo.*;
-import cz.stavbau.backend.files.service.impl.StoredFileServiceImpl;
-import cz.stavbau.backend.files.storage.FileStorage;
+import cz.stavbau.backend.features.files.model.LinkTarget;
+import cz.stavbau.backend.features.files.model.StoredFile;
+import cz.stavbau.backend.features.files.repo.FileLinkRepository;
+import cz.stavbau.backend.features.files.repo.FileTagJoinRepository;
+import cz.stavbau.backend.features.files.repo.FileTagRepository;
+import cz.stavbau.backend.features.files.repo.StoredFileRepository;
+import cz.stavbau.backend.features.files.service.StoredFileService;
+import cz.stavbau.backend.features.files.service.impl.StoredFileServiceImpl;
+import cz.stavbau.backend.features.files.storage.FileStorage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.mock.web.MockMultipartFile;
 

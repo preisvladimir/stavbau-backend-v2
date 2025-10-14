@@ -1,7 +1,6 @@
 package cz.stavbau.backend.tenants.api;
 
-import cz.stavbau.backend.TestAuditConfig;
-import cz.stavbau.backend.tenants.dto.CompanyRegistrationRequest;
+import cz.stavbau.backend.features.companies.dto.CompanyRegistrationRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -10,7 +9,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.UUID;
 

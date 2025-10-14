@@ -2,14 +2,13 @@
 package cz.stavbau.backend.common.i18n;
 
 import cz.stavbau.backend.security.SecurityUtils;
-import cz.stavbau.backend.tenants.service.CompanyLocaleService;
+import cz.stavbau.backend.features.companies.service.CompanyLocaleService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.Locale;
 import java.util.Optional;
-import java.util.UUID;
 
 @Component("i18nLocaleService") // ⬅️ už to nebude kolidovat se jménem 'localeResolver'
 @RequiredArgsConstructor

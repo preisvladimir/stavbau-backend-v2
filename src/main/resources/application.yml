@@ -54,11 +54,13 @@ mapycz:
   timeout-ms: 2500
 
 meteostat:
+  enabled: true
   base-url: "https://meteostat.p.rapidapi.com"
+  sessions-url: "${meteostat.base-url}"   # ← tohle vyžaduje @Value v configu
   rapidapi:
     host: "meteostat.p.rapidapi.com"
-    key: "440c5b540cmsh1379b04a05dc3eap1fde53jsn01f3e9c63e1e"   # nastav v ENV / docker secrets, NEcommitovat!
-
+    key:  "440c5b540cmsh1379b04a05dc3eap1fde53jsn01f3e9c63e1e"   # nastav v ENV / docker secrets, NEcommitovat!
+  timeout-ms: 5000
 
 ---
 spring:

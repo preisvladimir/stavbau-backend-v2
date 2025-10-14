@@ -11,7 +11,7 @@ import java.util.UUID;
 
 /**
  * Security utility – bez závislosti na spring-oauth2.
- * Čte companyId/locale primárně z AppUserPrincipal; fallbackem z principal interface nebo z details (Map).
+ * Čte companyId/userId/locale primárně z AppUserPrincipal; fallbackem z principal interface nebo z details (Map).
  */
 public final class SecurityUtils {
 
@@ -33,60 +33,72 @@ public final class SecurityUtils {
         return (auth != null) ? auth.getPrincipal() : null;
     }
 
-    /**
-     * Aktuální companyId:
-     * 0) AppUserPrincipal.getCompanyId()
-     * 1) Principal implementuje HasCompanyId
-     * 2) Authentication.getDetails() je Map a obsahuje "companyId" (UUID nebo String)
-     */
+    /* =========================
+     * companyId
+     * ========================= */
     public static Optional<UUID> currentCompanyId() {
-        // 0) primárně z AppUserPrincipal
         Object p = getPrincipalOrNull();
         if (p instanceof AppUserPrincipal ap && ap.getCompanyId() != null) {
             return Optional.of(ap.getCompanyId());
         }
-
-        // 1) případně z interface na vlastním principalu
         if (p instanceof HasCompanyId withCompany) {
             UUID cid = withCompany.getCompanyId();
             if (cid != null) return Optional.of(cid);
         }
-
-        // 2) fallback z details (Map)
         var auth = getAuthenticationOrNull();
         if (auth != null && auth.getDetails() instanceof Map<?, ?> map) {
-            Object raw = map.get("companyId");
-            if (raw instanceof UUID uuid) return Optional.of(uuid);
-            if (raw instanceof String s && !s.isBlank()) {
-                try { return Optional.of(UUID.fromString(s)); } catch (IllegalArgumentException ignored) {}
-            }
+            UUID parsed = parseUuid(map.get("companyId"));
+            if (parsed != null) return Optional.of(parsed);
         }
-
         return Optional.empty();
     }
-    /**
-      * Vrátí aktuální companyId, nebo vyhodí {@link AuthenticationCredentialsNotFoundException}
-      * s kódem "auth.company.required". Slouží k odstranění duplicitní logiky v service třídách.
-      */
+
     public static UUID requireCompanyId() {
         return currentCompanyId()
                 .orElseThrow(() -> new AuthenticationCredentialsNotFoundException("auth.company.required"));
     }
 
-    /**
-     * Preferované uživatelské locale:
-     * 0) Principal implementuje HasPreferredLocale (pokud existuje)
-     * 1) Authentication.getDetails() je Map a obsahuje "locale" (Locale nebo String "cs-CZ"/"en")
-     */
+    /* =========================
+     * userId  (DOPLNĚNO)
+     * ========================= */
+    /** Primárně z AppUserPrincipal.getUserId(), případně z details mapy (userId|sub). */
+    public static Optional<UUID> currentUserId() {
+        Object p = getPrincipalOrNull();
+        if (p instanceof AppUserPrincipal ap && ap.getUserId() != null) {
+            return Optional.of(ap.getUserId());
+        }
+        // volitelně: pokud používáš jiné rozhraní
+        if (p instanceof HasUserId withUser) {
+            UUID uid = withUser.getUserId();
+            if (uid != null) return Optional.of(uid);
+        }
+        var auth = getAuthenticationOrNull();
+        if (auth != null && auth.getDetails() instanceof Map<?, ?> map) {
+            // podporuj více klíčů – závisí na IdP (Keycloak/JWT "sub", apod.)
+            UUID parsed = firstNonNullUuid(
+                    parseUuid(map.get("userId")),
+                    parseUuid(map.get("sub"))
+            );
+            if (parsed != null) return Optional.of(parsed);
+        }
+        return Optional.empty();
+    }
+
+    /** Vrátí userId, nebo hodí 401 s kódem auth.user.required */
+    public static UUID requireUserId() {
+        return currentUserId()
+                .orElseThrow(() -> new AuthenticationCredentialsNotFoundException("auth.user.required"));
+    }
+
+    /* =========================
+     * locale
+     * ========================= */
     public static Optional<Locale> currentUserLocale() {
-        // 0) případně z interface na vlastním principalu (AppUserPrincipal zatím locale nemá)
         Object p = getPrincipalOrNull();
         if (p instanceof HasPreferredLocale withLocale) {
             Locale loc = withLocale.getPreferredLocale();
             if (loc != null) return Optional.of(loc);
         }
-
-        // 1) fallback z details (Map)
         var auth = getAuthenticationOrNull();
         if (auth != null && auth.getDetails() instanceof Map<?, ?> map) {
             Object raw = map.get("locale");
@@ -95,15 +107,29 @@ public final class SecurityUtils {
                 try { return Optional.of(Locale.forLanguageTag(s)); } catch (Exception ignored) {}
             }
         }
-
         return Optional.empty();
     }
 
+    /* =========================
+     * helpers & optional interfaces
+     * ========================= */
+    private static UUID parseUuid(Object raw) {
+        if (raw instanceof UUID uuid) return uuid;
+        if (raw instanceof String s && !s.isBlank()) {
+            try { return UUID.fromString(s); } catch (IllegalArgumentException ignored) {}
+        }
+        return null;
+    }
+
+    @SafeVarargs
+    private static <T> T firstNonNullUuid(T... vals) {
+        for (T v : vals) if (v != null) return v;
+        return null;
+    }
+
     /** Volitelná rozhraní pro vlastní principal (pokud chcete mít čisté API bez Map details). */
-    public interface HasCompanyId {
-        UUID getCompanyId();
-    }
-    public interface HasPreferredLocale {
-        Locale getPreferredLocale();
-    }
+    public interface HasCompanyId { UUID getCompanyId(); }
+    public interface HasPreferredLocale { Locale getPreferredLocale(); }
+    /** (DOPLNĚNO) */
+    public interface HasUserId { UUID getUserId(); }
 }

@@ -1,13 +1,14 @@
 package cz.stavbau.backend.invoices.service;
 
-import cz.stavbau.backend.invoices.model.Invoice;
-import cz.stavbau.backend.invoices.model.InvoiceLine;
-import cz.stavbau.backend.invoices.model.InvoiceStatus;
-import cz.stavbau.backend.invoices.model.VatMode;
-import cz.stavbau.backend.invoices.repo.InvoiceLineRepository;
-import cz.stavbau.backend.invoices.repo.InvoiceRepository;
-import cz.stavbau.backend.invoices.repo.NumberSeriesRepository;
-import cz.stavbau.backend.invoices.service.impl.InvoiceServiceImpl;
+import cz.stavbau.backend.features.invoices.model.Invoice;
+import cz.stavbau.backend.features.invoices.model.InvoiceStatus;
+import cz.stavbau.backend.features.invoices.model.VatMode;
+import cz.stavbau.backend.features.invoices.repo.InvoiceLineRepository;
+import cz.stavbau.backend.features.invoices.repo.InvoiceRepository;
+import cz.stavbau.backend.features.invoices.repo.NumberSeriesRepository;
+import cz.stavbau.backend.features.invoices.service.InvoiceService;
+import cz.stavbau.backend.features.invoices.service.NumberSeriesService;
+import cz.stavbau.backend.features.invoices.service.impl.InvoiceServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;

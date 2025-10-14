@@ -1,8 +1,9 @@
 package cz.stavbau.backend.invoices.service;
 
-import cz.stavbau.backend.invoices.model.NumberSeries;
-import cz.stavbau.backend.invoices.repo.NumberSeriesRepository;
-import cz.stavbau.backend.invoices.service.impl.NumberSeriesServiceImpl;
+import cz.stavbau.backend.features.invoices.model.NumberSeries;
+import cz.stavbau.backend.features.invoices.repo.NumberSeriesRepository;
+import cz.stavbau.backend.features.invoices.service.NumberSeriesService;
+import cz.stavbau.backend.features.invoices.service.impl.NumberSeriesServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

@@ -1,5 +1,6 @@
 package cz.stavbau.backend.security.auth;
 
+import cz.stavbau.backend.features.members.repo.MemberRepository;
 import cz.stavbau.backend.security.AppUserPrincipal;
 import cz.stavbau.backend.security.auth.dto.AuthResponse;
 import cz.stavbau.backend.security.auth.dto.RefreshResponse;
@@ -10,12 +11,10 @@ import cz.stavbau.backend.security.jwt.JwtService;
 import cz.stavbau.backend.security.jwt.RefreshCookie;
 import cz.stavbau.backend.security.rbac.BuiltInRoles;
 import cz.stavbau.backend.security.rbac.CompanyRoleName;
-import cz.stavbau.backend.tenants.membership.model.CompanyMember;
-import cz.stavbau.backend.tenants.membership.repo.CompanyMemberRepository;
-import cz.stavbau.backend.users.model.User;
-import cz.stavbau.backend.users.repo.UserRepository;
+import cz.stavbau.backend.features.members.model.Member;
+import cz.stavbau.backend.identity.users.model.User;
+import cz.stavbau.backend.identity.users.repo.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -24,8 +23,6 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 
 import java.util.*;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 /**
  * AuthService: obsahuje business logiku pro login/refresh/logout a sestavení /me response.
@@ -37,7 +34,7 @@ import java.util.stream.Collectors;
 public class AuthService {
 
     private final UserRepository users;
-    private final CompanyMemberRepository companyMembers;
+    private final MemberRepository companyMembers;
     private final PasswordEncoder encoder;
     private final JwtService jwt;
 
@@ -45,7 +42,7 @@ public class AuthService {
     private final int refreshMaxAgeSeconds;
 
     public AuthService(UserRepository users,
-                       CompanyMemberRepository companyMembers,
+                       MemberRepository companyMembers,
                        PasswordEncoder encoder,
                        JwtService jwt,
                        @Value("${app.security.cookies.secure:false}") boolean secureCookies,
@@ -197,7 +194,7 @@ public class AuthService {
         if (companyId == null) return CompanyRoleName.VIEWER;
         try {
             return companyMembers.findByUserIdAndCompanyId(userId, companyId)
-                    .map(CompanyMember::getRole)
+                    .map(Member::getRole)
                     .orElse(CompanyRoleName.VIEWER);
         } catch (Exception e) {
             return CompanyRoleName.VIEWER;

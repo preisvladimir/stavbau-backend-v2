@@ -4,10 +4,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /** Jednotná politika pro page/size/sort. */
 public final class PagingPolicy {
@@ -53,12 +50,12 @@ public final class PagingPolicy {
     }
 
     /** Z Pageable → bezpečný PageRequest (clamp, cap, allow-list sort). */
-    public static PageRequest ensure(Pageable pageable, int maxSize, Sort defaultSort, Set<String> allowlist) {
-        int page = clampPage(pageable != null ? pageable.getPageNumber() : 0);
-        int size = capSize(pageable != null ? pageable.getPageSize() : null, maxSize);
-        Sort safe = safeSortOrDefault(pageable != null ? pageable.getSort() : null, defaultSort, allowlist);
-        return PageRequest.of(page, size, safe);
-    }
+    //public static PageRequest ensure(Pageable pageable, int maxSize, Sort defaultSort, Set<String> allowlist) {
+      //  int page = clampPage(pageable != null ? pageable.getPageNumber() : 0);
+       // int size = capSize(pageable != null ? pageable.getPageSize() : null, maxSize);
+       // Sort safe = safeSortOrDefault(pageable != null ? pageable.getSort() : null, defaultSort, allowlist);
+       // return PageRequest.of(page, size, safe);
+    //}
 
     /** Varianta z „raw“ parametrů. */
     public static PageRequest of(Integer page, Integer size, Sort requestedSort, int maxSize, Sort defaultSort, Set<String> allowlist) {
@@ -66,5 +63,64 @@ public final class PagingPolicy {
         int s = capSize(size, maxSize);
         Sort safe = safeSortOrDefault(requestedSort, defaultSort, allowlist);
         return PageRequest.of(p, s, safe);
+    }
+
+    public static PageRequest ensure(
+            Pageable pageable,
+            int maxSize,
+            Sort defaultSort,
+            Set<String> allowedProps
+    ) {
+        return ensureWithAliases(pageable, maxSize, defaultSort, allowedProps, Map.of());
+    }
+
+    public static PageRequest ensureWithAliases(
+            Pageable pageable,
+            int maxSize,
+            Sort defaultSort,
+            Set<String> allowedProps,
+            Map<String, String> aliases // např. "email" -> "user.email"
+    ) {
+        int size = Math.min(Math.max(pageable.getPageSize(), 1), maxSize);
+        int page = Math.max(pageable.getPageNumber(), 0);
+
+        // 1) Aliasování
+        Sort aliased = applyAliases(pageable.getSort(), aliases);
+
+        // 2) Whitelist
+        Sort safe = whitelist(aliased, allowedProps)
+                .orElse(defaultSort);
+
+        return PageRequest.of(page, size, safe);
+    }
+
+    /** Nahradí property podle alias mapy (pokud existuje) */
+    public static Sort applyAliases(Sort sort, Map<String, String> aliases) {
+        if (sort == null || sort.isUnsorted() || aliases == null || aliases.isEmpty()) {
+            return sort == null ? Sort.unsorted() : sort;
+        }
+        List<Sort.Order> mapped = new ArrayList<>();
+        for (Sort.Order o : sort) {
+            String prop = o.getProperty();
+            String mappedProp = aliases.getOrDefault(prop, prop);
+            mapped.add(new Sort.Order(o.getDirection(), mappedProp)
+                    .ignoreCase()
+                    .nullsLast()); // volitelné
+        }
+        return Sort.by(mapped);
+    }
+
+    /** Vrátí whitelisted sort nebo prázdné, když nic neprošlo */
+    public static Optional<Sort> whitelist(Sort sort, Set<String> allowedProps) {
+        if (sort == null || sort.isUnsorted()) return Optional.empty();
+        if (allowedProps == null || allowedProps.isEmpty()) return Optional.of(Sort.unsorted());
+
+        List<Sort.Order> safe = new ArrayList<>();
+        for (Sort.Order o : sort) {
+            if (allowedProps.contains(o.getProperty())) {
+                safe.add(o);
+            }
+        }
+        return safe.isEmpty() ? Optional.empty() : Optional.of(Sort.by(safe));
     }
 }

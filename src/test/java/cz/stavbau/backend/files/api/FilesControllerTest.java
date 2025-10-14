@@ -1,9 +1,11 @@
 package cz.stavbau.backend.files.api;
 
-import cz.stavbau.backend.files.api.dto.LinkRequest;
-import cz.stavbau.backend.files.api.dto.TagsRequest;
-import cz.stavbau.backend.files.model.StoredFile;
-import cz.stavbau.backend.files.service.StoredFileService;
+import cz.stavbau.backend.features.files.api.FilesController;
+import cz.stavbau.backend.features.files.api.dto.LinkRequest;
+import cz.stavbau.backend.features.files.api.dto.TagsRequest;
+import cz.stavbau.backend.features.files.model.LinkTarget;
+import cz.stavbau.backend.features.files.model.StoredFile;
+import cz.stavbau.backend.features.files.service.StoredFileService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -61,7 +63,7 @@ class FilesControllerTest {
     @Test
     void link_204() throws Exception {
         UUID id = UUID.randomUUID();
-        var body = new LinkRequest(cz.stavbau.backend.files.model.LinkTarget.INVOICE, UUID.randomUUID());
+        var body = new LinkRequest(LinkTarget.INVOICE, UUID.randomUUID());
         mvc.perform(post("/api/v1/files/" + id + "/link")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(body)))

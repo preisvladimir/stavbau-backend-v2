@@ -1,8 +1,9 @@
 package cz.stavbau.backend.invoices.api;
 
-import cz.stavbau.backend.invoices.model.Invoice;
-import cz.stavbau.backend.invoices.model.InvoiceStatus;
-import cz.stavbau.backend.invoices.service.InvoiceService;
+import cz.stavbau.backend.features.invoices.api.InvoiceController;
+import cz.stavbau.backend.features.invoices.model.Invoice;
+import cz.stavbau.backend.features.invoices.model.InvoiceStatus;
+import cz.stavbau.backend.features.invoices.service.InvoiceService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;

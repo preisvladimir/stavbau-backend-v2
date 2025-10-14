@@ -1,13 +1,12 @@
 package cz.stavbau.backend.dev;
 
-import cz.stavbau.backend.tenants.model.Company;
-import cz.stavbau.backend.tenants.repo.CompanyRepository;
-import cz.stavbau.backend.users.model.User;
-import cz.stavbau.backend.users.repo.UserRepository;
+import cz.stavbau.backend.features.companies.model.Company;
+import cz.stavbau.backend.features.companies.repo.CompanyRepository;
+import cz.stavbau.backend.identity.users.model.User;
+import cz.stavbau.backend.identity.users.repo.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 import java.util.UUID;
