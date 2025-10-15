@@ -13,7 +13,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 @RestController
-@RequestMapping("/api/v1/tenants")
+@RequestMapping("/api/v1/companies")
 @Tag(name = "Tenants – registrace", description = "Veřejná registrace firmy a vlastníka (OWNER)")
 public class CompanyRegistrationController {
     @Autowired
