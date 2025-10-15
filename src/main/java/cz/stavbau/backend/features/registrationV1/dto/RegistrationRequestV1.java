@@ -1,9 +1,9 @@
-package cz.stavbau.backend.features.companies.dto;
+package cz.stavbau.backend.features.registrationV1.dto;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 
-public record CompanyRegistrationRequest(
+public record RegistrationRequestV1(
         @Valid @NotNull CompanyDto company,
         @Valid @NotNull OwnerDto owner,
         @Valid @NotNull ConsentsDto consents

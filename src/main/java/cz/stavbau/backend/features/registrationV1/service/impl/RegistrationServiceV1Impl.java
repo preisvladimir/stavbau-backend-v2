@@ -1,15 +1,15 @@
-package cz.stavbau.backend.features.companies.service.impl;
+package cz.stavbau.backend.features.registrationV1.service.impl;
 
 import cz.stavbau.backend.features.members.model.Member;
+import cz.stavbau.backend.features.registrationV1.service.RegistrationServiceV1;
 import cz.stavbau.backend.security.rbac.CompanyRoleName;
-import cz.stavbau.backend.features.companies.dto.CompanyRegistrationRequest;
-import cz.stavbau.backend.features.companies.dto.CompanyRegistrationResponse;
+import cz.stavbau.backend.features.registrationV1.dto.RegistrationRequestV1;
+import cz.stavbau.backend.features.registrationV1.dto.RegistrationResponseV1;
 
 import cz.stavbau.backend.features.members.repo.MemberRepository;
 import cz.stavbau.backend.features.companies.model.Company;
 import cz.stavbau.backend.features.companies.model.RegisteredAddress;
 import cz.stavbau.backend.features.companies.repo.CompanyRepository;
-import cz.stavbau.backend.features.companies.service.CompanyRegistrationService;
 import cz.stavbau.backend.identity.users.model.User;
 import cz.stavbau.backend.identity.users.repo.UserRepository;
 
@@ -24,7 +24,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class CompanyRegistrationServiceImpl implements CompanyRegistrationService {
+public class RegistrationServiceV1Impl implements RegistrationServiceV1 {
 
     private final Messages messages;
     private final CompanyRepository companyRepository;
@@ -34,7 +34,7 @@ public class CompanyRegistrationServiceImpl implements CompanyRegistrationServic
 
     @Override
     @Transactional
-    public CompanyRegistrationResponse register(CompanyRegistrationRequest req) {
+    public RegistrationResponseV1 register(RegistrationRequestV1 req) {
 
         // 1) Duplicitní IČO?
         if (companyRepository.existsByIco(req.company().ico())) {
@@ -82,6 +82,6 @@ public class CompanyRegistrationServiceImpl implements CompanyRegistrationServic
         m.setRole(CompanyRoleName.OWNER);
         memberRepository.save(m);
 
-        return CompanyRegistrationResponse.created(c.getId(), u.getId());
+        return RegistrationResponseV1.created(c.getId(), u.getId());
     }
 }
