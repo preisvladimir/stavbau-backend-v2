@@ -1,8 +1,8 @@
-package cz.stavbau.backend.features.companies.api;
+package cz.stavbau.backend.integrations.ares.api;
 
+import cz.stavbau.backend.integrations.ares.dto.AresPreviewDto;
 import cz.stavbau.backend.integrations.ares.exceptions.AresNotFoundException;
 import cz.stavbau.backend.features.companies.dto.CompanyDto;
-import cz.stavbau.backend.features.companies.dto.CompanyLookupPreviewDto;
 import cz.stavbau.backend.integrations.ares.mapper.AresPreviewMapper;
 import cz.stavbau.backend.features.companies.service.CompanyService;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -22,7 +22,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @Validated
 @RequiredArgsConstructor
 @Tag(name = "Companies • Lookup")
-public class CompanyLookupController {
+public class AresController {
 
     private final CompanyService companyService;
     private final AresPreviewMapper previewMapper;
@@ -54,13 +54,13 @@ public class CompanyLookupController {
             description = "Returns FE-ready preview of company data from ARES for form prefill. RAW `/ares` stays as-is.",
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK",
-                            content = @Content(schema = @Schema(implementation = CompanyLookupPreviewDto.class))),
+                            content = @Content(schema = @Schema(implementation = AresPreviewDto.class))),
                     @ApiResponse(responseCode = "404", description = "Not found (code=ares_not_found)"),
                     @ApiResponse(responseCode = "503", description = "ARES unavailable (code=ares_unavailable)"),
                     @ApiResponse(responseCode = "429", description = "Rate limit (code=rate_limit)")
             }
     )
-    public ResponseEntity<CompanyLookupPreviewDto> getPreview(
+    public ResponseEntity<AresPreviewDto> getPreview(
             @RequestParam @Pattern(regexp = "\\d{8}") String ico
     ) {
         // Použijeme existující service, která vrací CompanyDto (normalizace na BE)

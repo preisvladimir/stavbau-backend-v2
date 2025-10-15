@@ -1,10 +1,10 @@
-// +++ src/main/java/cz/stavbau/backend/tenants/dto/CompanyLookupPreviewDto.java
-package cz.stavbau.backend.features.companies.dto;
+// +++ src/main/java/cz/stavbau/backend/tenants/dto/AresPreviewDto.java
+package cz.stavbau.backend.integrations.ares.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "Normalized preview of company data from ARES for FE form prefill.")
-public record CompanyLookupPreviewDto(
+public record AresPreviewDto(
         @Schema(example = "03647072") String ico,
         @Schema(example = "CZ12345678", nullable = true) String dic,
         @Schema(example = "Dagmar Horová") String name,
