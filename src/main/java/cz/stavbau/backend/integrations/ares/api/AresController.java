@@ -1,5 +1,6 @@
 package cz.stavbau.backend.integrations.ares.api;
 
+import cz.stavbau.backend.integrations.ares.AresService;
 import cz.stavbau.backend.integrations.ares.dto.AresPreviewDto;
 import cz.stavbau.backend.integrations.ares.exceptions.AresNotFoundException;
 import cz.stavbau.backend.features.companies.dto.CompanyDto;
@@ -18,12 +19,13 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
-@RequestMapping("/api/v1/companies/lookup")
+@RequestMapping("/api/v1/ares/lookup")
 @Validated
 @RequiredArgsConstructor
 @Tag(name = "Companies • Lookup")
 public class AresController {
 
+    private final AresService aresService;
     private final CompanyService companyService;
     private final AresPreviewMapper previewMapper;
 
@@ -48,9 +50,10 @@ public class AresController {
         }
         return ResponseEntity.ok(dto);
     }
-    @GetMapping("/ares/preview")
+
+    @GetMapping("/by/ico")
     @Operation(
-            summary = "ARES preview (normalized for FE)",
+            summary = "ARES preview (normalized for FE registration)",
             description = "Returns FE-ready preview of company data from ARES for form prefill. RAW `/ares` stays as-is.",
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK",
@@ -64,7 +67,7 @@ public class AresController {
             @RequestParam @Pattern(regexp = "\\d{8}") String ico
     ) {
         // Použijeme existující service, která vrací CompanyDto (normalizace na BE)
-        CompanyDto dto = companyService.lookupByAres(ico);
+        CompanyDto dto = aresService.lookupByIco(ico);
         if (dto == null) {
             // Máte-li global exception handler pro RFC7807, hoďte jeho NotFound s code=ares_not_found.
             // Jinak pro MVP lze vrátit 404 bez těla a FE to zmapuje na i18n.

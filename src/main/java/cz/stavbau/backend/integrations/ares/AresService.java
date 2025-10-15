@@ -51,7 +51,7 @@ public class AresService {
         Company company;
 
         if (resp.getZaznamy() != null && !resp.getZaznamy().isEmpty()) {
-            company = mapper.fromLegacy(resp.getZaznamy().get(0), raw);
+            company = mapper.fromLegacy(resp.getZaznamy().getFirst(), raw);
         } else {
             company = mapper.fromSingle(resp, raw);
         }
