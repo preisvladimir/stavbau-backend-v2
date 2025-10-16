@@ -1,6 +1,6 @@
 package cz.stavbau.backend.features.members.model;
 
-import cz.stavbau.backend.common.domain.BaseEntity;
+import cz.stavbau.backend.common.domain.BaseArchivableEntity;
 import cz.stavbau.backend.identity.users.model.User;
 import cz.stavbau.backend.security.rbac.CompanyRoleName;
 import jakarta.persistence.*;
@@ -29,7 +29,7 @@ import java.util.UUID;
                 @Index(name = "ix_members_user", columnList = "user_id")
         }
 )
-public class Member extends BaseEntity {
+public class Member extends BaseArchivableEntity {
 
     @EqualsAndHashCode.Include
     @Column(name = "company_id", nullable = false)
@@ -58,13 +58,4 @@ public class Member extends BaseEntity {
     @JoinColumn(name = "user_id", referencedColumnName = "id", insertable = false, updatable = false)
     private User user;
 
-    @Column(name = "archived_at")
-    private Instant archivedAt;
-
-    public boolean isArchived() { return archivedAt != null; }
-
-    /** Idempotentní přepínač archivace (čas nastavujeme zde) */
-    public void setArchived(boolean archived) {
-        this.archivedAt = archived ? Instant.now() : null;
-    }
 }

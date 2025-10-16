@@ -13,8 +13,16 @@ public final class CommonSpecifications {
         };
     }
 
-    public static <T extends BaseEntity> Specification<T> notDeleted() {
+    public static <T> Specification<T> notDeleted() {
         return (root, cq, cb) -> cb.isFalse(root.get("deleted"));
+    }
+
+    public static <T> Specification<T> archivedOnly() {
+        return (root, cq, cb) -> cb.isNotNull(root.get("archivedAt"));
+    }
+
+    public static <T> Specification<T> notArchived() {
+        return (root, cq, cb) -> cb.isNull(root.get("archivedAt"));
     }
 
 }
