@@ -1,3 +1,4 @@
+// src/main/java/cz/stavbau/backend/features/members/model/Member.java
 package cz.stavbau.backend.features.members.model;
 
 import cz.stavbau.backend.common.domain.BaseArchivableEntity;
@@ -7,7 +8,6 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.Comment;
 
-import java.time.Instant;
 import java.util.UUID;
 
 @Getter
@@ -16,7 +16,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 @ToString(callSuper = true, exclude = "user")
-@Entity(name = "Member") // JPQL jméno entity (repo už používá "Member m")
+@Entity(name = "Member") // JPQL jméno entity
 @Table(
         name = "company_members",
         uniqueConstraints = {
@@ -42,7 +42,13 @@ public class Member extends BaseArchivableEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false, length = 32)
-    private CompanyRoleName role;
+    private CompanyRoleName role;  // legacy single role (roles/scopes JSONB klidně přidáme vedle)
+
+    @Column(name = "roles", columnDefinition = "jsonb", nullable = false)
+    private String roles;          // JSONB array of strings (["OWNER", ...])
+
+    @Column(name = "scopes", columnDefinition = "jsonb", nullable = false)
+    private String scopes;         // JSONB array of strings (["projects:read", ...])
 
     @Column(name = "first_name", length = 100)
     private String firstName;
@@ -57,5 +63,4 @@ public class Member extends BaseArchivableEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "id", insertable = false, updatable = false)
     private User user;
-
 }

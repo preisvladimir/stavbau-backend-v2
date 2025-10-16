@@ -86,6 +86,7 @@ public class MembersServiceImpl implements MembersService {
         Specification<Member> spec = Specification
                 .where(MemberSpecifications.byCompany(companyId))
                 .and(CommonSpecifications.notDeleted())
+                .and(CommonSpecifications.notArchived())
                 .and(MemberSpecifications.text(norm.getQ()))
                 .and(MemberSpecifications.byRole(norm.getRole()))
                 .and(MemberSpecifications.byStatus(norm.getStatus()));
