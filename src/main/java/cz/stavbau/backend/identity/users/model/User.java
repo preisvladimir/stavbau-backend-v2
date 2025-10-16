@@ -4,8 +4,11 @@ import cz.stavbau.backend.common.domain.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
+import java.util.Map;
 import java.util.UUID;
 
 @Entity
@@ -48,6 +51,7 @@ public class User extends BaseEntity {
     @Column(name = "avatar_url")
     private String avatarUrl;
 
-    @Column(name = "preferences", columnDefinition = "jsonb")
-    private String preferences; // nebo @Type(JsonType) pokud používáš hibernate-types
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "preferences", nullable = false)
+    private Map<String, Object> preferences = new java.util.LinkedHashMap<>();
 }
