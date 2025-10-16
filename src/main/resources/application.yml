@@ -88,3 +88,44 @@ files:
       - image/png
       - image/jpeg
       - text/plain
+
+registrations:
+  enabled: true
+  publicBaseUrl: http://localhost:5173
+  createCompanyUpfront: false
+  token:
+    ttl: PT24H
+    secretRef: REG_TOKEN_SECRET
+  case:
+    ttl: P7D
+  resend:
+    cooldown: PT5M
+  ratelimit:
+    backend: postgres
+    start:
+      perIpPerHour: 5
+      perEmailPerDay: 3
+    resend:
+      perEmailPerHour: 3
+  captcha:
+    provider: mock
+    minScore: 0.5
+    siteKeyRef: REG_RECAPTCHA_SITE_KEY
+    secretKeyRef: REG_RECAPTCHA_SECRET_KEY
+    enforceOnResend: false
+  locales:
+    allowed: [ "cs-CZ", "en-US" ]
+  mail:
+    provider: mock
+    from: "STAVBAU <noreply@stavbau.cz>"
+    templatePrefix: "mail/registration/"
+    verifySubjectKey: "mail.registration.verify.subject"
+    welcomeSubjectKey: "mail.registration.welcome.subject"
+  ares:
+    enabled: true
+    timeoutMs: 3000
+  jobs:
+    expire:
+      enabled: true
+      cron: "0 */10 * * * *"
+      batchSize: 500
