@@ -53,7 +53,7 @@ public class DevUserSeeder implements CommandLineRunner {
                 f.set(nu, userId);
             } catch (Exception ignored) {}
             nu.setEmail("admin@stavbau.local");
-            nu.setCompanyId(c.getId());
+            //nu.setCompanyId(c.getId());
             nu.setLocale("cs");
             return nu;
         });

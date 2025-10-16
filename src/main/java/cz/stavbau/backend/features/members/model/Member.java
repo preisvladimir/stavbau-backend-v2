@@ -14,7 +14,7 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true, exclude = "user")
 @Entity(name = "Member") // JPQL jméno entity
 @Table(
@@ -31,7 +31,6 @@ import java.util.UUID;
 )
 public class Member extends BaseArchivableEntity {
 
-    @EqualsAndHashCode.Include
     @Column(name = "company_id", nullable = false)
     @Comment("Tenant guard – všechny dotazy scope-ované firmou")
     private UUID companyId;

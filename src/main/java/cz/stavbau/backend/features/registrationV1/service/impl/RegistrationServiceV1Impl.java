@@ -69,7 +69,7 @@ public class RegistrationServiceV1Impl implements RegistrationServiceV1 {
         var u = new User();
         u.setEmail(email);
         u.setPasswordHash(passwordEncoder.encode(req.owner().password()));
-        u.setCompanyId(c.getId());
+        //u.setCompanyId(c.getId());
         try { u = userRepository.saveAndFlush(u); }
         catch (DataIntegrityViolationException ex) {
             throw new ConflictException(messages.msg("user.email.exists"), ex);

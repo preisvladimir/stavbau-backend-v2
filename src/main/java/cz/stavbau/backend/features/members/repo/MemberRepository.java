@@ -19,6 +19,7 @@ import java.util.UUID;
 public interface MemberRepository
         extends JpaRepository<Member, UUID>, JpaSpecificationExecutor<Member> {
 
+    List<Member> findByUserId(UUID userId);
     boolean existsByCompanyIdAndRole(UUID companyId, CompanyRoleName role);
     boolean existsByCompanyIdAndUserId(UUID companyId, UUID userId);
     List<Member> findByCompanyId(UUID companyId);

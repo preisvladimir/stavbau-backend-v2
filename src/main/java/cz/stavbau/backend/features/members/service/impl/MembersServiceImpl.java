@@ -118,32 +118,30 @@ public class MembersServiceImpl implements MembersService {
     @Override
     @Transactional
     public MemberDto create(UUID companyId, MemberCreateRequest req) {
-        // Validace vstupů (normalizovaný email + enum role)
+        // 1️⃣ Validace vstupů
         final String email = validator.requireValidEmail(req.email());
         final CompanyRoleName companyRole =
                 validator.requireEnum(CompanyRoleName.class, req.role(), "errors.validation.role.invalid");
 
-        // Pokus najít uživatele podle emailu
-        var existingUser = userRepository.findByEmailIgnoreCase(email);
+        // 2️⃣ Najdi existujícího uživatele (globálně)
+        var existingUserOpt = userRepository.findByEmailIgnoreCase(email);
         boolean invited = false;
-
         User user;
-        if (existingUser.isPresent()) {
-            user = existingUser.get();
 
-            // Uživatel existuje, ale je přiřazen k jiné firmě -> konflikt
-            if (!companyId.equals(user.getCompanyId())) {
-                throw new ConflictException(messages.msg("user.assigned_to_other_company"));
-            }
-            // Už je členem této firmy -> konflikt
+        if (existingUserOpt.isPresent()) {
+            user = existingUserOpt.get();
+
+            // 3️⃣ Pokud už je členem této firmy → konflikt
             if (memberRepository.existsByCompanyIdAndUserId(companyId, user.getId())) {
                 throw new ConflictException(messages.msg("member.exists"));
             }
+
+            // (uživatel může být členem jiné firmy – to nevadí, globální scope)
+            // žádné companyId na User už nekontrolujeme
         } else {
-            // Založ „pozvaného“ uživatele
+            // 4️⃣ Založ nového pozvaného uživatele
             user = new User();
             user.setEmail(email);
-            user.setCompanyId(companyId);
             user.setPasswordHash(passwordEncoder.encode(CryptoUtils.randomUrlSafeSecret()));
             user.setState(UserState.INVITED);
             user.setPasswordNeedsReset(true);
@@ -152,7 +150,7 @@ public class MembersServiceImpl implements MembersService {
             invited = true;
         }
 
-        // Vytvoř Member z požadavku
+        // 5️⃣ Vytvoř nový Member z požadavku
         var member = new Member();
         member.setCompanyId(companyId);
         member.setUserId(user.getId());
@@ -162,10 +160,11 @@ public class MembersServiceImpl implements MembersService {
         member.setPhone(req.phone());
         memberRepository.save(member);
 
-        // Stav pro FE (např. badge v detailu)
+        // 6️⃣ Výsledek pro FE
         String status = invited ? "INVITED" : "CREATED";
         return memberMapper.toDto(user, member, status);
     }
+
 
     @Override
     @Transactional
@@ -312,7 +311,7 @@ public class MembersServiceImpl implements MembersService {
         }
 
         if (!member.isArchived()) {
-            member.setArchived(true); // nastaví archivedAt = now
+            member.markArchived(SecurityUtils.requireUserId(), null);
             memberRepository.save(member);
         }
     }
@@ -324,7 +323,7 @@ public class MembersServiceImpl implements MembersService {
                 .orElseThrow(() -> new NotFoundException(messages.msg("errors.not.found.member")));
 
         if (member.isArchived()) {
-            member.setArchived(false); // vynuluje archivedAt
+            member.undoArchive();
             memberRepository.save(member);
         }
     }

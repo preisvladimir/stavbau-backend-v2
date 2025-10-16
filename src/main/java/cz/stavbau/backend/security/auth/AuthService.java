@@ -161,29 +161,30 @@ public class AuthService {
      * Vydá access token. Pokud je RBAC ON, přidá companyRole+scopes s fail-safe fallbackem na legacy token.
      */
     private String buildAccessTokenFailSafe(User u) {
+        // RBAC OFF → legacy access (ale už bez User.companyId)
         if (!jwt.isRbacClaimsEnabled()) {
-            return jwt.issueAccessToken(u.getId(), u.getCompanyId(), u.getEmail());
+            UUID companyId = resolveDefaultCompanyId(u.getId());
+            return jwt.issueAccessToken(u.getId(), companyId, u.getEmail());
         }
         try {
-            UUID userId = u.getId();
-            UUID companyId = u.getCompanyId(); // může být null
+            UUID userId   = u.getId();
+            UUID companyId = resolveDefaultCompanyId(userId);
 
             CompanyRoleName role = resolveCompanyRoleSafe(userId, companyId);
             Set<String> scopes = BuiltInRoles.COMPANY_ROLE_SCOPES.getOrDefault(role, Set.of());
 
             return jwt.issueAccessToken(
                     userId,
-                    companyId,
+                    companyId,                 // může být null → FE vyzve k výběru firmy
                     u.getEmail(),
                     role,
-                    List.of(), // projectRoles (Sprint 3)
+                    List.of(),                 // projectRoles (zatím prázdné)
                     scopes
             );
         } catch (Exception ex) {
-            // nikdy nespadnout v login/refresh kvůli RBAC
-            // (můžeš nahradit loggerem)
-            System.err.println("[WARN] RBAC claims emission failed, falling back to legacy token: " + ex.getMessage());
-            return jwt.issueAccessToken(u.getId(), u.getCompanyId(), u.getEmail());
+            // fail-safe: vrať „legacy“ access token bez RBAC
+            UUID companyId = resolveDefaultCompanyId(u.getId());
+            return jwt.issueAccessToken(u.getId(), companyId, u.getEmail());
         }
     }
 
@@ -199,5 +200,13 @@ public class AuthService {
         } catch (Exception e) {
             return CompanyRoleName.VIEWER;
         }
+    }
+
+    private UUID resolveDefaultCompanyId(UUID userId) {
+        var memberships = companyMembers.findByUserId(userId);
+        if (memberships == null || memberships.isEmpty()) return null;
+        if (memberships.size() == 1) return memberships.get(0).getCompanyId();
+        // více firem → nevybírat za uživatele, vrátíme null a FE vyžádá výběr
+        return null;
     }
 }

@@ -1,4 +1,5 @@
 --V20251015_19__users_add_profile_jsonb.sql
+
 alter table users
  add column if not exists display_name text,
  add column if not exists avatar_url text,

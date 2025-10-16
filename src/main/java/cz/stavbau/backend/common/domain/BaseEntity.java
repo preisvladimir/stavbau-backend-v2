@@ -3,6 +3,7 @@ package cz.stavbau.backend.common.domain;
 import jakarta.persistence.*;
 import jakarta.persistence.Id;
 import jakarta.persistence.Version;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.UuidGenerator;
@@ -20,10 +21,12 @@ import java.util.UUID;
  */
 @Getter
 @Setter
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
 public abstract class BaseEntity implements Serializable {
 
+    @EqualsAndHashCode.Include
     @Id
     @GeneratedValue
     @UuidGenerator
