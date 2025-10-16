@@ -1,4 +1,8 @@
 package cz.stavbau.backend.features.registrations.service;
 
-public class CaptchaService {
+
+import java.net.InetAddress;
+
+public interface CaptchaService {
+    void verify(String captchaToken, InetAddress ip);
 }

@@ -9,13 +9,51 @@ spring:
   mvc:
     problemdetails:
       enabled: true
+  mail:
+    host: localhost
+    port: 1025
+    properties:
+      mail.smtp.auth: false
+      mail.smtp.starttls.enable: false
+  jackson:
+    default-property-inclusion: non_null
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
 
 logging:
   level:
     cz.stavbau: DEBUG
-    org.springframework.web: INFO
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    cz.stavbau.backend.features.registrations: TRACE
+    org.springframework.transaction: DEBUG
+    org.hibernate.event.internal: DEBUG
+    org.springframework.web: DEBUG
 
 meteostat:
   enabled: false
+
+registrations:
+  mail:
+    provider: mock       # smtp
+    from: "noreply@stavbau.local"
+  token:
+    ttl: PT24H
+  case:
+    ttl: P7D
+  resend:
+    cooldown: PT5M
+  captcha:
+    provider: mock       # ať tě to v devu neblokuje
+    minScore: 0.5
+  locales:
+    allowed: [ "cs-CZ", "en-US" ]
+  jobs:
+    expire:
+      enabled: true
+      cron: "0 */10 * * * *"
+      batchSize: 500

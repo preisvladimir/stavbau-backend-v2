@@ -55,7 +55,8 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/api/v1/auth/**",
                                 "/api/v1/ping",
-                                "/api/v1/ares/**"
+                                "/api/v1/ares/**",
+                                "/api/v1/public/**"
                         ).permitAll()
                         .requestMatchers(HttpMethod.POST,
                                 "/api/v1/tenants/register",

@@ -11,6 +11,7 @@ import java.util.List;
 @ConfigurationProperties(prefix = "registrations")
 public class RegistrationsProperties {
 
+    // getters/setters top-level
     private boolean enabled = true;
     private String publicBaseUrl;
     private boolean createCompanyUpfront = false;
@@ -49,11 +50,10 @@ public class RegistrationsProperties {
 
     @Getter
     public static class RateLimit {
+        @Setter
         private String backend = "redis"; // redis|postgres
         private Start start = new Start();
         private ResendRate resend = new ResendRate();
-
-        public void setBackend(String backend) { this.backend = backend; }
 
         @Setter
         @Getter
@@ -115,20 +115,4 @@ public class RegistrationsProperties {
         }
     }
 
-    // getters/setters top-level
-    public boolean isEnabled() { return enabled; }
-    public void setEnabled(boolean enabled) { this.enabled = enabled; }
-    public String getPublicBaseUrl() { return publicBaseUrl; }
-    public void setPublicBaseUrl(String publicBaseUrl) { this.publicBaseUrl = publicBaseUrl; }
-    public boolean isCreateCompanyUpfront() { return createCompanyUpfront; }
-    public void setCreateCompanyUpfront(boolean createCompanyUpfront) { this.createCompanyUpfront = createCompanyUpfront; }
-    public Token getToken() { return token; }
-    public Case getACase() { return aCase; }
-    public Resend getResend() { return resend; }
-    public RateLimit getRatelimit() { return ratelimit; }
-    public Captcha getCaptcha() { return captcha; }
-    public Locales getLocales() { return locales; }
-    public Mail getMail() { return mail; }
-    public Ares getAres() { return ares; }
-    public Jobs getJobs() { return jobs; }
 }

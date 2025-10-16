@@ -1,0 +1,8 @@
+[[${appName}]] – Ověření e-mailu
+
+Klikněte na tento odkaz a potvrďte svou e-mailovou adresu:
+[[${verificationLink}]]
+
+Odkaz je platný do: [[${expiresAtLocal}]].
+
+Pokud jste o registraci nežádali, můžete tento e-mail ignorovat.

@@ -25,6 +25,25 @@ spring:
   mvc:
     problemdetails:
       enabled: true
+  mail:
+    host: ${SMTP_HOST:localhost}
+    port: ${SMTP_PORT:1025}       # MailHog v localu / 587 prod
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail.smtp.auth: ${SMTP_AUTH:false}
+      mail.smtp.starttls.enable: ${SMTP_STARTTLS:false}
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 5000
+      mail.smtp.writetimeout: 5000
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      # password: ${REDIS_PASSWORD:}     # pokud je potřeba
+      # ssl: true                        # pokud je potřeba
+      # sentinel/cluster lze přidat zde
+
 
 server:
   port: 8080
@@ -101,7 +120,7 @@ registrations:
   resend:
     cooldown: PT5M
   ratelimit:
-    backend: postgres
+    backend: postgres   # <-- přepínač /redis/
     start:
       perIpPerHour: 5
       perEmailPerDay: 3
@@ -129,3 +148,12 @@ registrations:
       enabled: true
       cron: "0 */10 * * * *"
       batchSize: 500
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: stavbau-be

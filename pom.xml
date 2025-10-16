@@ -43,23 +43,19 @@
     </dependencyManagement>
 
     <dependencies>
-        <!-- Web (servlet stack). Držíme MVC jako hlavní web stack.
-             POZN.: I když používáme WebClient (reactive), aplikace běží v SERVLET režimu.
-             Když je v classpath web i webflux, Spring zvolí SERVLET (MVC). -->
+        <!-- Web (MVC) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- WebFlux pouze kvůli WebClientu a reaktivním typům v servisní vrstvě.
-             Kontrolery mohou vracet Mono, Spring MVC je umí adaptovat. -->
+        <!-- WebFlux jen kvůli WebClientu (ponech, pokud ho fakt používáš) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
         </dependency>
 
-        <!-- OpenAPI + Swagger UI (SERVLET/MVC varianta – NE webflux-ui).
-             Důvod: projekt běží v SERVLET režimu, vyhneme se duplikaci beanů. -->
+        <!-- OpenAPI pro MVC -->
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
@@ -79,18 +75,45 @@
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+
+        <!-- metrics + health -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- (volitelné) Prometheus registry
+        <dependency>
+          <groupId>io.micrometer</groupId>
+          <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+        -->
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
         <!-- DB -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-core</artifactId>
-        </dependency>
+        <!-- <scope>runtime</scope> -->
+     </dependency>
+     <dependency>
+         <groupId>org.flywaydb</groupId>
+         <artifactId>flyway-core</artifactId>
+     </dependency>
 
-        <!-- JWT -->
+     <!-- JWT -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
@@ -109,7 +132,7 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- Lombok (compile time only) -->
+        <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -124,49 +147,43 @@
             <version>${mapstruct.version}</version>
         </dependency>
 
-        <!-- Rate-limiting (Bucket4j) -->
+        <!-- Bucket4j (pokud ho fakt používáš mimo registrations) -->
         <dependency>
             <groupId>com.github.vladimir-bukhtoyarov</groupId>
             <artifactId>bucket4j-core</artifactId>
             <version>${bucket4j.version}</version>
         </dependency>
 
-        <!-- Optional: configuration processor (metadata pro @ConfigurationProperties) -->
+        <!-- Config processor (optional) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-configuration-processor</artifactId>
             <optional>true</optional>
         </dependency>
 
-        <!-- Cache pro GEO apod. -->
+        <!-- Cache -->
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
         </dependency>
 
-        <!-- Test -->
+        <!-- Testy -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-
-        <!-- Spring Security test utils: @WithMockUser, SecurityMockMvc, atd. -->
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
-
-        <!-- Integrační testy WebClientu (MockWebServer) -->
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>mockwebserver</artifactId>
             <version>${mockwebserver.version}</version>
             <scope>test</scope>
         </dependency>
-
-        <!-- Testcontainers PostgreSQL -->
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>postgresql</artifactId>

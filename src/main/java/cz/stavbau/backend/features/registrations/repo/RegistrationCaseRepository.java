@@ -41,4 +41,21 @@ public interface RegistrationCaseRepository extends JpaRepository<RegistrationCa
 
     // Pro expirační job
     List<RegistrationCase> findAllByExpiresAtBefore(Instant now);
+
+    /**
+     * Vybere dávku "aktivních" registrací s uplynulým expires_at, uzamkne je
+     * a vrátí k expiračnímu zpracování. Používá nativní SQL kvůli
+     * FOR UPDATE SKIP LOCKED + LIMIT.
+     */
+    @Query(value = """
+    SELECT *
+    FROM registration_cases
+    WHERE expires_at < :now
+      AND status IN ('EMAIL_SENT','EMAIL_VERIFIED','APPROVED')
+    FOR UPDATE SKIP LOCKED
+    LIMIT :batchSize
+    """, nativeQuery = true)
+    List<RegistrationCase> lockBatchForExpiration(
+            @Param("now") Instant now,
+            @Param("batchSize") int batchSize);
 }

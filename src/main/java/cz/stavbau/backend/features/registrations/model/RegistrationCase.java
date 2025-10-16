@@ -3,6 +3,9 @@ package cz.stavbau.backend.features.registrations.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnTransformer;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -43,15 +46,20 @@ public class RegistrationCase {
     private String idempotencyKey;
 
     // Draft & consents (JSONB) - v PR1 jako plain JSON String, konvertor přidáme později
-    @Column(name = "company_draft", nullable = false, columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "company_draft", columnDefinition = "jsonb", nullable = false)
     private String companyDraft;
 
-    @Column(name = "consents", nullable = false, columnDefinition = "jsonb")
+    // consents
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "consents", columnDefinition = "jsonb", nullable = false)
     private String consents;
 
     // Meta
-    @Column(name = "requested_ip")
-    private String requestedIp; // v PR3 lze přepnout na INET typed mapping
+
+    @Column(name = "requested_ip", columnDefinition = "inet")
+    @ColumnTransformer(write = "?::inet")
+    private String requestedIp;
 
     @Column(name = "user_agent")
     private String userAgent;
@@ -59,6 +67,8 @@ public class RegistrationCase {
     @Column(name = "locale", nullable = false, length = 16)
     private String locale;
 
+    // ares_lookup_meta
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "ares_lookup_meta", columnDefinition = "jsonb")
     private String aresLookupMeta;
 
